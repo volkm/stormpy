@@ -19,6 +19,20 @@ class TestModelChecking:
         result = stormpy.model_checking(model, formulas[0])
         assert math.isclose(result.at(initial_state), 1 / 6)
 
+    def test_model_checking_prism_exact_dtmc(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        formulas = stormpy.parse_properties_for_prism_program("P=? [ F \"one\" ]", program)
+        model = stormpy.build_exact_model(program, formulas)
+        assert model.is_exact
+        assert not model.supports_parameters
+        assert model.nr_states == 13
+        assert model.nr_transitions == 20
+        assert len(model.initial_states) == 1
+        initial_state = model.initial_states[0]
+        assert initial_state == 0
+        result = stormpy.model_checking(model, formulas[0])
+        assert result.at(initial_state) == stormpy.Rational(1) / stormpy.Rational(6)
+
     @spot
     def test_model_checking_prism_dtmc_ltl(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))

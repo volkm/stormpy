@@ -24,15 +24,13 @@ except ImportError:
 core._set_up("")
 
 
-def _convert_sparse_model(model, parametric=False):
+def _convert_sparse_model(model):
     """
-    Convert (parametric) model in sparse representation into model corresponding to exact model type.
+    Convert model in sparse representation into model corresponding to the exact model type.
     :param model: Sparse model.
-    :param parametric: Flag indicating if the model is parametric.
-    :return: Model corresponding to exact model type.
+    :return: Model corresponding to the exact model type.
     """
-    if parametric:
-        assert model.supports_parameters
+    if model.supports_parameters:
         if model.model_type == ModelType.DTMC:
             return model._as_sparse_pdtmc()
         elif model.model_type == ModelType.MDP:
@@ -45,8 +43,20 @@ def _convert_sparse_model(model, parametric=False):
             return model._as_sparse_pma()
         else:
             raise StormError("Not supported parametric model constructed")
+    elif model.is_exact:
+        if model.model_type == ModelType.DTMC:
+            return model._as_sparse_exact_dtmc()
+        elif model.model_type == ModelType.MDP:
+            return model._as_sparse_exact_mdp()
+        elif model.model_type == ModelType.POMDP:
+            return model._as_sparse_exact_pomdp()
+        elif model.model_type == ModelType.CTMC:
+            return model._as_sparse_exact_ctmc()
+        elif model.model_type == ModelType.MA:
+            return model._as_sparse_exact_ma()
+        else:
+            raise StormError("Not supported exact model constructed")
     else:
-        assert not model.supports_parameters
         if model.model_type == ModelType.DTMC:
             return model._as_sparse_dtmc()
         elif model.model_type == ModelType.MDP:
@@ -58,18 +68,16 @@ def _convert_sparse_model(model, parametric=False):
         elif model.model_type == ModelType.MA:
             return model._as_sparse_ma()
         else:
-            raise StormError("Not supported non-parametric model constructed")
+            raise StormError("Not supported floating-point model constructed")
 
 
-def _convert_symbolic_model(model, parametric=False):
+def _convert_symbolic_model(model):
     """
-    Convert (parametric) model in symbolic representation into model corresponding to exact model type.
+    Convert model in symbolic representation into model corresponding to exact model type.
     :param model: Symbolic model.
-    :param parametric: Flag indicating if the model is parametric.
     :return: Model corresponding to exact model type.
     """
-    if parametric:
-        assert model.supports_parameters
+    if model.supports_parameters:
         if model.model_type == ModelType.DTMC:
             return model._as_symbolic_pdtmc()
         elif model.model_type == ModelType.MDP:
@@ -80,8 +88,9 @@ def _convert_symbolic_model(model, parametric=False):
             return model._as_symbolic_pma()
         else:
             raise StormError("Not supported parametric model constructed")
+    elif model.is_exact:
+        raise StormError("Exact symbolic model not supported")
     else:
-        assert not model.supports_parameters
         if model.model_type == ModelType.DTMC:
             return model._as_symbolic_dtmc()
         elif model.model_type == ModelType.MDP:
@@ -91,7 +100,7 @@ def _convert_symbolic_model(model, parametric=False):
         elif model.model_type == ModelType.MA:
             return model._as_symbolic_ma()
         else:
-            raise StormError("Not supported non-parametric model constructed")
+            raise StormError("Not supported floating-point model constructed")
 
 
 def build_model(symbolic_description, properties=None):
@@ -103,6 +112,17 @@ def build_model(symbolic_description, properties=None):
     :return: Model in sparse representation.
     """
     return build_sparse_model(symbolic_description, properties=properties)
+
+
+def build_exact_model(symbolic_description, properties=None):
+    """
+    Build a model with exact values in sparse representation from a symbolic description.
+
+    :param symbolic_description: Symbolic model description to translate into a model.
+    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
+    :return: Model with exact values in sparse representation.
+    """
+    return build_sparse_exact_model(symbolic_description, properties=properties)
 
 
 def build_parametric_model(symbolic_description, properties=None):
@@ -132,7 +152,26 @@ def build_sparse_model(symbolic_description, properties=None):
         intermediate = core._build_sparse_model_from_symbolic_description(symbolic_description, formulae)
     else:
         intermediate = core._build_sparse_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, parametric=False)
+    return _convert_sparse_model(intermediate)
+
+
+def build_sparse_exact_model(symbolic_description, properties=None):
+    """
+    Build a model with exact values in sparse representation from a symbolic description.
+
+    :param symbolic_description: Symbolic model description to translate into a model.
+    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
+    :return: Model with exact values in sparse representation.
+    """
+    if not symbolic_description.undefined_constants_are_graph_preserving:
+        raise StormError("Program still contains undefined constants")
+
+    if properties:
+        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
+        intermediate = core._build_sparse_exact_model_from_symbolic_description(symbolic_description, formulae)
+    else:
+        intermediate = core._build_sparse_exact_model_from_symbolic_description(symbolic_description)
+    return _convert_sparse_model(intermediate)
 
 
 def build_sparse_parametric_model(symbolic_description, properties=None):
@@ -151,7 +190,7 @@ def build_sparse_parametric_model(symbolic_description, properties=None):
         intermediate = core._build_sparse_parametric_model_from_symbolic_description(symbolic_description, formulae)
     else:
         intermediate = core._build_sparse_parametric_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, parametric=True)
+    return _convert_sparse_model(intermediate)
 
 
 def build_symbolic_model(symbolic_description, properties=None):
@@ -170,7 +209,7 @@ def build_symbolic_model(symbolic_description, properties=None):
         intermediate = core._build_symbolic_model_from_symbolic_description(symbolic_description, formulae)
     else:
         intermediate = core._build_symbolic_model_from_symbolic_description(symbolic_description)
-    return _convert_symbolic_model(intermediate, parametric=False)
+    return _convert_symbolic_model(intermediate)
 
 
 def build_symbolic_parametric_model(symbolic_description, properties=None):
@@ -189,7 +228,7 @@ def build_symbolic_parametric_model(symbolic_description, properties=None):
         intermediate = core._build_symbolic_parametric_model_from_symbolic_description(symbolic_description, formulae)
     else:
         intermediate = core._build_symbolic_parametric_model_from_symbolic_description(symbolic_description)
-    return _convert_symbolic_model(intermediate, parametric=True)
+    return _convert_symbolic_model(intermediate)
 
 
 def build_model_from_drn(file, options=DirectEncodingParserOptions()):
@@ -201,7 +240,19 @@ def build_model_from_drn(file, options=DirectEncodingParserOptions()):
     :return: Model in sparse representation.
     """
     intermediate = core._build_sparse_model_from_drn(file, options)
-    return _convert_sparse_model(intermediate, parametric=False)
+    return _convert_sparse_model(intermediate)
+
+
+def build_exact_model_from_drn(file, options = DirectEncodingParserOptions()):
+    """
+    Build a model with exact values in sparse representation from the explicit DRN representation.
+
+    :param String file: DRN file containing the model.
+    :param DirectEncodingParserOptions: Options for the parser.
+    :return: Model with exact values in sparse representation.
+    """
+    intermediate = core._build_sparse_exact_model_from_drn(file, options)
+    return _convert_sparse_model(intermediate)
 
 
 def build_parametric_model_from_drn(file, options = DirectEncodingParserOptions()):
@@ -213,7 +264,7 @@ def build_parametric_model_from_drn(file, options = DirectEncodingParserOptions(
     :return: Parametric model in sparse representation.
     """
     intermediate = core._build_sparse_parametric_model_from_drn(file, options)
-    return _convert_sparse_model(intermediate, parametric=True)
+    return _convert_sparse_model(intermediate)
 
 
 def perform_bisimulation(model, properties, bisimulation_type):
@@ -324,18 +375,19 @@ def check_model_sparse(model, property, only_initial_states=False, extract_sched
         if hint:
             task.set_hint(hint)
         return core._parametric_model_checking_sparse_engine(model, task, environment=environment)
-    else:
-        if model.is_exact:
-            if formula.is_multi_objective_formula:
-                return core._multi_objective_model_checking_exact(model, formula, environment=environment)
+    elif model.is_exact:
+        if formula.is_multi_objective_formula:
+            return core._multi_objective_model_checking_exact(model, formula, environment=environment)
+        else:
             task = core.ExactCheckTask(formula, only_initial_states)
             task.set_produce_schedulers(extract_scheduler)
             if hint:
                 task.set_hint(hint)
             return core._exact_model_checking_sparse_engine(model, task, environment=environment)
+    else:
+        if formula.is_multi_objective_formula:
+            return core._multi_objective_model_checking_double(model, formula, environment=environment)
         else:
-            if formula.is_multi_objective_formula:
-                return core._multi_objective_model_checking_double(model, formula, environment=environment)
             task = core.CheckTask(formula, only_initial_states)
             task.set_produce_schedulers(extract_scheduler)
             if hint:
@@ -604,6 +656,7 @@ def export_to_drn(model, file, options=DirectEncodingOptions()):
     """
     if model.supports_parameters:
         return core._export_parametric_to_drn(model, file, options)
-    if model.is_exact:
+    elif model.is_exact:
         return core._export_exact_to_drn(model, file, options)
-    return core._export_to_drn(model, file, options)
+    else:
+        return core._export_to_drn(model, file, options)
