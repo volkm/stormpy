@@ -12,6 +12,7 @@ void define_bisimulation(py::module& m) {
 
     // Bisimulation
     m.def("_perform_bisimulation", &storm::api::performBisimulationMinimization<double>, "Perform bisimulation", py::arg("model"), py::arg("formulas"), py::arg("bisimulation_type"));
+    m.def("_perform_exact_bisimulation", &storm::api::performBisimulationMinimization<storm::RationalNumber>, "Perform bisimulation on exact model", py::arg("model"), py::arg("formulas"), py::arg("bisimulation_type"));
     m.def("_perform_parametric_bisimulation", &storm::api::performBisimulationMinimization<storm::RationalFunction>, "Perform bisimulation on parametric model", py::arg("model"), py::arg("formulas"), py::arg("bisimulation_type"));
     m.def("_perform_symbolic_bisimulation", &performBisimulationMinimization<storm::dd::DdType::Sylvan, double>, "Perform bisimulation", py::arg("model"), py::arg("formulas"), py::arg("bisimulation_type"), py::arg("quotient_format"));
     m.def("_perform_symbolic_parametric_bisimulation", &performBisimulationMinimization<storm::dd::DdType::Sylvan, storm::RationalFunction>, "Perform bisimulation on parametric model", py::arg("model"), py::arg("formulas"), py::arg("bisimulation_type"), py::arg("quotient_format"));

@@ -45,6 +45,33 @@ class TestBisimulation:
         assert model_bisim.model_type == stormpy.ModelType.DTMC
         assert not model_bisim.supports_parameters
 
+    def test_exact_bisimulation(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "crowds5_5.pm"))
+        assert program.nr_modules == 1
+        assert program.model_type == stormpy.PrismModelType.DTMC
+
+        prop = "P=? [F \"observe0Greater1\"]"
+        properties = stormpy.parse_properties_for_prism_program(prop, program)
+        model = stormpy.build_exact_model(program, properties)
+        assert model.is_exact
+        assert model.nr_states == 7403
+        assert model.nr_transitions == 13041
+        assert model.model_type == stormpy.ModelType.DTMC
+        assert not model.supports_parameters
+        initial_state = model.initial_states[0]
+        assert initial_state == 0
+        result = stormpy.model_checking(model, properties[0])
+        model_bisim = stormpy.perform_bisimulation(model, properties, stormpy.BisimulationType.STRONG)
+        assert model.is_exact
+        assert model_bisim.nr_states == 64
+        assert model_bisim.nr_transitions == 104
+        assert model_bisim.model_type == stormpy.ModelType.DTMC
+        assert not model_bisim.supports_parameters
+        result_bisim = stormpy.model_checking(model_bisim, properties[0])
+        initial_state_bisim = model_bisim.initial_states[0]
+        assert initial_state_bisim == 34
+        assert result.at(initial_state) == result_bisim.at(initial_state_bisim)
+
     def test_parametric_bisimulation(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         assert program.nr_modules == 5

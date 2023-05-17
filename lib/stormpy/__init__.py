@@ -289,6 +289,8 @@ def perform_sparse_bisimulation(model, properties, bisimulation_type):
     formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
     if model.supports_parameters:
         return core._perform_parametric_bisimulation(model, formulae, bisimulation_type)
+    elif model.is_exact:
+        return core._perform_exact_bisimulation(model, formulae, bisimulation_type)
     else:
         return core._perform_bisimulation(model, formulae, bisimulation_type)
 
