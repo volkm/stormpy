@@ -43,10 +43,9 @@ doc = [
     "ipython",
     "ipykernel",
 ] # also requires pandoc to be installed
-dev = [
+test = [
     "pytest",
     "nbval",
-    "numpy",
 ]
 
 [tool.scikit-build]

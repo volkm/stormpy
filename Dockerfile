@@ -20,6 +20,8 @@ MAINTAINER Matthias Volk <m.volk@utwente.nl>
 ARG build_type=Release
 # Additional arguments for compiling stormpy
 ARG setup_args=""
+# Optional support to install for stormpy
+ARG options=""
 # Additional arguments for compiling pycarl
 ARG setup_args_pycarl=""
 # Number of threads to use for parallel compilation
@@ -87,7 +89,7 @@ WORKDIR /opt/stormpy
 COPY . .
 
 # Build stormpy
-RUN pip install -v -Ccmake.define.CMAKE_BUILD_PARALLEL_LEVEL=$no_threads $setup_args .
+RUN pip install -v -Ccmake.define.CMAKE_BUILD_PARALLEL_LEVEL=$no_threads $setup_args .$options
 
 # Uncomment to build optional dependencies
 #RUN pip install -e '.[doc,numpy]'"
