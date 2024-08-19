@@ -33,7 +33,7 @@ jobs:
       - name: Git clone
         uses: actions/checkout@v4
       - name: Build stormpy from Dockerfile
-        run: docker build -t movesrwth/stormpy:${{ matrix.buildType.dockerTag }} . --build-arg STORM_BASE=movesrwth/storm:${{ matrix.buildType.stormTag }} --build-arg build_type=${{ matrix.buildType.buildArgs }} --build-arg setup_args="${{ matrix.buildType.setupArgs }} ${{ matrix.configuration.disableFlags }}" --build-arg options=${{ optionalLibs }} --build-arg setup_args_pycarl=${{ matrix.buildType.pycarlArgs }} --build-arg no_threads=${NR_JOBS}
+        run: docker build -t movesrwth/stormpy:${{ matrix.buildType.dockerTag }} . --build-arg STORM_BASE=movesrwth/storm:${{ matrix.buildType.stormTag }} --build-arg build_type=${{ matrix.buildType.buildArgs }} --build-arg setup_args="${{ matrix.buildType.setupArgs }} ${{ matrix.configuration.disableFlags }}" --build-arg options=${{ matrix.configuration.optionalLibs }} --build-arg setup_args_pycarl=${{ matrix.buildType.pycarlArgs }} --build-arg no_threads=${NR_JOBS}
       - name: Run Docker
         run: docker run -d -it --name ci movesrwth/stormpy:${{ matrix.buildType.dockerTag }}
       - name: Run tests
@@ -93,7 +93,7 @@ jobs:
       - name: Git clone
         uses: actions/checkout@v4
       - name: Build stormpy from Dockerfile
-        run: docker build -t movesrwth/stormpy:${{ matrix.buildType.dockerTag }} . --build-arg STORM_BASE=movesrwth/storm:${{ matrix.buildType.stormTag }} --build-arg build_type=${{ matrix.buildType.buildArgs }} --build-arg setup_args=${{ matrix.buildType.setupArgs }} --build-arg optionals=${{ optionalLibs }} --build-arg setup_args_pycarl=${{ matrix.buildType.pycarlArgs }} --build-arg no_threads=${NR_JOBS}
+        run: docker build -t movesrwth/stormpy:${{ matrix.buildType.dockerTag }} . --build-arg STORM_BASE=movesrwth/storm:${{ matrix.buildType.stormTag }} --build-arg build_type=${{ matrix.buildType.buildArgs }} --build-arg setup_args=${{ matrix.buildType.setupArgs }} --build-arg optionals=${{ matrix.buildType.optionalLibs }} --build-arg setup_args_pycarl=${{ matrix.buildType.pycarlArgs }} --build-arg no_threads=${NR_JOBS}
       - name: Run Docker
         run: docker run -d -it --name ci movesrwth/stormpy:${{ matrix.buildType.dockerTag }}
       - name: Run tests
