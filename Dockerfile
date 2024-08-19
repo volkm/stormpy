@@ -87,7 +87,7 @@ WORKDIR /opt/stormpy
 COPY . .
 
 # Build stormpy
-RUN python setup.py build_ext $setup_args -j $no_threads develop
+RUN pip install -v -Ccmake.define.CMAKE_BUILD_PARALLEL_LEVEL=$no_threads $setup_args .
 
 # Uncomment to build optional dependencies
 #RUN pip install -e '.[doc,numpy]'"

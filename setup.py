@@ -188,27 +188,7 @@ class CMakeBuild(build_ext):
 
 
 setup(
-    name="stormpy",
     version=setup_helper.obtain_version(),
-    author="M. Volk",
-    author_email="matthias.volk@cs.rwth-aachen.de",
-    maintainer="S. Junges",
-    maintainer_email="sebastian.junges@cs.rwth-aachen.de",
-    url="https://github.com/moves-rwth/stormpy/",
-    description="stormpy - Python Bindings for Storm",
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    project_urls={
-        'Documentation': 'https://moves-rwth.github.io/stormpy/',
-        'Source': 'https://github.com/moves-rwth/stormpy/',
-        'Bug reports': 'https://github.com/moves-rwth/stormpy/issues',
-    },
-    classifiers=[
-        'Intended Audience :: Science/Research',
-        'Topic :: Scientific/Engineering',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
-
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
     include_package_data=True,
@@ -226,15 +206,4 @@ setup(
                  ],
     cmdclass={'build_ext': CMakeBuild},
     zip_safe=False,
-    install_requires=['pycarl>=2.2.0'],
-    setup_requires=['pycarl>=2.2.0', # required to check pybind version used for pycarl
-                   'packaging'
-                   ],
-    extras_require={
-        "numpy":  ["numpy"],
-        "plot":  ["matplotlib","numpy","scipy"],
-        "test": ["pytest", "nbval", "numpy"],
-        "doc": ["Sphinx", "sphinx-bootstrap-theme", "nbsphinx", "ipython", "ipykernel"], # also requires pandoc to be installed
-    },
-    python_requires='>=3.7', # required by packaging
 )

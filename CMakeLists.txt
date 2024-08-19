@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(stormpy)
+# Scikit-build-core sets these values
+project(
+  ${SKBUILD_PROJECT_NAME}
+  VERSION ${SKBUILD_PROJECT_VERSION}
+  LANGUAGES CXX
+)
+
 
 option(USE_STORM_DFT "Enable support for DFTs" ON)
 option(USE_STORM_GSPN "Enable support for GSPNs" ON)
@@ -14,8 +20,13 @@ set(STORM_DIR_HINT "" CACHE STRING "A hint where the Storm library can be found.
 
 find_package(storm REQUIRED HINTS ${STORM_DIR_HINT})
 
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
-include(resources/include_pybind11.cmake)
+# Find the module development requirements (requires FindPython from 3.17 or
+# scikit-build-core's built-in backport)
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(pybind11 2.10.0 CONFIG REQUIRED)
+
+message(STATUS "Stormpy - Using pybind11 version ${pybind11_VERSION}")
+message(STATUS "Stormpy - Using Storm version ${storm_VERSION} from ${storm_DIR}")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
 
