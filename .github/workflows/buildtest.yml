@@ -65,7 +65,7 @@ jobs:
         id: build_stormpy
         shell: bash {0} // Deactivate fast-fail to handle exit code for incompatibility
         run: |
-          docker exec ci bash -c "cd /opt/stormpy; pip install -v -Ccmake.define.CMAKE_BUILD_PARALLEL_LEVEL=${NR_JOBS} ${{ matrix.buildType.setupArgs }} .[test]"
+          docker exec ci bash -c "cd /opt/stormpy; pip install -v --config-settings=cmake.define.CMAKE_BUILD_PARALLEL_LEVEL=${NR_JOBS} ${{ matrix.buildType.setupArgs }} .[test]"
           status=$?
           if [ $status -eq 42 ]; then
             # Warn about incompatibility but do not handle as failure
@@ -93,7 +93,7 @@ jobs:
       - name: Git clone
         uses: actions/checkout@v4
       - name: Build stormpy from Dockerfile
-        run: docker build -t movesrwth/stormpy:${{ matrix.buildType.dockerTag }} . --build-arg STORM_BASE=movesrwth/storm:${{ matrix.buildType.stormTag }} --build-arg build_type=${{ matrix.buildType.buildArgs }} --build-arg setup_args=${{ matrix.buildType.setupArgs }} --build-arg optionals=${{ matrix.buildType.optionalLibs }} --build-arg setup_args_pycarl=${{ matrix.buildType.pycarlArgs }} --build-arg no_threads=${NR_JOBS}
+        run: docker build -t movesrwth/stormpy:${{ matrix.buildType.dockerTag }} . --build-arg STORM_BASE=movesrwth/storm:${{ matrix.buildType.stormTag }} --build-arg build_type=${{ matrix.buildType.buildArgs }} --build-arg setup_args=${{ matrix.buildType.setupArgs }} --build-arg options=${{ matrix.buildType.optionalLibs }} --build-arg setup_args_pycarl=${{ matrix.buildType.pycarlArgs }} --build-arg no_threads=${NR_JOBS}
       - name: Run Docker
         run: docker run -d -it --name ci movesrwth/stormpy:${{ matrix.buildType.dockerTag }}
       - name: Run tests
