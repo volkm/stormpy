@@ -52,7 +52,6 @@ test = [
 cmake.build-type = "Release"
 build-dir = "build/{wheel_tag}"
 cmake.args = [
-#        '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=build/{wheel_tag}',
 ]
 wheel.packages = ["lib/stormpy"]
 sdist.include = [

@@ -7,7 +7,9 @@ project(
   LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 17)
 
+# Configuration options
 option(USE_STORM_DFT "Enable support for DFTs" ON)
 option(USE_STORM_GSPN "Enable support for GSPNs" ON)
 option(USE_STORM_PARS "Enable support for parametric models" ON)
@@ -18,28 +20,24 @@ set(PYBIND_VERSION "" CACHE STRING "Pybind11 version to use")
 MARK_AS_ADVANCED(PYBIND_VERSION)
 set(STORM_DIR_HINT "" CACHE STRING "A hint where the Storm library can be found.")
 
-find_package(storm REQUIRED HINTS ${STORM_DIR_HINT})
-
 # Find the module development requirements (requires FindPython from 3.17 or
 # scikit-build-core's built-in backport)
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 2.10.0 CONFIG REQUIRED)
-
 message(STATUS "Stormpy - Using pybind11 version ${pybind11_VERSION}")
+
+# Find Storm
+find_package(storm REQUIRED HINTS ${STORM_DIR_HINT})
 message(STATUS "Stormpy - Using Storm version ${storm_VERSION} from ${storm_DIR}")
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
-
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/stormpy")
+message(STATUS "Stormpy -- Library directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 # This sets interprocedural optimization off as this leads to some problems on some systems
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 # This sets the default visibility from hidden to default,
 # which is recommended *not* to do, but leads to errors otherwise.
 set(CMAKE_CXX_VISIBILITY_PRESET "default")
-
 
 # Workaround for issue with Boost >= 1.81
 find_package(Boost 1.65.1 QUIET REQUIRED COMPONENTS filesystem system)
@@ -52,6 +50,8 @@ endif ()
 
 
 # Set configurations
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
+
 set(STORM_VERSION ${storm_VERSION})
 # Set number types from Carl
 set_variable_string(STORM_USE_CLN_EA_BOOL ${STORM_USE_CLN_EA})
@@ -88,6 +88,7 @@ set_optional_lib_var(GSPN)
 set_optional_lib_var(PARS)
 set_optional_lib_var(POMDP)
 
+
 # Helper functions
 function(stormpy_module NAME)
     file(GLOB_RECURSE "STORM_${NAME}_SOURCES" "${CMAKE_CURRENT_SOURCE_DIR}/src/${NAME}/*.cpp")
@@ -108,10 +109,11 @@ function(stormpy_optional_module NAME ADDITIONAL_LIBS ADDITIONAL_INCLUDES)
     set_target_properties(${NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}")
 endfunction(stormpy_optional_module)
 
+
 # Generate definitions used during compilation
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
 
-
+# Build modules
 stormpy_module(core)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/core_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_config.py @ONLY)
 stormpy_module(info)
@@ -120,17 +122,17 @@ stormpy_module(logic)
 stormpy_module(storage)
 stormpy_module(utility)
 
-# Optional modules
-if(HAVE_STORM_DFT)
+# Build optional modules
+if(HAVE_STORM_DFT AND USE_STORM_DFT)
     stormpy_optional_module(dft storm-dft "${storm-dft_INCLUDE_DIR}")
 endif()
-if(HAVE_STORM_GSPN)
+if(HAVE_STORM_GSPN AND USE_STORM_GSPN)
     stormpy_optional_module(gspn storm-gspn "${storm-gspn_INCLUDE_DIR}")
 endif()
-if(HAVE_STORM_PARS)
+if(HAVE_STORM_PARS AND USE_STORM_PARS)
     stormpy_optional_module(pars storm-pars "${storm-pars_INCLUDE_DIR}")
 endif()
-if(HAVE_STORM_POMDP)
+if(HAVE_STORM_POMDP AND USE_STORM_POMDP)
     stormpy_optional_module(pomdp storm-pomdp "${storm-pomdp_INCLUDE_DIR}")
 endif()
 
