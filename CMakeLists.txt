@@ -38,7 +38,7 @@ if (${storm_VERSION} VERSION_LESS ${STORM_MIN_VERSION})
 endif()
 if (NOT ${STORM_DIR_HINT} STREQUAL "")
 	if (${storm_DIR} STREQUAL ${STORM_DIR_HINT})
-		MESSAGE(WARNING "Stormpy - Using different Storm directory ${storm_DIR} instead of given ${STORM_DIR_HINT}!")
+		MESSAGE(ERROR "Stormpy - Using different Storm directory ${storm_DIR} instead of given ${STORM_DIR_HINT}!")
 	endif()
 endif()
 
