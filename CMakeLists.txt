@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.15)
 
 # Scikit-build-core sets these values
 project(
-  ${SKBUILD_PROJECT_NAME}
-  VERSION ${SKBUILD_PROJECT_VERSION}
-  LANGUAGES CXX
+	${SKBUILD_PROJECT_NAME}
+	VERSION ${SKBUILD_PROJECT_VERSION}
+	LANGUAGES CXX
 )
 
 set(CMAKE_CXX_STANDARD 17)
@@ -32,11 +32,17 @@ find_package(storm REQUIRED HINTS ${STORM_DIR_HINT})
 message(STATUS "Stormpy - Using Storm version ${storm_VERSION} from ${storm_DIR}")
 # Check Storm version
 if (${storm_VERSION} VERSION_LESS ${STORM_MIN_VERSION})
-	MESSAGE(FATAL_ERROR "Stormpy - Require Storm version >= ${STORM_MIN_VERSION}")
+	MESSAGE(FATAL_ERROR "Stormpy - Storm version ${storm_VERSION} from ${storm_DIR} is not supported anymore!\n
+		Stormpy requires at least Storm version >= ${STORM_MIN_VERSION}.\n
+		For more information, see https://moves-rwth.github.io/stormpy/installation.html#compatibility-of-stormpy-and-storm")
+endif()
+if (NOT ${STORM_DIR_HINT} STREQUAL "")
+	if (${storm_DIR} STREQUAL ${STORM_DIR_HINT})
+		MESSAGE(WARNING "Stormpy - Using different Storm directory ${storm_DIR} instead of given ${STORM_DIR_HINT}!")
+	endif()
 endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/stormpy")
-message(STATUS "Stormpy -- Library directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 # This sets interprocedural optimization off as this leads to some problems on some systems
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
@@ -47,10 +53,10 @@ set(CMAKE_CXX_VISIBILITY_PRESET "default")
 # Workaround for issue with Boost >= 1.81
 find_package(Boost 1.65.1 QUIET REQUIRED COMPONENTS filesystem system)
 if (Boost_FOUND)
-    if (${Boost_VERSION} VERSION_GREATER_EQUAL "1.81.0")
-        message(STATUS "Stormpy - Using workaround for Boost >= 1.81")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_PHOENIX_STL_TUPLE_H_")
-    endif()
+	if (${Boost_VERSION} VERSION_GREATER_EQUAL "1.81.0")
+		message(STATUS "Stormpy - Using workaround for Boost >= 1.81")
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_PHOENIX_STL_TUPLE_H_")
+	endif()
 endif ()
 
 
@@ -62,21 +68,21 @@ set(STORM_VERSION ${storm_VERSION})
 set_variable_string(STORM_USE_CLN_EA_BOOL ${STORM_USE_CLN_EA})
 set_variable_string(STORM_USE_CLN_RF_BOOL ${STORM_USE_CLN_RF})
 if (STORM_USE_CLN_EA)
-    set(PYCARL_EA_PACKAGE "cln")
+	set(PYCARL_EA_PACKAGE "cln")
 else()
-    set(PYCARL_EA_PACKAGE "gmp")
+	set(PYCARL_EA_PACKAGE "gmp")
 endif()
 if (STORM_USE_CLN_RF)
-    set(PYCARL_RF_PACKAGE "cln")
+	set(PYCARL_RF_PACKAGE "cln")
 else()
-    set(PYCARL_RF_PACKAGE "gmp")
+	set(PYCARL_RF_PACKAGE "gmp")
 endif()
 set(PYCARL_IMPORTS "import pycarl")
 if (STORM_USE_CLN_EA OR STORM_USE_CLN_RF)
-    set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nimport pycarl.cln")
+	set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nimport pycarl.cln")
 endif()
 if (NOT STORM_USE_CLN_EA OR NOT STORM_USE_CLN_RF)
-    set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nimport pycarl.gmp")
+	set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nimport pycarl.gmp")
 endif()
 
 # Set dependency variables
@@ -96,22 +102,22 @@ set_optional_lib_var(POMDP)
 
 # Helper functions
 function(stormpy_module NAME)
-    file(GLOB_RECURSE "STORM_${NAME}_SOURCES" "${CMAKE_CURRENT_SOURCE_DIR}/src/${NAME}/*.cpp")
-    pybind11_add_module(${NAME} "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_${NAME}.cpp" ${STORM_${NAME}_SOURCES})
-    target_include_directories(${NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${storm_INCLUDE_DIR} ${storm-parsers_INCLUDE_DIR} ${storm-counterexamples_INCLUDE_DIR} ${storm-version-info_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/src)
-    target_link_libraries(${NAME} PRIVATE storm storm-parsers storm-counterexamples storm-version-info )
-    if (NOT (${NAME} STREQUAL "core"))
-        set_target_properties(${NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}")
-    endif()
+	file(GLOB_RECURSE "STORM_${NAME}_SOURCES" "${CMAKE_CURRENT_SOURCE_DIR}/src/${NAME}/*.cpp")
+	pybind11_add_module(${NAME} "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_${NAME}.cpp" ${STORM_${NAME}_SOURCES})
+	target_include_directories(${NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${storm_INCLUDE_DIR} ${storm-parsers_INCLUDE_DIR} ${storm-counterexamples_INCLUDE_DIR} ${storm-version-info_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/src)
+	target_link_libraries(${NAME} PRIVATE storm storm-parsers storm-counterexamples storm-version-info )
+	if (NOT (${NAME} STREQUAL "core"))
+		set_target_properties(${NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}")
+	endif()
 endfunction(stormpy_module)
 
 function(stormpy_optional_module NAME ADDITIONAL_LIBS ADDITIONAL_INCLUDES)
-    file(GLOB_RECURSE "STORM_${NAME}_SOURCES" "${CMAKE_CURRENT_SOURCE_DIR}/src/${NAME}/*.cpp")
-    pybind11_add_module(${NAME} "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_${NAME}.cpp" ${STORM_${NAME}_SOURCES})
-    target_include_directories(${NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${storm_INCLUDE_DIR} ${storm-parsers_INCLUDE_DIR} ${storm-counterexamples_INCLUDE_DIR} ${storm-version-info_INCLUDE_DIR} ${ADDITIONAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src)
-    target_link_libraries(${NAME} PRIVATE storm storm-parsers storm-counterexamples storm-version-info ${ADDITIONAL_LIBS})
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${NAME}_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}/_config.py @ONLY)
-    set_target_properties(${NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}")
+	file(GLOB_RECURSE "STORM_${NAME}_SOURCES" "${CMAKE_CURRENT_SOURCE_DIR}/src/${NAME}/*.cpp")
+	pybind11_add_module(${NAME} "${CMAKE_CURRENT_SOURCE_DIR}/src/mod_${NAME}.cpp" ${STORM_${NAME}_SOURCES})
+	target_include_directories(${NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${storm_INCLUDE_DIR} ${storm-parsers_INCLUDE_DIR} ${storm-counterexamples_INCLUDE_DIR} ${storm-version-info_INCLUDE_DIR} ${ADDITIONAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src)
+	target_link_libraries(${NAME} PRIVATE storm storm-parsers storm-counterexamples storm-version-info ${ADDITIONAL_LIBS})
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${NAME}_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}/_config.py @ONLY)
+	set_target_properties(${NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${NAME}")
 endfunction(stormpy_optional_module)
 
 
@@ -129,15 +135,26 @@ stormpy_module(utility)
 
 # Build optional modules
 if(HAVE_STORM_DFT AND USE_STORM_DFT)
-    stormpy_optional_module(dft storm-dft "${storm-dft_INCLUDE_DIR}")
+	stormpy_optional_module(dft storm-dft "${storm-dft_INCLUDE_DIR}")
+	MESSAGE(STATUS "Stormpy - Support for DFT found and included.")
+else()
+	MESSAGE(WARNING "Stormpy - No support for DFT!")
 endif()
 if(HAVE_STORM_GSPN AND USE_STORM_GSPN)
-    stormpy_optional_module(gspn storm-gspn "${storm-gspn_INCLUDE_DIR}")
+	stormpy_optional_module(gspn storm-gspn "${storm-gspn_INCLUDE_DIR}")
+	MESSAGE(STATUS "Stormpy - Support for GSPN found and included.")
+else()
+	MESSAGE(WARNING "Stormpy - No support for GSPN!")
 endif()
 if(HAVE_STORM_PARS AND USE_STORM_PARS)
-    stormpy_optional_module(pars storm-pars "${storm-pars_INCLUDE_DIR}")
+	stormpy_optional_module(pars storm-pars "${storm-pars_INCLUDE_DIR}")
+	MESSAGE(STATUS "Stormpy - Support for parametric models found and included.")
+else()
+	MESSAGE(WARNING "Stormpy - No support for parametric models!")
 endif()
 if(HAVE_STORM_POMDP AND USE_STORM_POMDP)
-    stormpy_optional_module(pomdp storm-pomdp "${storm-pomdp_INCLUDE_DIR}")
+	stormpy_optional_module(pomdp storm-pomdp "${storm-pomdp_INCLUDE_DIR}")
+	MESSAGE(STATUS "Stormpy - Support for POMDP found and included.")
+else()
+	MESSAGE(WARNING "Stormpy - No support for POMDP!")
 endif()
-
