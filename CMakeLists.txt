@@ -28,6 +28,8 @@ find_package(pybind11 2.10.0 CONFIG REQUIRED)
 message(STATUS "Stormpy - Using pybind11 version ${pybind11_VERSION}")
 message(STATUS "Stormpy - Using Storm version ${storm_VERSION} from ${storm_DIR}")
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
