@@ -27,8 +27,13 @@ find_package(pybind11 2.10.0 CONFIG REQUIRED)
 message(STATUS "Stormpy - Using pybind11 version ${pybind11_VERSION}")
 
 # Find Storm
+set(STORM_MIN_VERSION "1.8.2")
 find_package(storm REQUIRED HINTS ${STORM_DIR_HINT})
 message(STATUS "Stormpy - Using Storm version ${storm_VERSION} from ${storm_DIR}")
+# Check Storm version
+if (${storm_VERSION} VERSION_LESS ${STORM_MIN_VERSION})
+	MESSAGE(FATAL_ERROR "Stormpy - Require Storm version >= ${STORM_MIN_VERSION}")
+endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/stormpy")
 message(STATUS "Stormpy -- Library directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
