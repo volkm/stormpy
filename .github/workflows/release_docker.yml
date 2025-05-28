@@ -11,6 +11,10 @@ on:
         description: 'Docker tag (e.g. 1.1.0 or stable)'
         required: true
         default: 'x.y.z'
+      stormTag:
+        description: 'Docker tag of Storm base image (e.g. 1.1.0 or stable)'
+        required: true
+        default: 'x.y.z'
 
 env:
   IMAGE: movesrwth/stormpy
@@ -25,13 +29,13 @@ jobs:
       matrix:
         image:
           - {tag: "${{ github.event.inputs.tag }}-debug",
-             baseImg: "movesrwth/storm:${{ github.event.inputs.tag }}-debug",
+             baseImg: "movesrwth/storm:${{ github.event.inputs.stormTag }}-debug",
              file: "Dockerfile",
              buildType: "Debug",
              setupArgs: "--debug"
             }
           - {tag: "${{ github.event.inputs.tag }}",
-             baseImg: "movesrwth/storm:${{ github.event.inputs.tag }}",
+             baseImg: "movesrwth/storm:${{ github.event.inputs.stormTag }}",
              file: "Dockerfile",
              buildType: "Release",
              setupArgs: ""
