@@ -76,7 +76,7 @@ jobs:
             no_threads=${{ env.NR_JOBS }}
           platforms: ${{ matrix.platform.name }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true
       - name: Export digest
         run: |
           mkdir -p ${{ runner.temp }}/digests/${{ matrix.image.tag }}
