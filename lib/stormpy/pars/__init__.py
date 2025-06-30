@@ -6,7 +6,7 @@ if not _config.STORM_WITH_PARS:
 from . import _pars
 from ._pars import *
 
-from stormpy import ModelType
+from stormpy.storage import ModelType
 
 _pars._set_up()
 

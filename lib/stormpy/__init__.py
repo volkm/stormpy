@@ -1,11 +1,12 @@
 from ._config import *
 
-from . import _core
 from ._core import *
-from . import storage
-from .storage import *
-from .logic import *
-from . import exceptions
+from ._core import _set_up
+
+import stormpy.storage
+from stormpy.storage import ModelType
+import stormpy.logic
+import stormpy.exceptions
 
 from enum import Enum
 
@@ -15,7 +16,7 @@ except ImportError:
     # We're running in a tree that doesn't have a _version.py, so we don't know what our version is.
     __version__ = "unknown"
 
-_core._set_up("")
+_set_up("")
 
 
 class _ValueType(Enum):
@@ -388,7 +389,7 @@ def perform_sparse_bisimulation(model, properties, bisimulation_type, graph_pres
         return _core._perform_bisimulation(model, formulae, bisimulation_type, graph_preserving)
 
 
-def perform_symbolic_bisimulation(model, properties, quotient_format=stormpy.QuotientFormat.DD):
+def perform_symbolic_bisimulation(model, properties, quotient_format=QuotientFormat.DD):
     """
     Perform bisimulation on model in symbolic representation.
     :param model: Model.
@@ -545,7 +546,7 @@ def set_state_valuations(model, new_state_valuations):
     if model.model_type not in [stormpy.ModelType.MDP, stormpy.ModelType.DTMC]:
         raise RuntimeError(f"Only MDPs/DTMCs are currently supported, got {model.model_type}")
 
-    components = stormpy.SparseModelComponents(
+    components = stormpy.storage.SparseModelComponents(
         transition_matrix=model.transition_matrix, state_labeling=model.labeling, reward_models=model.reward_models, rate_transitions=False
     )
     components.state_valuations = new_state_valuations
@@ -602,7 +603,7 @@ def prob01min_states(model, eventually_formula):
     assert type(eventually_formula) == logic.EventuallyFormula
     labelform = eventually_formula.subformula
     labelprop = _core.Property("label-prop", labelform)
-    phiStates = BitVector(model.nr_states, True)
+    phiStates = stormpy.storage.BitVector(model.nr_states, True)
     psiStates = model_checking(model, labelprop).get_truth_values()
     return compute_prob01min_states(model, phiStates, psiStates)
 
@@ -611,7 +612,7 @@ def prob01max_states(model, eventually_formula):
     assert type(eventually_formula) == logic.EventuallyFormula
     labelform = eventually_formula.subformula
     labelprop = _core.Property("label-prop", labelform)
-    phiStates = BitVector(model.nr_states, True)
+    phiStates = stormpy.storage.BitVector(model.nr_states, True)
     psiStates = model_checking(model, labelprop).get_truth_values()
     return compute_prob01max_states(model, phiStates, psiStates)
 
@@ -827,7 +828,7 @@ def export_to_drn(model, file, options=DirectEncodingExporterOptions()):
     return _core._export_to_drn(model, file, options)
 
 
-def export_to_umb(model, path, options=UmbExportOptions()):
+def export_to_umb(model, path, options=stormpy.storage.UmbExportOptions()):
     """
     Export a model to a UMB archive.
 
@@ -835,11 +836,11 @@ def export_to_umb(model, path, options=UmbExportOptions()):
     :param path: Path to the output UMB archive.
     :param options: UmbExportOptions controlling value type, compression, etc.
     """
-    umb = sparse_model_to_umb(model, options)
-    umb_to_archive(umb, path, options)
+    umb = stormpy.storage.sparse_model_to_umb(model, options)
+    stormpy.storage.umb_to_archive(umb, path, options)
 
 
-def build_from_umb(path, options=UmbImportOptions()):
+def build_from_umb(path, options=stormpy.storage.UmbImportOptions()):
     """
     Build a sparse model from a UMB archive.
 
@@ -847,8 +848,8 @@ def build_from_umb(path, options=UmbImportOptions()):
     :param options: UmbImportOptions controlling value type and what to build.
     :return: Sparse model in the concrete typed representation.
     """
-    umb = import_umb(path, options)
-    intermediate = sparse_model_from_umb(umb, options)
+    umb = stormpy.storage.import_umb(path, options)
+    intermediate = stormpy.storage.sparse_model_from_umb(umb, options)
     if intermediate.is_exact and intermediate.supports_uncertainty:
         return _convert_sparse_model(intermediate, value_type=_ValueType.EXACT_INTERVAL)
     if intermediate.is_exact:
