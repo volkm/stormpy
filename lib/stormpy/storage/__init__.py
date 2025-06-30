@@ -68,13 +68,13 @@ def get_maximal_end_components(model):
     :return: Maximal end components.
     """
     if model.supports_parameters:
-        return stormpy.MaximalEndComponentDecomposition_ratfunc(model)
+        return stormpy.storage.MaximalEndComponentDecomposition_ratfunc(model)
     elif model.is_exact:
-        return stormpy.MaximalEndComponentDecomposition_exact(model)
+        return stormpy.storage.MaximalEndComponentDecomposition_exact(model)
     elif model.supports_uncertainty:
-        return stormpy.MaximalEndComponentDecomposition_interval(model)
+        return stormpy.storage.MaximalEndComponentDecomposition_interval(model)
     else:
-        return stormpy.MaximalEndComponentDecomposition_double(model)
+        return stormpy.storage.MaximalEndComponentDecomposition_double(model)
 
 
 # Extend class StateValuation

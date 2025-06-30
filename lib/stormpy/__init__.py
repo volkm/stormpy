@@ -1,11 +1,12 @@
 from ._config import *
 
-from . import _core
 from ._core import *
-from . import storage
-from .storage import *
-from .logic import *
-from . import exceptions
+from ._core import _set_up
+
+import stormpy.storage
+from stormpy.storage import ModelType
+import stormpy.logic
+import stormpy.exceptions
 
 try:
     from ._version import __version__
@@ -13,7 +14,7 @@ except ImportError:
     # We're running in a tree that doesn't have a _version.py, so we don't know what our version is.
     __version__ = "unknown"
 
-_core._set_up("")
+_set_up("")
 
 
 def _convert_sparse_model(model, parametric=False):
@@ -256,7 +257,7 @@ def perform_sparse_bisimulation(model, properties, bisimulation_type, graph_pres
         return _core._perform_bisimulation(model, formulae, bisimulation_type, graph_preserving)
 
 
-def perform_symbolic_bisimulation(model, properties, quotient_format=stormpy.QuotientFormat.DD):
+def perform_symbolic_bisimulation(model, properties, quotient_format=QuotientFormat.DD):
     """
     Perform bisimulation on model in symbolic representation.
     :param model: Model.
@@ -451,7 +452,7 @@ def prob01min_states(model, eventually_formula):
     assert type(eventually_formula) == logic.EventuallyFormula
     labelform = eventually_formula.subformula
     labelprop = _core.Property("label-prop", labelform)
-    phiStates = BitVector(model.nr_states, True)
+    phiStates = stormpy.storage.BitVector(model.nr_states, True)
     psiStates = model_checking(model, labelprop).get_truth_values()
     return compute_prob01min_states(model, phiStates, psiStates)
 
@@ -460,7 +461,7 @@ def prob01max_states(model, eventually_formula):
     assert type(eventually_formula) == logic.EventuallyFormula
     labelform = eventually_formula.subformula
     labelprop = _core.Property("label-prop", labelform)
-    phiStates = BitVector(model.nr_states, True)
+    phiStates = stormpy.storage.BitVector(model.nr_states, True)
     psiStates = model_checking(model, labelprop).get_truth_values()
     return compute_prob01max_states(model, phiStates, psiStates)
 
