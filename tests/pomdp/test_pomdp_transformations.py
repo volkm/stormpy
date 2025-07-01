@@ -9,9 +9,9 @@ class TestPomdpTransformations:
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         formulas = stormpy.parse_properties_for_prism_program('P=? [F "goal"]', program)
         model = stormpy.build_sparse_exact_model(program, formulas)
-        assert type(model) is stormpy.SparseExactPomdp
+        assert type(model) is stormpy.storage.SparseExactPomdp
         canonic = stormpy.pomdp.make_canonic(model)
-        assert type(canonic) is stormpy.SparseExactPomdp
+        assert type(canonic) is stormpy.storage.SparseExactPomdp
         assert canonic.nr_states == model.nr_states
         assert canonic.nr_observations == model.nr_observations
 
@@ -27,9 +27,9 @@ class TestPomdpTransformations:
     def test_create_observation_trace_unfolder_with_options(self):
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         model = stormpy.build_model(program)
-        assert type(model) is stormpy.SparsePomdp
+        assert type(model) is stormpy.storage.SparsePomdp
         risk = [0.0] * model.nr_observations
-        expr_manager = stormpy.ExpressionManager()
+        expr_manager = stormpy.storage.ExpressionManager()
         options = stormpy.pomdp.ObservationTraceUnfolderOptions()
         unfolder = stormpy.pomdp.create_observation_trace_unfolder(model, risk, expr_manager, options)
         unfolder.transform([6])
@@ -39,7 +39,7 @@ class TestPomdpTransformations:
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         model = stormpy.build_model(program)
         risk = [0.0] * model.nr_observations
-        expr_manager = stormpy.ExpressionManager()
+        expr_manager = stormpy.storage.ExpressionManager()
         options = stormpy.pomdp.ObservationTraceUnfolderOptions()
         options.restart_semantics = False
         unfolder = stormpy.pomdp.create_observation_trace_unfolder(model, risk, expr_manager, options)

@@ -20,7 +20,7 @@ class _DfsQueue:
 
 
 def _dfs_explore(program, callback):
-    generator = stormpy.StateGenerator(program)
+    generator = stormpy.storage.StateGenerator(program)
 
     queue = _DfsQueue()
     current_state_id = generator.load_initial_state()
@@ -44,7 +44,7 @@ def _load_program(filename):
     program = stormpy.parse_prism_program(filename)  # pylint: disable=no-member
     program = program.substitute_constants()
 
-    expression_parser = stormpy.ExpressionParser(program.expression_manager)
+    expression_parser = stormpy.storage.ExpressionParser(program.expression_manager)
     expression_parser.set_identifier_mapping({var.name: var.get_expression() for var in program.get_variables()})
     return program, expression_parser
 

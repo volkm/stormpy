@@ -145,7 +145,7 @@ class TestMatrix:
         for e in matrix:
             assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
 
-        row_constraint = stormpy.BitVector(13, [0, 1, 3, 4, 7, 8, 9])
+        row_constraint = stormpy.storage.BitVector(13, [0, 1, 3, 4, 7, 8, 9])
         submatrix = matrix.submatrix(row_constraint, row_constraint)
         assert submatrix.nr_rows == 7
         assert submatrix.nr_columns == 7
@@ -164,7 +164,7 @@ class TestMatrix:
 
         assert matrix.nr_rows != matrix.nr_columns
 
-        row_constraint = stormpy.BitVector(254, [0, 1, 3, 4, 7, 8, 9])
+        row_constraint = stormpy.storage.BitVector(254, [0, 1, 3, 4, 7, 8, 9])
         submatrix = matrix.submatrix(row_constraint, row_constraint, use_groups=False)
         assert submatrix.nr_rows == 7
         assert submatrix.nr_columns == 7

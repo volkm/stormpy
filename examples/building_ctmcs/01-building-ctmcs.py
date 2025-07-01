@@ -26,7 +26,7 @@ def example_building_ctmcs_01():
     )
 
     # Default row groups: [0,1,2,3]
-    transition_matrix = stormpy.build_sparse_matrix(transitions)
+    transition_matrix = stormpy.storage.build_sparse_matrix(transitions)
     print(transition_matrix)
 
     # State labeling
@@ -42,7 +42,7 @@ def example_building_ctmcs_01():
 
     # Collect components
     # rate_transitions = True, because the transition values are interpreted as rates
-    components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=True)
+    components = stormpy.storage.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=True)
 
     # Build the model
     ctmc = stormpy.storage.SparseCtmc(components)

@@ -18,7 +18,7 @@ def example_building_mas_01():
     transitions = np.array([[0, 1, 0, 0, 0], [0.8, 0, 0.2, 0, 0], [0.9, 0, 0, 0.1, 0], [0, 0, 0, 0, 1], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]], dtype="float64")
 
     # Build matrix and define indices of row groups (ascending order)
-    transition_matrix = stormpy.build_sparse_matrix(transitions, [0, 2, 3, 4, 5])
+    transition_matrix = stormpy.storage.build_sparse_matrix(transitions, [0, 2, 3, 4, 5])
     print(transition_matrix)
 
     # StateLabeling
@@ -43,10 +43,10 @@ def example_building_mas_01():
     # Provide exit rates (for Markovian states)
     exit_rates = [0.0, 10.0, 12.0, 1.0, 1.0]
 
-    markovian_states = stormpy.BitVector(5, [1, 2, 3, 4])
+    markovian_states = stormpy.storage.BitVector(5, [1, 2, 3, 4])
 
     # Collect components
-    components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, markovian_states=markovian_states)
+    components = stormpy.storage.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, markovian_states=markovian_states)
     components.choice_labeling = choice_labeling
     components.exit_rates = exit_rates
 

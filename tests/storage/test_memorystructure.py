@@ -8,7 +8,7 @@ class TestMemoryStructure:
         builder = stormpy.storage.MemoryStructureBuilder(2, model, False)
         builder.set_transition(0, 0, ~goalstates)
         builder.set_transition(0, 1, goalstates)
-        builder.set_transition(1, 1, stormpy.BitVector(model.nr_states, True))
+        builder.set_transition(1, 1, stormpy.storage.BitVector(model.nr_states, True))
         memorystructure = builder.build()
         return memorystructure
 

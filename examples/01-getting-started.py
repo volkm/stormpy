@@ -1,4 +1,5 @@
 import stormpy
+import stormpy.storage
 
 import stormpy.examples
 import stormpy.examples.files
