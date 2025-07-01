@@ -7,7 +7,7 @@ class TestMaximalEndComponents:
         program = stormpy.parse_prism_program(get_example_path("mdp", "two_dice.nm"))
         model = stormpy.build_model(program)
 
-        decomposition = stormpy.MaximalEndComponentDecomposition_double(model)
+        decomposition = stormpy.storage.MaximalEndComponentDecomposition_double(model)
         assert decomposition.size == 36
         for mec in decomposition:
             assert mec.size == 1
@@ -19,7 +19,7 @@ class TestMaximalEndComponents:
         program = stormpy.parse_prism_program(get_example_path("mdp", "maze_2.nm"))
         model = stormpy.build_model(program)
 
-        decomposition = stormpy.get_maximal_end_components(model)
+        decomposition = stormpy.storage.get_maximal_end_components(model)
         assert decomposition.size == 2
         matrix = model.transition_matrix
         for mec in decomposition:

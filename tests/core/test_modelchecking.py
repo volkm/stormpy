@@ -77,7 +77,7 @@ class TestModelChecking:
 
     def test_model_checking_jani_dtmc(self):
         jani_model, formulas = stormpy.parse_jani_model(get_example_path("dtmc", "die.jani"))
-        formulas = stormpy.eliminate_reward_accumulations(jani_model, formulas)
+        formulas = stormpy.storage.eliminate_reward_accumulations(jani_model, formulas)
         assert len(formulas) == 2
         model = stormpy.build_model(jani_model, formulas)
         assert model.nr_states == 13

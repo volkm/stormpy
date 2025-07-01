@@ -5,7 +5,7 @@ from configurations import numpy_avail, pars
 
 class TestSparseModelComponents:
     def test_init_default(self):
-        components = stormpy.SparseModelComponents()
+        components = stormpy.storage.SparseModelComponents()
 
         assert components.state_labeling.get_labels() == set()
         assert components.reward_models == {}
@@ -20,7 +20,7 @@ class TestSparseModelComponents:
         nr_choices = 13
 
         # transition_matrix
-        builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=False, row_groups=0)
+        builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=False, row_groups=0)
 
         # Add transitions
         builder.add_next_value(0, 1, 0.5)
@@ -56,19 +56,19 @@ class TestSparseModelComponents:
         state_labeling.add_label_to_state("five", 11)
         state_labeling.add_label_to_state("six", 12)
 
-        state_labeling.set_states("done", stormpy.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
+        state_labeling.set_states("done", stormpy.storage.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
 
         # reward_models
         reward_models = {}
         # Create a vector representing the state-action rewards
         action_reward = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+        reward_models["coin_flips"] = stormpy.storage.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 
         # state valuations
-        manager = stormpy.ExpressionManager()
+        manager = stormpy.storage.ExpressionManager()
         var_s = manager.create_integer_variable(name="s")
         var_d = manager.create_integer_variable(name="d")
-        v_builder = stormpy.StateValuationsBuilder()
+        v_builder = stormpy.storage.StateValuationsBuilder()
 
         v_builder.add_variable(var_s)
         v_builder.add_variable(var_d)
@@ -87,17 +87,17 @@ class TestSparseModelComponents:
         for i in range(1, 8):  # 0: no origin
             id_to_command_set_mapping[i].insert(i - 1)
         id_to_command_set_mapping[8].insert(7)
-        choice_origins = stormpy.PrismChoiceOrigins(prism_program, index_to_identifier_mapping, id_to_command_set_mapping)
+        choice_origins = stormpy.storage.PrismChoiceOrigins(prism_program, index_to_identifier_mapping, id_to_command_set_mapping)
 
         # Construct components
-        components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models)
+        components = stormpy.storage.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models)
         components.choice_origins = choice_origins
         components.state_valuations = state_valuations
 
         # Build DTMC
         dtmc = stormpy.storage.SparseDtmc(components)
 
-        assert type(dtmc) is stormpy.SparseDtmc
+        assert type(dtmc) is stormpy.storage.SparseDtmc
         assert not dtmc.supports_parameters
 
         # Test transition matrix
@@ -145,7 +145,7 @@ class TestSparseModelComponents:
         nr_choices = 14
 
         # Build transition matrix
-        builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+        builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 
         # Row group, state 0
         builder.new_row_group(0)
@@ -197,13 +197,13 @@ class TestSparseModelComponents:
         state_labeling.add_label_to_state("five", 11)
         state_labeling.add_label_to_state("six", 12)
 
-        state_labeling.set_states("done", stormpy.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
+        state_labeling.set_states("done", stormpy.storage.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
 
         # reward models
         reward_models = {}
         # Vector representing the state-action rewards
         action_reward = [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+        reward_models["coin_flips"] = stormpy.storage.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 
         # choice labeling
         choice_labeling = stormpy.storage.ChoiceLabeling(nr_choices)
@@ -214,10 +214,10 @@ class TestSparseModelComponents:
         choice_labeling.add_label_to_choice("b", 1)
 
         # state valuations
-        manager = stormpy.ExpressionManager()
+        manager = stormpy.storage.ExpressionManager()
         var_s = manager.create_integer_variable(name="s")
         var_d = manager.create_integer_variable(name="d")
-        v_builder = stormpy.StateValuationsBuilder()
+        v_builder = stormpy.storage.StateValuationsBuilder()
         v_builder.add_variable(var_s)
         v_builder.add_variable(var_d)
         for s in range(7):
@@ -236,10 +236,10 @@ class TestSparseModelComponents:
             # 0: no origin
             id_to_command_set_mapping[i].insert(i - 1)
         id_to_command_set_mapping[9].insert(8)
-        choice_origins = stormpy.PrismChoiceOrigins(prism_program, index_to_identifier_mapping, id_to_command_set_mapping)
+        choice_origins = stormpy.storage.PrismChoiceOrigins(prism_program, index_to_identifier_mapping, id_to_command_set_mapping)
 
         # Construct Components
-        components = stormpy.SparseModelComponents(
+        components = stormpy.storage.SparseModelComponents(
             transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models, rate_transitions=False
         )
         components.state_valuations = state_valuations
@@ -249,7 +249,7 @@ class TestSparseModelComponents:
         # Build MDP
         mdp = stormpy.storage.SparseMdp(components)
 
-        assert type(mdp) is stormpy.SparseMdp
+        assert type(mdp) is stormpy.storage.SparseMdp
         assert not mdp.supports_parameters
 
         # Test transition matrix
@@ -319,7 +319,7 @@ class TestSparseModelComponents:
             dtype="float64",
         )
 
-        transition_matrix = stormpy.build_sparse_matrix(transitions)
+        transition_matrix = stormpy.storage.build_sparse_matrix(transitions)
 
         # state labeling
         state_labeling = stormpy.storage.StateLabeling(nr_states)
@@ -330,17 +330,17 @@ class TestSparseModelComponents:
 
         # Add labels to states
         state_labeling.add_label_to_state("init", 0)
-        state_labeling.set_states("target", stormpy.BitVector(nr_states, [5, 8]))
+        state_labeling.set_states("target", stormpy.storage.BitVector(nr_states, [5, 8]))
 
         # reward models
         reward_models = {}
         # vector representing state-action rewards
         action_reward = [0.0, 0.0, 0.0, 0.0, 0.0, 2 / 3, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-        reward_models["served"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+        reward_models["served"] = stormpy.storage.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 
         # vector representing state rewards
         state_reward = [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
-        reward_models["waiting"] = stormpy.SparseRewardModel(optional_state_reward_vector=state_reward)
+        reward_models["waiting"] = stormpy.storage.SparseRewardModel(optional_state_reward_vector=state_reward)
 
         # choice labeling
         choice_labeling = stormpy.storage.ChoiceLabeling(nr_choices)
@@ -349,20 +349,20 @@ class TestSparseModelComponents:
         for label in choice_labels:
             choice_labeling.add_label(label)
 
-        choice_labeling.set_choices("loop1a", stormpy.BitVector(nr_choices, [0, 2]))
-        choice_labeling.set_choices("loop1b", stormpy.BitVector(nr_choices, [1, 4]))
-        choice_labeling.set_choices("serve1", stormpy.BitVector(nr_choices, [5, 8]))
-        choice_labeling.set_choices("loop2a", stormpy.BitVector(nr_choices, [3, 7]))
-        choice_labeling.set_choices("loop2b", stormpy.BitVector(nr_choices, [6, 9]))
-        choice_labeling.set_choices("serve2", stormpy.BitVector(nr_choices, [10, 11]))
+        choice_labeling.set_choices("loop1a", stormpy.storage.BitVector(nr_choices, [0, 2]))
+        choice_labeling.set_choices("loop1b", stormpy.storage.BitVector(nr_choices, [1, 4]))
+        choice_labeling.set_choices("serve1", stormpy.storage.BitVector(nr_choices, [5, 8]))
+        choice_labeling.set_choices("loop2a", stormpy.storage.BitVector(nr_choices, [3, 7]))
+        choice_labeling.set_choices("loop2b", stormpy.storage.BitVector(nr_choices, [6, 9]))
+        choice_labeling.set_choices("serve2", stormpy.storage.BitVector(nr_choices, [10, 11]))
 
         # state valuations
-        manager = stormpy.ExpressionManager()
+        manager = stormpy.storage.ExpressionManager()
         var_s = manager.create_integer_variable(name="s")
         var_a = manager.create_integer_variable(name="a")
         var_s1 = manager.create_integer_variable(name="s1")
         var_s2 = manager.create_integer_variable(name="s2")
-        v_builder = stormpy.StateValuationsBuilder()
+        v_builder = stormpy.storage.StateValuationsBuilder()
         v_builder.add_variable(var_s)
         v_builder.add_variable(var_a)
         v_builder.add_variable(var_s1)
@@ -384,7 +384,7 @@ class TestSparseModelComponents:
         state_valuations = v_builder.build()
 
         # set rate_transitions to True: the transition values are interpreted as rates
-        components = stormpy.SparseModelComponents(
+        components = stormpy.storage.SparseModelComponents(
             transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models, rate_transitions=True
         )
         components.choice_labeling = choice_labeling
@@ -393,7 +393,7 @@ class TestSparseModelComponents:
 
         # Build CTMC
         ctmc = stormpy.storage.SparseCtmc(components)
-        assert type(ctmc) is stormpy.SparseCtmc
+        assert type(ctmc) is stormpy.storage.SparseCtmc
         assert not ctmc.supports_parameters
 
         # Test transition matrix
@@ -454,7 +454,7 @@ class TestSparseModelComponents:
         nr_choices = 10
 
         # Build transition matrix
-        builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+        builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 
         # Row group, state 0
         builder.new_row_group(0)
@@ -502,9 +502,9 @@ class TestSparseModelComponents:
         state_labeling.add_label_to_state("init", 0)
 
         # state valuations
-        manager = stormpy.ExpressionManager()
+        manager = stormpy.storage.ExpressionManager()
         var_s = manager.create_integer_variable(name="s")
-        v_builder = stormpy.StateValuationsBuilder()
+        v_builder = stormpy.storage.StateValuationsBuilder()
         v_builder.add_variable(var_s)
 
         v_builder.add_state(state=0, boolean_values=[], integer_values=[0], rational_values=[])
@@ -531,14 +531,14 @@ class TestSparseModelComponents:
         id_to_command_set_mapping[9].insert(6)
         id_to_command_set_mapping[10].insert(5)
 
-        choice_origins = stormpy.PrismChoiceOrigins(prism_program, index_to_identifier_mapping, id_to_command_set_mapping)
+        choice_origins = stormpy.storage.PrismChoiceOrigins(prism_program, index_to_identifier_mapping, id_to_command_set_mapping)
 
         exit_rates = [3.0, 12.0, 10.0, 3.0, 4.0]
 
-        markovian_states = stormpy.BitVector(5, [0, 1, 2, 3, 4])
+        markovian_states = stormpy.storage.BitVector(5, [0, 1, 2, 3, 4])
 
         # Build components, set rate_transitions to False
-        components = stormpy.SparseModelComponents(
+        components = stormpy.storage.SparseModelComponents(
             transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=False, markovian_states=markovian_states
         )
         components.state_valuations = state_valuations
@@ -547,7 +547,7 @@ class TestSparseModelComponents:
 
         # Build MA
         ma = stormpy.storage.SparseMA(components)
-        assert type(ma) is stormpy.SparseMA
+        assert type(ma) is stormpy.storage.SparseMA
         assert not ma.supports_parameters
 
         # Test transition matrix
@@ -598,7 +598,7 @@ class TestSparseModelComponents:
         assert ma.exit_rates == [3.0, 12.0, 10.0, 3.0, 4.0]
 
         # Test Markovian states
-        assert ma.markovian_states == stormpy.BitVector(5, [0, 1, 2, 3, 4])
+        assert ma.markovian_states == stormpy.storage.BitVector(5, [0, 1, 2, 3, 4])
 
     @numpy_avail
     def test_build_pomdp(self):
@@ -608,7 +608,7 @@ class TestSparseModelComponents:
         nr_choices = 34
 
         # Build transition matrix
-        builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+        builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 
         transitions = np.array(
             [
@@ -649,7 +649,7 @@ class TestSparseModelComponents:
             ]
         )
 
-        transition_matrix = stormpy.build_sparse_matrix(transitions, row_group_indices=[0, 1, 5, 9, 13, 17, 21, 25, 29, 33])
+        transition_matrix = stormpy.storage.build_sparse_matrix(transitions, row_group_indices=[0, 1, 5, 9, 13, 17, 21, 25, 29, 33])
 
         # state labeling
         state_labeling = stormpy.storage.StateLabeling(nr_states)
@@ -698,25 +698,25 @@ class TestSparseModelComponents:
             1.0,
             0.0,
         ]
-        reward_models[""] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+        reward_models[""] = stormpy.storage.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 
         # choice labeling
         choice_labeling = stormpy.storage.ChoiceLabeling(nr_choices)
         choice_labels = {"south", "north", "west", "east", "done"}
         for label in choice_labels:
             choice_labeling.add_label(label)
-        choice_labeling.set_choices("south", stormpy.BitVector(nr_choices, [4, 8, 12, 16, 20, 24, 28, 32]))
-        choice_labeling.set_choices("north", stormpy.BitVector(nr_choices, [3, 7, 11, 15, 19, 23, 27, 31]))
-        choice_labeling.set_choices("west", stormpy.BitVector(nr_choices, [2, 6, 10, 14, 18, 22, 26, 30]))
-        choice_labeling.set_choices("east", stormpy.BitVector(nr_choices, [1, 5, 9, 13, 17, 21, 25, 29]))
-        choice_labeling.set_choices("done", stormpy.BitVector(nr_choices, [33]))
+        choice_labeling.set_choices("south", stormpy.storage.BitVector(nr_choices, [4, 8, 12, 16, 20, 24, 28, 32]))
+        choice_labeling.set_choices("north", stormpy.storage.BitVector(nr_choices, [3, 7, 11, 15, 19, 23, 27, 31]))
+        choice_labeling.set_choices("west", stormpy.storage.BitVector(nr_choices, [2, 6, 10, 14, 18, 22, 26, 30]))
+        choice_labeling.set_choices("east", stormpy.storage.BitVector(nr_choices, [1, 5, 9, 13, 17, 21, 25, 29]))
+        choice_labeling.set_choices("done", stormpy.storage.BitVector(nr_choices, [33]))
 
         # state valuations
-        manager = stormpy.ExpressionManager()
+        manager = stormpy.storage.ExpressionManager()
         var_x = manager.create_integer_variable(name="x")
         var_y = manager.create_integer_variable(name="y")
         var_o = manager.create_integer_variable(name="o")
-        v_builder = stormpy.StateValuationsBuilder()
+        v_builder = stormpy.storage.StateValuationsBuilder()
 
         v_builder.add_variable(var_x)
         v_builder.add_variable(var_y)
@@ -738,7 +738,7 @@ class TestSparseModelComponents:
         observations = [1, 0, 0, 0, 0, 0, 0, 0, 0, 2]
 
         # Build components, set rate_transitions to False
-        components = stormpy.SparseModelComponents(
+        components = stormpy.storage.SparseModelComponents(
             transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models, rate_transitions=False
         )
         components.state_valuations = state_valuations
@@ -748,7 +748,7 @@ class TestSparseModelComponents:
 
         # Build POMDP
         pomdp = stormpy.storage.SparsePomdp(components)
-        assert type(pomdp) is stormpy.SparsePomdp
+        assert type(pomdp) is stormpy.storage.SparsePomdp
         assert not pomdp.supports_parameters
 
         # Test transition matrix
@@ -818,7 +818,9 @@ class TestSparseModelComponents:
         nr_choices = 13
 
         # transition_matrix
-        builder = stormpy.ParametricSparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=False, row_groups=0)
+        builder = stormpy.storage.ParametricSparseMatrixBuilder(
+            rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=False, row_groups=0
+        )
 
         # Create variables
         var_p = create_polynomial(Variable("p"))
@@ -860,20 +862,22 @@ class TestSparseModelComponents:
         state_labeling.add_label_to_state("five", 11)
         state_labeling.add_label_to_state("six", 12)
 
-        state_labeling.set_states("done", stormpy.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
+        state_labeling.set_states("done", stormpy.storage.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
 
         # reward_models
         reward_models = {}
         # Create a vector representing the state-action rewards
         action_reward = [one, one, one, one, one, one, one, zero, zero, zero, zero, zero, zero]
-        reward_models["coin_flips"] = stormpy.SparseParametricRewardModel(optional_state_action_reward_vector=action_reward)
+        reward_models["coin_flips"] = stormpy.storage.SparseParametricRewardModel(optional_state_action_reward_vector=action_reward)
 
         # Construct components
-        components = stormpy.SparseParametricModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models)
+        components = stormpy.storage.SparseParametricModelComponents(
+            transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models
+        )
         # Build parametric DTMC
         dtmc = stormpy.storage.SparseParametricDtmc(components)
 
-        assert type(dtmc) is stormpy.SparseParametricDtmc
+        assert type(dtmc) is stormpy.storage.SparseParametricDtmc
         assert dtmc.supports_parameters
         assert dtmc.has_parameters
 
@@ -906,7 +910,7 @@ class TestSparseModelComponents:
         nr_choices = 10
 
         # Build transition matrix
-        builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+        builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 
         # Row group, state 0
         builder.new_row_group(0)
@@ -963,14 +967,14 @@ class TestSparseModelComponents:
         # State player indications
         state_player_indications = [0, 1, 2, 0, 2, 1, 0]
 
-        components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling)
+        components = stormpy.storage.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling)
         components.choice_labeling = choice_labeling
         components.state_player_indications = state_player_indications
 
         # Build SMG
         smg = stormpy.storage.SparseSmg(components)
 
-        assert type(smg) is stormpy.SparseSmg
+        assert type(smg) is stormpy.storage.SparseSmg
         assert smg.model_type == stormpy.storage.ModelType.SMG
 
         # Test transition matrix

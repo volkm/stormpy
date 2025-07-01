@@ -44,7 +44,7 @@ def _load_program(filename):
     program = stormpy.parse_prism_program(filename)  # pylint: disable=no-member
     program = program.substitute_constants()
 
-    expression_parser = stormpy.ExpressionParser(program.expression_manager)
+    expression_parser = stormpy.storage.ExpressionParser(program.expression_manager)
     expression_parser.set_identifier_mapping({var.name: var.get_expression() for var in program.get_variables()})
     return program, expression_parser
 

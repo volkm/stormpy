@@ -31,7 +31,7 @@ class TestPrism:
     def test_prism_variables(selfs):
         program = stormpy.parse_prism_program(get_example_path("mdp", "leader3.nm"))
         assert program.nr_modules == 3
-        assert program.model_type == stormpy.PrismModelType.MDP
+        assert program.model_type == stormpy.storage.PrismModelType.MDP
         assert not program.has_undefined_constants
         assert len(program.constants) == 1
         assert len(program.global_boolean_variables) == 0

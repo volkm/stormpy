@@ -19,7 +19,7 @@ class TestAnalysis:
         dft = stormpy.dft.load_dft_json_file(get_example_path("dft", "and.json"))
         model = stormpy.dft.build_model(dft)
         assert model.model_type == stormpy.ModelType.CTMC
-        assert type(model) is stormpy.SparseCtmc
+        assert type(model) is stormpy.storage.SparseCtmc
         assert model.nr_states == 4
         assert model.nr_transitions == 5
         assert not model.supports_parameters
@@ -30,7 +30,7 @@ class TestAnalysis:
         builder.build(0)
         model = builder.get_model()
         assert model.model_type == stormpy.ModelType.CTMC
-        assert type(model) is stormpy.SparseCtmc
+        assert type(model) is stormpy.storage.SparseCtmc
         assert model.nr_states == 4
         assert model.nr_transitions == 5
         assert not model.supports_parameters
@@ -49,7 +49,7 @@ class TestAnalysis:
         builder.build(0, 1.0)
         model_low = builder.get_partial_model(True, True)
         assert model_low.model_type == stormpy.ModelType.CTMC
-        assert type(model_low) is stormpy.SparseCtmc
+        assert type(model_low) is stormpy.storage.SparseCtmc
         assert model_low.nr_states == 25
         assert model_low.nr_transitions == 46
         assert not model_low.supports_parameters
@@ -60,7 +60,7 @@ class TestAnalysis:
 
         model_up = builder.get_partial_model(False, True)
         assert model_up.model_type == stormpy.ModelType.CTMC
-        assert type(model_up) is stormpy.SparseCtmc
+        assert type(model_up) is stormpy.storage.SparseCtmc
         assert model_up.nr_states == 25
         assert model_up.nr_transitions == 46
         assert not model_up.supports_parameters
@@ -105,7 +105,7 @@ class TestAnalysis:
         builder.build(0, 1.0)
         model_low = builder.get_partial_model(True, True)
         assert model_low.model_type == stormpy.ModelType.CTMC
-        assert type(model_low) is stormpy.SparseCtmc
+        assert type(model_low) is stormpy.storage.SparseCtmc
         assert model_low.nr_states == 25
         assert model_low.nr_transitions == 46
         assert not model_low.supports_parameters
@@ -118,7 +118,7 @@ class TestAnalysis:
         builder.build(1)
         model = builder.get_model()
         assert model.model_type == stormpy.ModelType.CTMC
-        assert type(model) is stormpy.SparseCtmc
+        assert type(model) is stormpy.storage.SparseCtmc
         assert model.nr_states == 145
         assert model.nr_transitions == 625
         assert not model.supports_parameters

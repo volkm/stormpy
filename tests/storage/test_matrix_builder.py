@@ -5,13 +5,13 @@ from configurations import numpy_avail
 
 class TestMatrixBuilder:
     def test_matrix_builder(self):
-        builder = stormpy.SparseMatrixBuilder(force_dimensions=True)
+        builder = stormpy.storage.SparseMatrixBuilder(force_dimensions=True)
         matrix = builder.build()
         assert matrix.nr_columns == 0
         assert matrix.nr_rows == 0
         assert matrix.nr_entries == 0
 
-        builder_5x5 = stormpy.SparseMatrixBuilder(5, 5, force_dimensions=False)
+        builder_5x5 = stormpy.storage.SparseMatrixBuilder(5, 5, force_dimensions=False)
 
         builder_5x5.add_next_value(0, 0, 0)
         builder_5x5.add_next_value(0, 1, 0.1)
@@ -35,13 +35,13 @@ class TestMatrixBuilder:
             assert (e.value() == 0.1 and e.column == 1) or e.value() == 0 or (e.value() > 20 and e.column > 1)
 
     def test_exact_matrix_builder(self):
-        builder = stormpy.ExactSparseMatrixBuilder(force_dimensions=True)
+        builder = stormpy.storage.ExactSparseMatrixBuilder(force_dimensions=True)
         matrix = builder.build()
         assert matrix.nr_columns == 0
         assert matrix.nr_rows == 0
         assert matrix.nr_entries == 0
 
-        builder_5x5 = stormpy.ExactSparseMatrixBuilder(5, 5, force_dimensions=False)
+        builder_5x5 = stormpy.storage.ExactSparseMatrixBuilder(5, 5, force_dimensions=False)
 
         builder_5x5.add_next_value(0, 0, stormpy.Rational(1))
         builder_5x5.add_next_value(0, 1, stormpy.Rational(1))
@@ -70,13 +70,13 @@ class TestMatrixBuilder:
             )
 
     def test_parametric_matrix_builder(self):
-        builder = stormpy.ParametricSparseMatrixBuilder(force_dimensions=True)
+        builder = stormpy.storage.ParametricSparseMatrixBuilder(force_dimensions=True)
         matrix = builder.build()
         assert matrix.nr_columns == 0
         assert matrix.nr_rows == 0
         assert matrix.nr_entries == 0
 
-        builder_5x5 = stormpy.ParametricSparseMatrixBuilder(5, 5, force_dimensions=False)
+        builder_5x5 = stormpy.storage.ParametricSparseMatrixBuilder(5, 5, force_dimensions=False)
 
         one_pol = stormpy.RationalRF(1)
         one_pol = stormpy.FactorizedPolynomial(one_pol)
@@ -108,7 +108,7 @@ class TestMatrixBuilder:
             assert (e.value() == first_val and e.column < 2) or (e.value() == sec_val and e.column > 1)
 
     def test_matrix_replace_columns(self):
-        builder = stormpy.SparseMatrixBuilder(3, 4, force_dimensions=False)
+        builder = stormpy.storage.SparseMatrixBuilder(3, 4, force_dimensions=False)
 
         builder.add_next_value(0, 0, 0)
         builder.add_next_value(0, 1, 1)
@@ -139,7 +139,7 @@ class TestMatrixBuilder:
             )
 
     def test_parametric_matrix_replace_columns(self):
-        builder = stormpy.ParametricSparseMatrixBuilder(3, 4, force_dimensions=False)
+        builder = stormpy.storage.ParametricSparseMatrixBuilder(3, 4, force_dimensions=False)
 
         one_pol = stormpy.RationalRF(1)
         one_pol = stormpy.FactorizedPolynomial(one_pol)
@@ -173,7 +173,7 @@ class TestMatrixBuilder:
 
     def test_matrix_builder_row_grouping(self):
         num_rows = 5
-        builder = stormpy.SparseMatrixBuilder(num_rows, 6, has_custom_row_grouping=True, row_groups=2)
+        builder = stormpy.storage.SparseMatrixBuilder(num_rows, 6, has_custom_row_grouping=True, row_groups=2)
 
         builder.new_row_group(1)
         assert builder.get_current_row_group_count() == 1
@@ -190,7 +190,7 @@ class TestMatrixBuilder:
 
     def test_parametric_matrix_builder_row_grouping(self):
         num_rows = 5
-        builder = stormpy.ParametricSparseMatrixBuilder(num_rows, 6, has_custom_row_grouping=True, row_groups=2)
+        builder = stormpy.storage.ParametricSparseMatrixBuilder(num_rows, 6, has_custom_row_grouping=True, row_groups=2)
 
         builder.new_row_group(1)
         assert builder.get_current_row_group_count() == 1
@@ -211,7 +211,7 @@ class TestMatrixBuilder:
 
         array = np.array([[0, 2], [3, 4], [0.1, 24], [-0.3, -4]], dtype="float64")
 
-        matrix = stormpy.build_sparse_matrix(array)
+        matrix = stormpy.storage.build_sparse_matrix(array)
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -230,7 +230,7 @@ class TestMatrixBuilder:
 
         array = np.array([[0, 0, 1, 0], [0.1, 0, 0, 0.9], [0, 0, 0, 0], [1, 0, 0, 0]], dtype="float64")
 
-        matrix = stormpy.build_sparse_matrix(array)
+        matrix = stormpy.storage.build_sparse_matrix(array)
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -258,7 +258,7 @@ class TestMatrixBuilder:
 
         array = np.array([[sec_val, first_val], [first_val, zero], [0, sec_val], [third_val, third_val]])
 
-        matrix = stormpy.build_parametric_sparse_matrix(array)
+        matrix = stormpy.storage.build_parametric_sparse_matrix(array)
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -277,7 +277,7 @@ class TestMatrixBuilder:
 
         array = np.array([[0, 2], [3, 4], [0.1, 24], [-0.3, -4]], dtype="float64")
 
-        matrix = stormpy.build_sparse_matrix(array, row_group_indices=[1, 3])
+        matrix = stormpy.storage.build_sparse_matrix(array, row_group_indices=[1, 3])
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -311,7 +311,7 @@ class TestMatrixBuilder:
 
         array = np.array([[sec_val, first_val], [first_val, sec_val], [sec_val, sec_val], [third_val, third_val]])
 
-        matrix = stormpy.build_parametric_sparse_matrix(array, row_group_indices=[1, 3])
+        matrix = stormpy.storage.build_parametric_sparse_matrix(array, row_group_indices=[1, 3])
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]

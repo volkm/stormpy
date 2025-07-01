@@ -16,7 +16,7 @@ class TestSparseParametricModel:
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SparseParametricDtmc
+        assert type(model) is stormpy.storage.SparseParametricDtmc
 
     def test_build_parametric_dtmc_preprocess(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "herman5.pm"))
@@ -29,7 +29,7 @@ class TestSparseParametricModel:
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SparseParametricDtmc
+        assert type(model) is stormpy.storage.SparseParametricDtmc
 
     def test_build_dtmc_supporting_parameters(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -40,7 +40,7 @@ class TestSparseParametricModel:
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.supports_parameters
         assert not model.has_parameters
-        assert type(model) is stormpy.SparseParametricDtmc
+        assert type(model) is stormpy.storage.SparseParametricDtmc
 
     def test_build_parametric_mdp(self):
         program = stormpy.parse_prism_program(get_example_path("pmdp", "two_dice.nm"))
@@ -50,7 +50,7 @@ class TestSparseParametricModel:
         assert model.nr_transitions == 435
         assert model.model_type == stormpy.ModelType.MDP
         assert model.supports_parameters
-        assert type(model) is stormpy.SparseParametricMdp
+        assert type(model) is stormpy.storage.SparseParametricMdp
 
 
 @pars
@@ -64,7 +64,7 @@ class TestSymbolicParametricModel:
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SymbolicSylvanParametricDtmc
+        assert type(model) is stormpy.storage.SymbolicSylvanParametricDtmc
 
     def test_build_parametric_dtmc_preprocess(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "herman5.pm"))
@@ -77,7 +77,7 @@ class TestSymbolicParametricModel:
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SymbolicSylvanParametricDtmc
+        assert type(model) is stormpy.storage.SymbolicSylvanParametricDtmc
 
     def test_build_dtmc_supporting_parameters(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -88,7 +88,7 @@ class TestSymbolicParametricModel:
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.supports_parameters
         assert not model.has_parameters
-        assert type(model) is stormpy.SymbolicSylvanParametricDtmc
+        assert type(model) is stormpy.storage.SymbolicSylvanParametricDtmc
 
     def test_build_parametric_mdp(self):
         program = stormpy.parse_prism_program(get_example_path("pmdp", "two_dice.nm"))
@@ -98,4 +98,4 @@ class TestSymbolicParametricModel:
         assert model.nr_transitions == 435
         assert model.model_type == stormpy.ModelType.MDP
         assert model.supports_parameters
-        assert type(model) is stormpy.SymbolicSylvanParametricMdp
+        assert type(model) is stormpy.storage.SymbolicSylvanParametricMdp

@@ -8,7 +8,7 @@ class TestBisimulation:
     def test_bisimulation(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "crowds5_5.pm"))
         assert program.nr_modules == 1
-        assert program.model_type == stormpy.PrismModelType.DTMC
+        assert program.model_type == stormpy.storage.PrismModelType.DTMC
 
         prop = 'P=? [F "observe0Greater1"]'
         properties = stormpy.parse_properties_for_prism_program(prop, program)
@@ -48,7 +48,7 @@ class TestBisimulation:
     def test_parametric_bisimulation(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         assert program.nr_modules == 5
-        assert program.model_type == stormpy.PrismModelType.DTMC
+        assert program.model_type == stormpy.storage.PrismModelType.DTMC
         assert program.has_undefined_constants
         assert program.undefined_constants_are_graph_preserving
         prop = "P=? [F s=5]"

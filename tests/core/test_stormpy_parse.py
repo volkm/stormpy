@@ -6,7 +6,7 @@ class TestStormpyParse:
     def test_parse_prism_program(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         assert program.nr_modules == 1
-        assert program.model_type == stormpy.PrismModelType.DTMC
+        assert program.model_type == stormpy.storage.PrismModelType.DTMC
         assert not program.has_undefined_constants
         description = stormpy.SymbolicModelDescription(program)
         assert description.is_prism_program
@@ -15,7 +15,7 @@ class TestStormpyParse:
     def test_parse_parametric_prism_program(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         assert program.nr_modules == 5
-        assert program.model_type == stormpy.PrismModelType.DTMC
+        assert program.model_type == stormpy.storage.PrismModelType.DTMC
         assert program.has_undefined_constants
         assert program.undefined_constants_are_graph_preserving
 
@@ -51,7 +51,7 @@ class TestStormpyParse:
         assert model.nr_transitions == 20
         assert model.model_type == stormpy.ModelType.DTMC
         assert not model.supports_parameters
-        assert type(model) is stormpy.SparseDtmc
+        assert type(model) is stormpy.storage.SparseDtmc
 
     def test_parse_explicit_mdp(self):
         model = stormpy.build_sparse_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
@@ -59,7 +59,7 @@ class TestStormpyParse:
         assert model.nr_transitions == 436
         assert model.model_type == stormpy.ModelType.MDP
         assert not model.supports_parameters
-        assert type(model) is stormpy.SparseMdp
+        assert type(model) is stormpy.storage.SparseMdp
 
     def test_parse_drn_dtmc(self):
         model = stormpy.build_model_from_drn(get_example_path("ctmc", "dft.drn"))
@@ -67,4 +67,4 @@ class TestStormpyParse:
         assert model.nr_transitions == 33
         assert model.model_type == stormpy.ModelType.CTMC
         assert not model.supports_parameters
-        assert type(model) is stormpy.SparseCtmc
+        assert type(model) is stormpy.storage.SparseCtmc

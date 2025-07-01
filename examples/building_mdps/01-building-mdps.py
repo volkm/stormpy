@@ -7,7 +7,7 @@ def example_building_mdps_01():
     nr_choices = 14
 
     # Transition matrix with custom row grouping: nondeterministic choice over the actions available in states
-    builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+    builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 
     # New row group, for actions of state 0
     builder.new_row_group(0)
@@ -64,7 +64,7 @@ def example_building_mdps_01():
     state_labeling.add_label_to_state("six", 12)
 
     # Set label 'done' for multiple states
-    state_labeling.set_states("done", stormpy.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
+    state_labeling.set_states("done", stormpy.storage.BitVector(nr_states, [7, 8, 9, 10, 11, 12]))
 
     # Choice labeling
     choice_labeling = stormpy.storage.ChoiceLabeling(nr_choices)
@@ -82,10 +82,10 @@ def example_building_mdps_01():
     reward_models = {}
     # Create a vector representing the state-action rewards
     action_reward = [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+    reward_models["coin_flips"] = stormpy.storage.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 
     # Collect components
-    components = stormpy.SparseModelComponents(
+    components = stormpy.storage.SparseModelComponents(
         transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models, rate_transitions=False
     )
     components.choice_labeling = choice_labeling
