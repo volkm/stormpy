@@ -13,6 +13,7 @@ mkdir build
 cd build
 cmake .. -DSTORM_BUILD_TESTS=OFF -DSTORM_BUILD_EXECUTABLES=OFF -DSTORM_PORTABLE=ON
 make -j ${NR_JOBS}
-sudo make install # Needed for macOS 14
+sudo chown runner:admin /usr/local/ # Permission differ in macOS 14, see https://github.com/actions/runner-images/issues/9272
+make install
 cd ..
 rm -rf build
