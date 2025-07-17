@@ -6,10 +6,6 @@ on:
     types:
       - published
 
-env:
-  # GitHub runners currently have 4 cores
-  NR_JOBS: "4"
-
 jobs:
   build_wheels:
     name: Build wheels for ${{ matrix.os }}
@@ -47,6 +43,7 @@ jobs:
           CIBW_PLATFORM: ${{ matrix.platform }}
           CIBW_ARCHS: ${{ matrix.archs }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
+          CIBW_ENVIRONMENT: STORM_VERSION=master NR_JOBS=4
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}

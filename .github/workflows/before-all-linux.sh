@@ -8,7 +8,6 @@ sccache_version=0.10.0
 boost_version=1.88.0
 boost_version_under=${boost_version//./_}
 ginac_version=1.8.9
-storm_version=master
 
 dnf install -y boost-devel cln-devel gmp-devel glpk-devel hwloc-devel z3-devel xerces-c-devel eigen3-devel # missing ginac and boost
 
@@ -36,7 +35,7 @@ make install
 cd ..
 
 # Install Storm
-git clone https://github.com/moves-rwth/storm.git -b ${storm_version}
+git clone https://github.com/moves-rwth/storm.git -b ${STORM_VERSION}
 cd storm
 mkdir build
 cd build

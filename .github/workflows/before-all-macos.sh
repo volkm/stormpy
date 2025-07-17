@@ -4,12 +4,10 @@
 
 set -e -u
 
-storm_version=master
-
 brew install ccache automake boost cln ginac glpk hwloc z3 xerces-c
 
 # Install Storm
-git clone https://github.com/moves-rwth/storm.git -b ${storm_version}
+git clone https://github.com/moves-rwth/storm.git -b ${STORM_VERSION}
 cd storm
 mkdir build
 cd build
