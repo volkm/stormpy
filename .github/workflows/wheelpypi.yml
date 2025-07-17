@@ -6,6 +6,10 @@ on:
     types:
       - published
 
+env:
+  # GitHub runners currently have 4 cores
+  NR_JOBS: "4"
+
 jobs:
   build_wheels:
     name: Build wheels for ${{ matrix.os }}

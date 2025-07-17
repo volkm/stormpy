@@ -31,7 +31,7 @@ tar -jxf ginac-${ginac_version}.tar.bz2
 cd ginac-${ginac_version}
 export CXXFLAGS="-Wall -O2"
 ./configure
-make
+make -j ${NR_JOBS}
 make install
 cd ..
 
