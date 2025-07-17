@@ -8,6 +8,7 @@ sccache_version=0.10.0
 boost_version=1.88.0
 boost_version_under=${boost_version//./_}
 ginac_version=1.8.9
+storm_version=master
 
 dnf install -y boost-devel cln-devel gmp-devel glpk-devel hwloc-devel z3-devel xerces-c-devel eigen3-devel # missing ginac and boost
 
@@ -32,3 +33,15 @@ export CXXFLAGS="-Wall -O2"
 ./configure
 make
 make install
+cd ..
+
+# Install Storm
+git clone https://github.com/moves-rwth/storm.git -b ${storm_version}
+cd storm
+mkdir build
+cd build
+cmake .. -DSTORM_BUILD_TESTS=OFF -DSTORM_BUILD_EXECUTABLES=OFF -DSTORM_PORTABLE=ON
+make -j ${NR_JOBS}
+sudo make install
+cd ..
+rm -rf build
