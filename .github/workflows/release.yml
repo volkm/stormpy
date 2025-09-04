@@ -66,21 +66,21 @@ jobs:
 
   deploy_pypi:
     # Create pypi package
-    needs: [env_storm_version, deploy_docker, deploy_docker_stable]
+    needs: [env_storm_version]
     uses: ./.github/workflows/wheelpypi.yml
     with:
-      test_pypi: false
+      test_pypi: true
       storm_version: ${{ needs.env_storm_version.outputs.STORM_VERSION }}
     secrets: inherit
 
   update_binder:
     # Update stormpy version in Binder images
-    needs: [deploy_docker, deploy_docker_stable]
+    needs: [env_storm_version]
     steps:
       - name: Git clone
         uses: actions/checkout@v5
         with:
-          repository: moves-rwth/stormpy
+          repository: volkm/stormpy
       - name: Update Binder version
         run: |
           # Update STORM_MIN_VERSION
