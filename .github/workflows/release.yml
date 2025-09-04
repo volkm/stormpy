@@ -86,6 +86,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: volkm/stormpy
+          ref: master
       - name: Update Binder version
         run: |
           # Update STORM_MIN_VERSION
