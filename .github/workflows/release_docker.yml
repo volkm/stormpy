@@ -12,7 +12,7 @@ on:
         required: true
         type: string
         default: 'x.y.z'
-      stormTag:
+      storm_tag:
         description: 'Docker tag of Storm base image (e.g. 1.1.0 or stable)'
         required: true
         type: string
@@ -25,7 +25,7 @@ on:
         required: true
         type: string
         default: 'x.y.z'
-      stormTag:
+      storm_tag:
         description: 'Docker tag of Storm base image (e.g. 1.1.0 or stable)'
         required: true
         type: string
@@ -44,13 +44,13 @@ jobs:
       matrix:
         image:
           - {tag: "${{ inputs.tag }}-debug",
-             baseImg: "movesrwth/storm:${{ inputs.stormTag }}-debug",
+             baseImg: "movesrwth/storm:${{ inputs.storm_tag }}-debug",
              file: "Dockerfile",
              buildType: "Debug",
              setupArgs: "--debug"
             }
           - {tag: "${{ inputs.tag }}",
-             baseImg: "movesrwth/storm:${{ inputs.stormTag }}",
+             baseImg: "movesrwth/storm:${{ inputs.storm_tag }}",
              file: "Dockerfile",
              buildType: "Release",
              setupArgs: ""

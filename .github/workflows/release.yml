@@ -16,7 +16,7 @@ jobs:
     # Set Storm version in environment variable for later use
     runs-on: ubuntu-latest
     outputs:
-      stormVersion: ${{ steps.getVersion.outputs.STORM_VERSION }}
+      storm_version: ${{ steps.getVersion.outputs.storm_version }}
     steps:
       - name: Git clone
         uses: actions/checkout@v5
@@ -35,7 +35,7 @@ jobs:
     with:
       # Use the tag from the release
       tag: ${{ github.event.release.tag_name }}
-      stormTag: ${{ needs.env_storm_version.outputs.STORM_VERSION }}
+      storm_tag: ${{ needs.env_storm_version.outputs.storm_version }}
     secrets: inherit
 
   update_stable:
@@ -65,7 +65,7 @@ jobs:
     uses: ./.github/workflows/release_docker.yml
     with:
       tag: stable
-      stormTag: stable
+      storm_tag: stable
     secrets: inherit
 
   deploy_pypi:
@@ -74,7 +74,7 @@ jobs:
     uses: ./.github/workflows/wheelpypi.yml
     with:
       test_pypi: true
-      storm_version: ${{ needs.env_storm_version.outputs.STORM_VERSION }}
+      storm_version: ${{ needs.env_storm_version.outputs.storm_version }}
     secrets: inherit
 
   update_binder:
