@@ -74,7 +74,8 @@ jobs:
     uses: ./.github/workflows/wheelpypi.yml
     with:
       test_pypi: true
-      storm_version: ${{ needs.env_storm_version.outputs.storm_version }}
+      #storm_version: ${{ needs.env_storm_version.outputs.storm_version }}
+      storm_version: master
     secrets: inherit
 
   update_binder:
