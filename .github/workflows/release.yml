@@ -18,6 +18,10 @@ jobs:
     outputs:
       stormVersion: ${{ steps.getVersion.outputs.STORM_VERSION }}
     steps:
+      - name: Git clone
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - name: Get Storm version
         id: getVersion
         run: |
@@ -85,7 +89,7 @@ jobs:
       - name: Update Binder version
         run: |
           # Update STORM_MIN_VERSION
-          sed -i -E 's/FROM movesrwth/stormpy:(.+)/FROM movesrwth/stormpy:${{ github.event.release.tag_name }}/' binder/Dockerfile
+          sed -i -E 's/FROM movesrwth\/stormpy:(.+)/FROM movesrwth\/stormpy:${{ github.event.release.tag_name }}/' binder/Dockerfile
       - name: Commit update
         run: |
           git diff
