@@ -76,6 +76,7 @@ jobs:
   update_binder:
     # Update stormpy version in Binder images
     needs: [env_storm_version]
+    runs-on: ubuntu-latest
     steps:
       - name: Git clone
         uses: actions/checkout@v5
