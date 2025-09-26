@@ -24,7 +24,7 @@ git clone https://github.com/moves-rwth/storm.git -b ${STORM_VERSION}
 cd storm
 mkdir build
 cd build
-cmake .. -DSTORM_BUILD_TESTS=OFF -DSTORM_BUILD_EXECUTABLES=OFF -DSTORM_PORTABLE=ON -STORM_CARL_GIT_TAG=master
+cmake .. -DSTORM_BUILD_TESTS=OFF -DSTORM_BUILD_EXECUTABLES=OFF -DSTORM_PORTABLE=ON -DSTORM_CARL_GIT_TAG=master
 make -j ${NR_JOBS}
 make install
 cd ..
