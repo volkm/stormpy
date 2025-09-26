@@ -99,7 +99,8 @@ jobs:
 
   create_wheels:
     # Create pypi package
-    needs: [env_storm_version, deploy_docker, deploy_docker_stable]
+    #needs: [env_storm_version, deploy_docker, deploy_docker_stable]
+    needs: [env_storm_version]
     uses: ./.github/workflows/create_wheel.yml
     with:
       storm_version: ${{ needs.env_storm_version.outputs.storm_version }}
@@ -111,15 +112,16 @@ jobs:
     needs: [create_wheels]
     runs-on: ubuntu-latest
     environment:
-      name: pypi
-      url: https://pypi.org/p/stormpy
+      #name: pypi
+      #url: https://pypi.org/p/stormpy
       # When testing
-      #name: testpypi
-      #url: https://test.pypi.org/p/stormpy
+      name: testpypi
+      url: https://test.pypi.org/p/stormpy
     permissions:
       id-token: write
     # Only upload if using original repo and triggered by either a release or a manual workflow dispatch
-    if: ${{ github.repository_owner == 'moves-rwth' && ((github.event_name == 'release' && github.event.action == 'published') || github.event_name == 'workflow_dispatch') }}
+    #if: ${{ github.repository_owner == 'moves-rwth' && ((github.event_name == 'release' && github.event.action == 'published') || github.event_name == 'workflow_dispatch') }}
+    if: ${{ ((github.event_name == 'release' && github.event.action == 'published') || github.event_name == 'workflow_dispatch') }}
     steps:
       - uses: actions/download-artifact@v5
         with:
@@ -131,6 +133,6 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # When testing
-          #repository-url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
           verbose: true
           skip-existing: true
