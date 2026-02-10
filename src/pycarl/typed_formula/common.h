@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-//toString
+// toString
 #include "src/pycarl/helpers.h"
 
 #endif /* PYTHON_FORMULA_COMMON_H_ */
