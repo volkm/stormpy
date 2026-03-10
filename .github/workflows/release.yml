@@ -68,7 +68,7 @@ jobs:
 
   update_binder:
     # Update stormpy version in Binder images
-    needs: [deploy_docker, deploy_docker_stable]
+    #needs: [deploy_docker, deploy_docker_stable]
     runs-on: ubuntu-latest
     steps:
       - name: Git clone
@@ -99,7 +99,7 @@ jobs:
 
   create_wheels:
     # Create pypi package
-    needs: [env_storm_version, deploy_docker, deploy_docker_stable]
+    needs: [env_storm_version] #, deploy_docker, deploy_docker_stable]
     uses: ./.github/workflows/create_wheel.yml
     with:
       storm_version: ${{ needs.env_storm_version.outputs.storm_version }}
