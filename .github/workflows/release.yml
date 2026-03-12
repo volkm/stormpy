@@ -22,8 +22,8 @@ jobs:
           ref: ${{ github.event.release.tag_name }}
       - name: Get Storm version
         id: getVersion
+        # Get Storm version from STORM_GIT_TAG in pyproject.toml
         run: |
-          # Get Storm version from STORM_GIT_TAG in pyproject.toml
           echo "STORM_VERSION=$(sed -n -E 's/STORM_GIT_TAG="(.+)".*/\1/p' pyproject.toml)" >> "$GITHUB_OUTPUT"
 
   deploy_docker:
@@ -78,7 +78,6 @@ jobs:
           ref: master
       - name: Update Binder version
         run: |
-          # Update STORM_MIN_VERSION
           sed -i -E 's/stormpy==(.+)/stormpy==${{ github.event.release.tag_name }}/' binder/Dockerfile
       - name: Commit update
         run: |
