@@ -8,7 +8,7 @@ FROM quay.io/jupyter/minimal-notebook:2026-03-09
 LABEL org.opencontainers.image.authors="dev@stormchecker.org"
 
 # Install libraries
-RUN pip install --no-cache-dir stormpy==1.12.0
+RUN pip install --no-cache-dir stormpy==5
 # Dependencies for stormpy
 RUN pip install --no-cache-dir numpy==2.2.6
 
