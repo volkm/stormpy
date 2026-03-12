@@ -74,7 +74,7 @@ jobs:
       - name: Git clone
         uses: actions/checkout@v6
         with:
-          repository: moves-rwth/stormpy
+          repository: volkm/stormpy
           ref: master
       - name: Update Binder version
         run: |
