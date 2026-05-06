@@ -85,7 +85,7 @@ jobs:
           CIBW_ARCHS: ${{ matrix.archs }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
           # Build development version only on latest Python versions
-          CIBW_BUILD: "cp313-*,cp314-*"
+          CIBW_BUILD: "cp313-* cp314-*"
           CIBW_ENVIRONMENT: STORM_VERSION=${{ inputs.storm_version }} NR_JOBS=4
       - name: Build wheels (stable)
         if: ${{ !inputs.dev_version }}
