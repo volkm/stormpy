@@ -84,8 +84,8 @@ jobs:
           CIBW_PLATFORM: ${{ matrix.platform }}
           CIBW_ARCHS: ${{ matrix.archs }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
-          # Build development version only on latest Python version
-          CIBW_BUILD: "cp314-*"
+          # Build development version only on latest Python versions
+          CIBW_BUILD: "cp313-*,cp314-*"
           CIBW_ENVIRONMENT: STORM_VERSION=${{ inputs.storm_version }} NR_JOBS=4
       - name: Build wheels (stable)
         if: ${{ !inputs.dev_version }}
@@ -123,7 +123,7 @@ jobs:
     name: Test wheel on ${{ matrix.distro }} and ${{ matrix.arch.name }}
     needs: [build_wheels]
     runs-on: ${{ matrix.arch.runner }}
-    # Allow failure for development version because not all runners have the latest Python version
+    # Allow failure for development version because not all runners have the latest Python versions
     continue-on-error: ${{ inputs.dev_version }}
     strategy:
       fail-fast: false
