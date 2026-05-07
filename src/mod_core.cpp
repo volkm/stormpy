@@ -43,8 +43,9 @@ PYBIND11_MODULE(_core, m) {
     define_transformation_typed<double>(m, "Double");
     define_transformation_typed<storm::RationalNumber>(m, "Exact");
     define_transformation_typed<storm::RationalFunction>(m, "RatFunc");
+    define_transformation_typed_only_numbers<double>(m, "Double");
+    define_transformation_typed_only_numbers<storm::RationalNumber>(m, "Exact");
     define_sparse_model_simulator<double>(m, "Double");
     define_sparse_model_simulator<storm::RationalNumber>(m, "Exact");
     define_prism_program_simulator<double>(m, "Double");
-
 }
