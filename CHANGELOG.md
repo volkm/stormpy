@@ -1,6 +1,25 @@
 Changelog
 =============
 
+Version 1.13.x
+--------------
+
+### Version 1.13.0 (2026/05)
+Requires Storm version >= 1.13.0.
+
+- Repository moved to stormchecker/stormpy
+- Support for exact intervals in sparse models, matrices, schedulers, model components, model checking, DRN build/export, and the Kwek-Mehlhorn sharpening utility
+- Added bindings for monitor verification
+- Added bindings for conditional model checking
+- Adaption to changes in Storm:
+    * Scheduler for `ExplicitQualitativeCheckResult`
+    * Added `ObservationTraceUnfolderOptions`
+- Bugfixes for release workflow and rpath
+- Developer: added `git_hash`
+- Developer: revised CI workflows w.r.t. OS configurations, Storm version, Docker login
+- Developer: simplified Dockerfile for Binder
+
+
 Version 1.12.x
 --------------
 
