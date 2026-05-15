@@ -50,6 +50,32 @@ void define_sparse_matrix(py::module& m, std::string const& vtSuffix) {
               :param double column: The column in which the matrix entry is to be set
               :param double value: The value that is to be set at the specified row and column
             )dox", py::arg("row"), py::arg("column"), py::arg("value"))
+            .def("add_next_values", [](SparseMatrixBuilder<ValueType>& self,
+                    const std::vector<uint64_t>& rows,
+                    const std::vector<uint64_t>& cols,
+                    const std::vector<ValueType>& vals,
+                    const std::vector<uint64_t>& rowGroupIndices) {
+                if (rows.size() != cols.size() || rows.size() != vals.size()) {
+                    throw std::invalid_argument("rows, cols, and values must have the same length");
+                }
+                auto groupIt = rowGroupIndices.begin();
+                for (size_t i = 0; i < rows.size(); ++i) {
+                    while (groupIt != rowGroupIndices.end() && *groupIt <= rows[i]) {
+                        self.newRowGroup(*groupIt);
+                        ++groupIt;
+                    }
+                    self.addNextValue(rows[i], cols[i], vals[i]);
+                }
+            }, py::arg("rows"), py::arg("cols"), py::arg("values"), py::arg("row_group_indices") = std::vector<uint64_t>(), R"dox(
+
+                Calls :meth:`stormpy.storage.SparseMatrixBuilder.add_next_value` for each (row, col, value) triple.
+                Accepts any sequence of scalars (e.g. plain Python lists).
+
+                :param list[int] rows: Row indices.
+                :param list[int] cols: Column indices.
+                :param list[float] values: Entry values.
+                :param list[int] row_group_indices: Starting row of each row group, in ascending order (optional).
+            )dox")
 
             .def("new_row_group", &SparseMatrixBuilder<ValueType>::newRowGroup, py::arg("starting_row"), "Start a new row group in the matrix")
             .def("build", &SparseMatrixBuilder<ValueType>::build, py::arg("overridden_row_count") = 0, py::arg("overridden_column_count") = 0, py::arg("overridden-row_group_count") = 0, "Finalize the sparse matrix")
