@@ -24,7 +24,8 @@ void define_verimon_generator(py::module &m, std::string const &vtSuffix) {
            py::arg("product"), py::arg("observation_map"), py::arg("default_action_map"));
     mv.def("get_product", &storm::generator::MonitorVerifier<ValueType>::getProduct, py::return_value_policy::reference_internal);
     mv.def_property_readonly("observation_map", &storm::generator::MonitorVerifier<ValueType>::getObservationMap, py::return_value_policy::reference_internal);
-    mv.def_property_readonly("default_action_map", &storm::generator::MonitorVerifier<ValueType>::getObservationDefaultAction, py::return_value_policy::reference_internal);
+    mv.def_property_readonly("default_action_map", &storm::generator::MonitorVerifier<ValueType>::getObservationDefaultAction,
+                             py::return_value_policy::reference_internal);
 
     py::class_<storm::generator::GenerateMonitorVerifier<ValueType>> gmv(m, ("GenerateMonitorVerifier" + vtSuffix).c_str(),
                                                                          "Generator of POMDP used in verifying monitors against markov chains");

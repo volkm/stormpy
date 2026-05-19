@@ -1,9 +1,9 @@
 
 #include "common.h"
 
+#include <storm/adapters/IntervalAdapter.h>
 #include <storm/adapters/RationalFunctionAdapter.h>
 #include <storm/adapters/RationalNumberAdapter.h>
-#include <storm/adapters/IntervalAdapter.h>
 #include "pomdp/generator.h"
 #include "pomdp/memory.h"
 #include "pomdp/qualitative_analysis.h"
