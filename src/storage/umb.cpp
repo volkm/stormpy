@@ -1,8 +1,6 @@
 #include "umb.h"
-#include "src/helpers.h"
 
 #include <sstream>
-
 #include <storm/io/CompressionMode.h>
 #include <storm/models/ModelBase.h>
 #include <storm/models/sparse/Model.h>
@@ -13,6 +11,8 @@
 #include <storm/storage/umb/import/SparseModelFromUmb.h>
 #include <storm/storage/umb/import/UmbImport.h>
 #include <storm/storage/umb/model/UmbModel.h>
+
+#include "src/helpers.h"
 
 void define_umb(py::module& m) {
     py::enum_<storm::io::CompressionMode>(m, "CompressionMode", "Compression mode for UMB archives")

@@ -1,12 +1,7 @@
 #pragma once
 
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <exception>
-#include <tuple>
-
 #include <boost/variant.hpp>
+#include <exception>
 
 #include "src/common.h"
 
