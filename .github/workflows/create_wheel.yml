@@ -14,11 +14,16 @@ on:
         required: true
         type: string
         default: 'x.y.z'
-      dev_version:
-        description: 'Whether to build a development version for only selected Python versions'
+      full_build:
+        description: 'Build for all Python versions (if false, 3.13 and 3.14 only)'
         required: true
         type: boolean
         default: false
+      build_type:
+        description: 'Build configuration (Release/Debug)'
+        required: false
+        type: string
+        default: 'Release'
       repo:
         description: 'Repository to build from (owner/name)'
         required: false
@@ -43,11 +48,16 @@ on:
         required: true
         type: string
         default: 'x.y.z'
-      dev_version:
-        description: 'Whether to build a development version for only selected Python versions'
+      full_build:
+        description: 'Build for all Python versions (if false, 3.13 and 3.14 only)'
         required: true
         type: boolean
         default: false
+      build_type:
+        description: 'Build configuration (Release/Debug)'
+        required: false
+        type: string
+        default: 'Release'
       repo:
         description: 'Repository to build from (owner/name)'
         required: false
@@ -104,7 +114,7 @@ jobs:
       - name: Prepare version
         run: perl -i -pe 's/__version__ = "[^"]+"/__version__ = "'"${{ inputs.version }}"'"/' lib/stormpy/_version.py
       - name: Build wheels (development)
-        if: ${{ inputs.dev_version }}
+        if: ${{ !inputs.full_build }}
         uses: pypa/cibuildwheel@v3.4.1
         env:
           CIBW_PLATFORM: ${{ matrix.platform }}
@@ -112,18 +122,26 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
           # Build development version only on latest Python versions
           CIBW_BUILD: "cp313-* cp314-*"
-          CIBW_ENVIRONMENT: STORM_VERSION=${{ inputs.storm_version }} NR_JOBS=4
+          CIBW_CONFIG_SETTINGS: cmake.build-type=${{ inputs.build_type }}
+          CIBW_ENVIRONMENT: >-
+            STORM_VERSION=${{ inputs.storm_version }}
+            NR_JOBS=4
+            CMAKE_BUILD_TYPE=${{ inputs.build_type }}
       - name: Build wheels (stable)
-        if: ${{ !inputs.dev_version }}
+        if: ${{ inputs.full_build }}
         uses: pypa/cibuildwheel@v3.4.1
         env:
           CIBW_PLATFORM: ${{ matrix.platform }}
           CIBW_ARCHS: ${{ matrix.archs }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
-          CIBW_ENVIRONMENT: STORM_VERSION=${{ inputs.storm_version }} NR_JOBS=4
+          CIBW_CONFIG_SETTINGS: cmake.build-type=${{ inputs.build_type }}
+          CIBW_ENVIRONMENT: >-
+            STORM_VERSION=${{ inputs.storm_version }}
+            NR_JOBS=4
+            CMAKE_BUILD_TYPE=${{ inputs.build_type }}
       - uses: actions/upload-artifact@v7
         with:
-          name: stormpy-wheels-${{ matrix.os }}
+          name: stormpy-wheels-${{ matrix.os }}-${{ inputs.build_type }}
           path: ./wheelhouse/*.whl
 
 
@@ -177,7 +195,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          pattern: stormpy-wheels-${{ matrix.arch.name }}
+          pattern: stormpy-wheels-${{ matrix.arch.name }}-${{ inputs.build_type }}
           path: dist
           merge-multiple: true
       - name: Checkout test files (default current repo)
@@ -266,7 +284,7 @@ jobs:
           xcode-version: ${{ matrix.distro.xcode }}
       - uses: actions/download-artifact@v8
         with:
-          pattern: stormpy-wheels-${{ matrix.distro.os }}
+          pattern: stormpy-wheels-${{ matrix.distro.os }}-${{ inputs.build_type }}
           path: dist
           merge-multiple: true
       - name: Install from wheel
