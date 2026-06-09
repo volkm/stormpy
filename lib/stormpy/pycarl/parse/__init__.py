@@ -31,20 +31,20 @@ def deserialize(input, package):
     if error:
         raise ParserError(error + " when parsing '" + input + "'")
     res_type = res.get_type()
-    if res_type == _parse._ParserReturnType.Rational:
+    if res_type == _parse._ParserReturnType.RATIONAL:
         return res.as_rational()
-    elif res_type == _parse._ParserReturnType.Variable:
+    elif res_type == _parse._ParserReturnType.VARIABLE:
         return res.as_variable()
-    elif res_type == _parse._ParserReturnType.Monomial:
+    elif res_type == _parse._ParserReturnType.MONOMIAL:
         return res.as_monomial()
-    elif res_type == _parse._ParserReturnType.Term:
+    elif res_type == _parse._ParserReturnType.TERM:
         return res.as_term()
-    elif res_type == _parse._ParserReturnType.Polynomial:
+    elif res_type == _parse._ParserReturnType.POLYNOMIAL:
         return res.as_polynomial()
-    elif res_type == _parse._ParserReturnType.RationalFunction:
+    elif res_type == _parse._ParserReturnType.RATIONAL_FUNCTION:
         return res.as_rational_function()
-    elif res_type == _parse._ParserReturnType.Constraint:
+    elif res_type == _parse._ParserReturnType.CONSTRAINT:
         return res.as_constraint()
-    elif res_type == _parse._ParserReturnType.Formula:
+    elif res_type == _parse._ParserReturnType.FORMULA:
         return res.as_formula()
     assert False, "Internal error."
