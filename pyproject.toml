@@ -34,10 +34,17 @@ Documentation = "https://stormchecker.github.io/stormpy"
 numpy = [
     "numpy"
 ]
+parser = [
+    "lark"
+]
 plot = [
     "matplotlib",
     "numpy",
     "scipy",
+]
+dev = [
+    # Formatting
+    "black[jupyter]",
 ]
 doc = [
     "Sphinx>=8.2.2",
@@ -48,10 +55,6 @@ doc = [
     "ipykernel",
     "myst-parser",
 ]  # also requires pandoc to be installed
-dev = [
-    # Formatting
-    "black[jupyter]",
-]
 test = [
     "pytest",
     "nbval",
@@ -75,9 +78,6 @@ sdist.include = [
     "lib/stormpy/pycarl/_config.py",
     "lib/stormpy/pycarl/cln/_config.py",
     "lib/stormpy/pycarl/cln/formula/_config.py",
-    "lib/stormpy/pycarl/parse/_config.py",
-    "lib/stormpy/pycarl/gmp/parse/_config.py",
-    "lib/stormpy/pycarl/cln/parse/_config.py",
 ]
 
 [tool.scikit-build.cmake.define]
@@ -89,8 +89,6 @@ USE_STORM_GSPN="ON"
 USE_STORM_PARS="ON"
 USE_STORM_POMDP="ON"
 USE_CLN_NUMBERS="ON"
-USE_PARSER="ON"
-CARLPARSER_DIR_HINT=""
 COMPILE_WITH_CCACHE="ON"
 STORMPY_DISABLE_SIGNATURE_DOC="OFF"
 STORM_GIT_REPO="https://github.com/stormchecker/storm.git"
