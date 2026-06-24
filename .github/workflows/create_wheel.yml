@@ -17,8 +17,8 @@ on:
         required: true
         type: string
         default: 'x.y.z'
-      full_build:
-        description: 'Build for all Python versions (if false, 3.13 and 3.14 only)'
+      dev_build:
+        description: 'Development build: use caching, only latest Python versions (3.13, 3.14)'
         required: true
         type: boolean
         default: false
@@ -51,8 +51,8 @@ on:
         required: true
         type: string
         default: 'x.y.z'
-      full_build:
-        description: 'Build for all Python versions (if false, 3.13 and 3.14 only)'
+      dev_build:
+        description: 'Development build: use caching, only latest Python versions (3.13, 3.14)'
         required: true
         type: boolean
         default: false
@@ -88,17 +88,21 @@ jobs:
           - os: linux-intel
             runs-on: ubuntu-latest
             archs: x86_64
+            ccache-prefix: /host
           - os: linux-arm
             runs-on: ubuntu-24.04-arm
             archs: aarch64
+            ccache-prefix: /host
           - os: macos-intel
             runs-on: macos-15-intel # x86_64 runner
             xcode: latest-stable
             deploy_target: 15.0
+            ccache-prefix: ""
           - os: macos-arm
             runs-on: macos-14 # macos-14+ (including latest) are ARM64 runners
             xcode: 15.4
             deploy_target: 14.0
+            ccache-prefix: ""
       fail-fast: false
     steps:
       - name: Git clone (default current repo)
@@ -116,8 +120,17 @@ jobs:
           xcode-version: ${{ matrix.xcode }}
       - name: Prepare version
         run: perl -i -pe 's/__version__ = "[^"]+"/__version__ = "'"${{ inputs.version }}"'"/' lib/stormpy/_version.py
+      - name: Restore ccache
+        if: ${{ inputs.dev_build }}
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-${{ matrix.os }}-${{ inputs.build_type }}-${{ inputs.storm_version }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-${{ inputs.build_type }}-${{ inputs.storm_version }}-
+            ccache-${{ matrix.os }}-${{ inputs.build_type }}-
       - name: Build wheels (development)
-        if: ${{ !inputs.full_build }}
+        if: ${{ inputs.dev_build }}
         uses: pypa/cibuildwheel@v4.1.0
         env:
           CIBW_PLATFORM: ${{ matrix.platform }}
@@ -135,8 +148,14 @@ jobs:
             NR_JOBS=${{ env.NR_JOBS }}
             CMAKE_BUILD_PARALLEL_LEVEL=${{ env.NR_JOBS }}
             CMAKE_BUILD_TYPE=${{ inputs.build_type }}
+            CCACHE_DIR=${{ matrix.ccache-prefix }}${{ runner.temp }}/ccache
+            CCACHE_MAXSIZE=4G
+            CCACHE_UMASK=0
+            CCACHE_BASEDIR=${{ runner.workspace }}
+            CCACHE_NOHASHDIR=true
+            CCACHE_SLOPPINESS=file_macro
       - name: Build wheels (stable)
-        if: ${{ inputs.full_build }}
+        if: ${{ !inputs.dev_build }}
         uses: pypa/cibuildwheel@v4.1.0
         env:
           CIBW_PLATFORM: ${{ matrix.platform }}
@@ -152,6 +171,11 @@ jobs:
             NR_JOBS=${{ env.NR_JOBS }}
             CMAKE_BUILD_PARALLEL_LEVEL=${{ env.NR_JOBS }}
             CMAKE_BUILD_TYPE=${{ inputs.build_type }}
+      - name: ccache stats
+        if: ${{ inputs.dev_build }}
+        env:
+          CCACHE_DIR: ${{ runner.temp }}/ccache
+        run: ccache -s || true
       - uses: actions/upload-artifact@v7
         with:
           name: stormpy-wheels-${{ matrix.os }}-${{ inputs.build_type }}

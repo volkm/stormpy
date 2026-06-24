@@ -12,5 +12,6 @@ _build/
 .vscode/
 cmake-build-debug/
 .cache/
+.ccache/
 .DS_Store
 .venv/
