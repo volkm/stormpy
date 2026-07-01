@@ -1,0 +1,39 @@
+name: Get stormpy version
+on:
+  workflow_call:
+    outputs:
+      version:
+        description: Version from _version.py
+        value: ${{ jobs.get-version.outputs.version }}
+      sha:
+        description: stormpy commit SHA
+        value: ${{ jobs.get-version.outputs.sha }}
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 1
+          sparse-checkout: lib/stormpy/_version.py
+
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - id: version
+        run: |
+          VERSION=$(python - << 'EOF'
+          from pathlib import Path
+          import re
+
+          content = Path("lib/stormpy/_version.py").read_text()
+          print(re.search(r'__version__\s*=\s*"([^"]+)"', content).group(1))
+          EOF
+          )
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
