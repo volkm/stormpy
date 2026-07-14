@@ -150,6 +150,8 @@ if (NOT storm_FOUND)
     endif()
 endif()
 
+message(STATUS "Stormpy - Building ${CMAKE_BUILD_TYPE} version.")
+
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/stormpy")
 
 # This sets interprocedural optimization off as this leads to some problems on some systems
@@ -185,7 +187,7 @@ find_package(Boost 1.70 QUIET REQUIRED CONFIG)
 if (Boost_FOUND)
     if (${Boost_VERSION} VERSION_GREATER_EQUAL "1.81.0")
         message(STATUS "Stormpy - Using workaround for Boost >= 1.81")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_PHOENIX_STL_TUPLE_H_")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_PHOENIX_STL_TUPLE_H_")
     endif()
 endif()
 
