@@ -34,18 +34,18 @@ jobs:
           }
         config:
           - {name: "all libraries",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[numpy,plot,test]",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[numpy,parser,plot,test]",
              test_opt: ""
           }
           - {name: "no libraries",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF --config-settings=cmake.define=USE_STORM_DFT=OFF --config-settings=cmake.define.USE_STORM_GSPN=OFF --config-settings=cmake.define.USE_STORM_PARS=OFF --config-settings=cmake.define.USE_STORM_POMDP=OFF --config-settings=cmake.define.USE_PARSER=OFF",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF --config-settings=cmake.define.STORMPY_USE_STORM_DFT=OFF --config-settings=cmake.define.STORMPY_USE_STORM_GSPN=OFF --config-settings=cmake.define.STORMPY_USE_STORM_PARS=OFF --config-settings=cmake.define.STORMPY_USE_STORM_POMDP=OFF",
              optional_libs: "[test]",
              test_opt: "tests"
           }
     steps:
       - name: Git clone
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build stormpy from Dockerfile
         run: |
           docker build -t movesrwth/stormpy:ci . \
@@ -69,19 +69,19 @@ jobs:
           - {name: "Debug",
              storm_base: "stable-debug",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[test,parser,plot]"
           }
           - {name: "Release",
              storm_base: "stable",
              build_type: "Release",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[test,parser,plot]"
           }
     # Allow failures of stable versions as new features might have been added
     steps:
       - name: Git clone
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Replace Dockerfile
         run: cp .github/workflows/Dockerfile.stable Dockerfile
       - name: Build dependencies
@@ -97,7 +97,7 @@ jobs:
         id: build_stormpy
         shell: bash {0} // Deactivate fast-fail to handle exit code for incompatibility
         run: |
-          docker exec ci bash -c "cd /opt/stormpy; pip install -v --config-settings=cmake.define.CMAKE_BUILD_PARALLEL_LEVEL=${NR_JOBS} --config-settings=cmake.build-type=${{ matrix.build_type.build_type }} --config-settings=cmake.define.CARLPARSER_DIR_HINT=/opt/carl-parser/build/ ${{ matrix.build_type.setup_args }} .${{ matrix.build_type.optional_libs }}"
+          docker exec ci bash -c "cd /opt/stormpy; pip install -v --config-settings=cmake.define.CMAKE_BUILD_PARALLEL_LEVEL=${NR_JOBS} --config-settings=cmake.build-type=${{ matrix.build_type.build_type }} ${{ matrix.build_type.setup_args }} .${{ matrix.build_type.optional_libs }}"
           status=$?
           if [ $status -eq 1 ]; then
             # Warn about possible incompatibility but do not handle as failure
@@ -122,47 +122,45 @@ jobs:
           - {name: "Debian 12, Debug",
              base_image: "movesrwth/storm-basesystem:debian-12",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]",
              test_opt: ""
           }
           - {name: "Debian 13, Debug",
              base_image: "movesrwth/storm-basesystem:debian-13",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]",
              test_opt: ""
           }
           - {name: "Ubuntu 24.04, Debug",
              base_image: "movesrwth/storm-basesystem:ubuntu-24.04",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]",
              test_opt: ""
           }
           - {name: "Ubuntu 24.04, Debug, only Storm core",
              base_image: "movesrwth/storm-basesystem:ubuntu-24.04",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master --config-settings=cmake.define.USE_STORM_DFT=OFF --config-settings=cmake.define.USE_STORM_GSPN=OFF --config-settings=cmake.define.USE_STORM_PARS=OFF --config-settings=cmake.define.USE_STORM_POMDP=OFF --config-settings=cmake.define.USE_PARSER=OFF",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master --config-settings=cmake.define.STORMPY_USE_STORM_DFT=OFF --config-settings=cmake.define.STORMPY_USE_STORM_GSPN=OFF --config-settings=cmake.define.STORMPY_USE_STORM_PARS=OFF --config-settings=cmake.define.STORMPY_USE_STORM_POMDP=OFF",
              optional_libs: "[test]",
              test_opt: "tests"
           }
           - {name: "Ubuntu 24.04, Release",
              base_image: "movesrwth/storm-basesystem:ubuntu-24.04",
              build_type: "Release",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]",
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]",
              test_opt: ""
           }
     steps:
       - name: Git clone
-        uses: actions/checkout@v6
-      - name: Replace Dockerfile
-        run: cp .github/workflows/Dockerfile.fetch Dockerfile
+        uses: actions/checkout@v7
       - name: Build stormpy
         run: |
           docker build -t movesrwth/stormpy:ci . \
-            --build-arg BASE_IMAGE=${{ matrix.config.base_image }} \
+            --build-arg STORM_BASE=${{ matrix.config.base_image }} \
             --build-arg build_type=${{ matrix.config.build_type }} \
             --build-arg setup_args="${{ matrix.config.setup_args }}" \
             --build-arg options=${{ matrix.config.optional_libs }} \
@@ -182,29 +180,29 @@ jobs:
              distro: "macos-14",
              xcode: "15.4",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]"
           }
           - {name: "MacOS 15, ARM, Debug",
              distro: "macos-15",
              xcode: "16.4",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]"
           }
           - {name: "MacOS 26, ARM, Debug",
              distro: "macos-26",
              xcode: "latest-stable",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]"
           }
           - {name: "MacOS 26, Intel, Debug",
              distro: "macos-26-intel",
              xcode: "latest-stable",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF --config-settings=cmake.define.STORM_GIT_TAG=master",
+             optional_libs: "[test,parser,plot]"
           }
     runs-on: ${{ matrix.config.distro }}
     steps:
@@ -212,7 +210,7 @@ jobs:
         with:
           xcode-version: ${{ matrix.config.xcode }}
       - name: Git clone
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install dependencies
         # cmake and gmp and python3 are already installed
         run: |
@@ -237,15 +235,15 @@ jobs:
              distro: "macos-26",
              xcode: "latest-stable",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[test,parser,plot]"
           }
           - {name: "MacOS 26, ARM, Release",
              distro: "macos-26",
              xcode: "latest-stable",
              build_type: "Release",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[test,parser,plot]"
           }
     runs-on: ${{ matrix.config.distro }}
     steps:
@@ -253,14 +251,14 @@ jobs:
         with:
           xcode-version: ${{ matrix.config.xcode }}
       - name: Git clone
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install dependencies
         # cmake and gmp and python3 are already installed
         run: |
           brew update
           brew install automake boost cln ginac glpk hwloc libarchive xerces-c z3
       - name: Checkout Storm
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: stormchecker/storm
           ref: master
@@ -298,19 +296,19 @@ jobs:
              docker_tag: "ci-debug",
              storm_base: "ci-debug",
              build_type: "Debug",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[test,plot]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[test,parser,plot]"
           }
           - {name: "Release",
              docker_tag: "ci",
              storm_base: "ci",
              build_type: "Release",
-             setup_args: "--config-settings=cmake.define.ALLOW_STORM_FETCH=OFF",
-             optional_libs: "[test,plot,doc]"
+             setup_args: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF",
+             optional_libs: "[test,parser,plot,doc]"
           }
     steps:
       - name: Git clone
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build stormpy from Dockerfile
         run: |
           docker build -t movesrwth/stormpy:${{ matrix.build_type.docker_tag }} . \
@@ -355,6 +353,8 @@ jobs:
         with:
           personal_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./html
+          publish_branch: gh-pages
+          force_orphan: true
 
   notify:
     name: Email notification
@@ -364,7 +364,7 @@ jobs:
     if: github.repository_owner == 'stormchecker' && always()
     steps:
       - uses: technote-space/workflow-conclusion-action@v3
-      - uses: dawidd6/action-send-mail@v17
+      - uses: dawidd6/action-send-mail@v18
         with:
           server_address: ${{ secrets.STORM_CI_MAIL_SERVER }}
           server_port: 587

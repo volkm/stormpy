@@ -2,13 +2,12 @@
 
 #include <pybind11/pytypes.h>
 #include <storm/environment/Environment.h>
-#include <storm/environment/modelchecker/ConditionalModelCheckerEnvironment.h>
-#include <storm/environment/modelchecker/ModelCheckerEnvironment.h>
-#include <storm/environment/modelchecker/MultiObjectiveModelCheckerEnvironment.h>
+#include <storm/environment/dd/AllDdEnvironments.h>
+#include <storm/environment/modelchecker/AllModelCheckerEnvironments.h>
 #include <storm/environment/solver/AllSolverEnvironments.h>
-#include <storm/environment/solver/SolverEnvironment.h>
 #include <storm/settings/SettingsManager.h>
 #include <storm/storage/SchedulerClass.h>
+#include <storm/storage/dd/cudd/CuddReorderingTechnique.h>
 #include <storm/utility/constants.h>
 
 #include "src/helpers.h"
@@ -84,6 +83,27 @@ void define_environment(py::module& m) {
         .value("FLOW", storm::MultiObjectiveModelCheckerEnvironment::EncodingType::Flow)
         .finalize();
 
+    py::native_enum<storm::dd::CuddReorderingTechnique>(m, "CuddReorderingTechnique", "enum.Enum", "Reordering technique used in CUDD library")
+        .value("NONE", storm::dd::CuddReorderingTechnique::None)
+        .value("RANDOM", storm::dd::CuddReorderingTechnique::Random)
+        .value("RANDOM_PIVOT", storm::dd::CuddReorderingTechnique::RandomPivot)
+        .value("SIFT", storm::dd::CuddReorderingTechnique::Sift)
+        .value("SIFT_CONV", storm::dd::CuddReorderingTechnique::SiftConv)
+        .value("SYMMETRIC_SIFT", storm::dd::CuddReorderingTechnique::SymmetricSift)
+        .value("SYMMETRIC_SIFT_CONV", storm::dd::CuddReorderingTechnique::SymmetricSiftConv)
+        .value("GROUP_SIFT", storm::dd::CuddReorderingTechnique::GroupSift)
+        .value("GROUP_SIFT_CONV", storm::dd::CuddReorderingTechnique::GroupSiftConv)
+        .value("WIN2", storm::dd::CuddReorderingTechnique::Win2)
+        .value("WIN2_CONV", storm::dd::CuddReorderingTechnique::Win2Conv)
+        .value("WIN3", storm::dd::CuddReorderingTechnique::Win3)
+        .value("WIN3_CONV", storm::dd::CuddReorderingTechnique::Win3Conv)
+        .value("WIN4", storm::dd::CuddReorderingTechnique::Win4)
+        .value("WIN4_CONV", storm::dd::CuddReorderingTechnique::Win4Conv)
+        .value("ANNEALING", storm::dd::CuddReorderingTechnique::Annealing)
+        .value("GENETIC", storm::dd::CuddReorderingTechnique::Genetic)
+        .value("EXACT", storm::dd::CuddReorderingTechnique::Exact)
+        .finalize();
+
     // Scheduler class bindings (needed for scheduler restriction)
     py::native_enum<storm::storage::SchedulerClass::MemoryPattern>(m, "SchedulerMemoryPattern", "enum.Enum", "Memory pattern of a scheduler")
         .value("ARBITRARY", storm::storage::SchedulerClass::MemoryPattern::Arbitrary)
@@ -91,7 +111,7 @@ void define_environment(py::module& m) {
         .value("COUNTER", storm::storage::SchedulerClass::MemoryPattern::Counter)
         .finalize();
 
-    py::class_<storm::storage::SchedulerClass>(m, "SchedulerClass", "Scheduler class restriction")
+    py::classh<storm::storage::SchedulerClass>(m, "SchedulerClass", "Scheduler class restriction")
         .def(py::init<>())
         .def_property("deterministic", &storm::storage::SchedulerClass::isDeterministic,
                       [](storm::storage::SchedulerClass& sc, bool v) { sc.setIsDeterministic(v); })
@@ -113,14 +133,15 @@ void define_environment(py::module& m) {
         .def("set_memory_pattern", [](storm::storage::SchedulerClass& sc, storm::storage::SchedulerClass::MemoryPattern p) { sc.setMemoryPattern(p); })
         .def("set_positional", &storm::storage::SchedulerClass::setPositional);
 
-    py::class_<storm::Environment>(m, "Environment", "Environment")
+    py::classh<storm::Environment>(m, "Environment", "Environment")
         .def(py::init<>(), "Construct default environment")
         .def_property_readonly(
             "solver_environment", [](storm::Environment& env) -> auto& { return env.solver(); }, "solver part of environment")
         .def_property_readonly(
-            "model_checker_environment", [](storm::Environment& env) -> auto& { return env.modelchecker(); }, "model checker part of environment");
+            "model_checker_environment", [](storm::Environment& env) -> auto& { return env.modelchecker(); }, "model checker part of environment")
+        .def_property_readonly("dd_environment", [](storm::Environment& env) -> auto& { return env.dd(); }, "dd part of environment");
 
-    py::class_<storm::ConditionalModelCheckerEnvironment>(m, "ConditionalModelCheckerEnvironment", "Environment for conditional model checking")
+    py::classh<storm::ConditionalModelCheckerEnvironment>(m, "ConditionalModelCheckerEnvironment", "Environment for conditional model checking")
         .def_property("algorithm", &storm::ConditionalModelCheckerEnvironment::getAlgorithm, &storm::ConditionalModelCheckerEnvironment::setAlgorithm,
                       "algorithm for conditional model checking")
         .def_property(
@@ -130,7 +151,7 @@ void define_environment(py::module& m) {
         .def_property("relative", &storm::ConditionalModelCheckerEnvironment::isRelativePrecision,
                       &storm::ConditionalModelCheckerEnvironment::setRelativePrecision, "whether the precision is relative");
 
-    py::class_<storm::ModelCheckerEnvironment>(m, "ModelCheckerEnvironment", "Environment for the model checker")
+    py::classh<storm::ModelCheckerEnvironment>(m, "ModelCheckerEnvironment", "Environment for the model checker")
         .def_property("steady_state_distribution_algorithm", &storm::ModelCheckerEnvironment::getSteadyStateDistributionAlgorithm,
                       &storm::ModelCheckerEnvironment::setSteadyStateDistributionAlgorithm, "steady state distribution algorithm used")
         .def_property(
@@ -154,7 +175,7 @@ void define_environment(py::module& m) {
             "multi", [](storm::ModelCheckerEnvironment& env) -> storm::MultiObjectiveModelCheckerEnvironment& { return env.multi(); },
             py::return_value_policy::reference, "Access multi-objective sub-environment");
 
-    py::class_<storm::MultiObjectiveModelCheckerEnvironment>(m, "MultiObjectiveModelCheckerEnvironment", "Environment for multi-objective model checking")
+    py::classh<storm::MultiObjectiveModelCheckerEnvironment>(m, "MultiObjectiveModelCheckerEnvironment", "Environment for multi-objective model checking")
         .def_property(
             "method", [](storm::MultiObjectiveModelCheckerEnvironment const& env) { return env.getMethod(); },
             &storm::MultiObjectiveModelCheckerEnvironment::setMethod, "multi-objective model checking method")
@@ -239,11 +260,9 @@ void define_environment(py::module& m) {
                     env.setSchedulerRestriction(obj.cast<storm::storage::SchedulerClass>());
             })
         .def_property("print_results", &storm::MultiObjectiveModelCheckerEnvironment::isPrintResultsSet,
-                      &storm::MultiObjectiveModelCheckerEnvironment::setPrintResults)
-        .def_property("lexicographic_model_checking", &storm::MultiObjectiveModelCheckerEnvironment::isLexicographicModelCheckingSet,
-                      &storm::MultiObjectiveModelCheckerEnvironment::setLexicographicModelChecking);
+                      &storm::MultiObjectiveModelCheckerEnvironment::setPrintResults);
 
-    py::class_<storm::SolverEnvironment>(m, "SolverEnvironment", "Environment for solvers")
+    py::classh<storm::SolverEnvironment>(m, "SolverEnvironment", "Environment for solvers")
         .def("set_force_sound", &storm::SolverEnvironment::setForceSoundness, "force soundness", py::arg("new_value") = true)
         .def("set_force_exact", &storm::SolverEnvironment::setForceExact, "force exact solving", py::arg("new_value") = true)
         .def("set_linear_equation_solver_type", &storm::SolverEnvironment::setLinearEquationSolverType, "set solver type to use", py::arg("new_value"),
@@ -251,15 +270,30 @@ void define_environment(py::module& m) {
         .def_property_readonly("minmax_solver_environment", [](storm::SolverEnvironment& senv) -> auto& { return senv.minMax(); })
         .def_property_readonly("native_solver_environment", [](storm::SolverEnvironment& senv) -> auto& { return senv.native(); });
 
-    py::class_<storm::NativeSolverEnvironment>(m, "NativeSolverEnvironment", "Environment for Native solvers")
+    py::classh<storm::NativeSolverEnvironment>(m, "NativeSolverEnvironment", "Environment for Native solvers")
         .def_property("method", &storm::NativeSolverEnvironment::getMethod,
                       [](storm::NativeSolverEnvironment& nsenv, storm::solver::NativeLinearEquationSolverMethod const& m) { nsenv.setMethod(m); })
         .def_property("maximum_iterations", &storm::NativeSolverEnvironment::getMaximalNumberOfIterations,
                       [](storm::NativeSolverEnvironment& nsenv, uint64_t iters) { nsenv.setMaximalNumberOfIterations(iters); })
         .def_property("precision", &storm::NativeSolverEnvironment::getPrecision, &storm::NativeSolverEnvironment::setPrecision);
 
-    py::class_<storm::MinMaxSolverEnvironment>(m, "MinMaxSolverEnvironment", "Environment for Min-Max-Solvers")
+    py::classh<storm::MinMaxSolverEnvironment>(m, "MinMaxSolverEnvironment", "Environment for Min-Max-Solvers")
         .def_property("method", &storm::MinMaxSolverEnvironment::getMethod,
                       [](storm::MinMaxSolverEnvironment& mmenv, storm::solver::MinMaxMethod const& m) { mmenv.setMethod(m, false); })
         .def_property("precision", &storm::MinMaxSolverEnvironment::getPrecision, &storm::MinMaxSolverEnvironment::setPrecision);
+
+    py::classh<storm::DdEnvironment>(m, "DdEnvironment", "Environment for DD libraries")
+        .def_property_readonly("sylvan", [](storm::DdEnvironment& senv) -> auto& { return senv.sylvan(); })
+        .def_property_readonly("cudd", [](storm::DdEnvironment& senv) -> auto& { return senv.cudd(); });
+
+    py::classh<storm::SylvanDdManagerEnvironment>(m, "SylvanDdManagerEnvironment", "Environment for Sylvan Dd manager")
+        .def_property("maximal_memory", &storm::SylvanDdManagerEnvironment::getMaximalMemory, &storm::SylvanDdManagerEnvironment::setMaximalMemory)
+        .def_property("number_threads", &storm::SylvanDdManagerEnvironment::getNumberOfThreads, &storm::SylvanDdManagerEnvironment::setNumberOfThreads);
+
+    py::classh<storm::CuddDdManagerEnvironment>(m, "CuddDdManagerEnvironment", "Environment for CUDD Dd manager")
+        .def_property("maximal_memory", &storm::CuddDdManagerEnvironment::getMaximalMemory, &storm::CuddDdManagerEnvironment::setMaximalMemory)
+        .def_property("constant_precision", &storm::CuddDdManagerEnvironment::getConstantPrecision, &storm::CuddDdManagerEnvironment::setConstantPrecision)
+        .def_property("reordering_enabled", &storm::CuddDdManagerEnvironment::isReorderingEnabled, &storm::CuddDdManagerEnvironment::setReorderingEnabled)
+        .def_property("reordering_technique", &storm::CuddDdManagerEnvironment::getReorderingTechnique,
+                      &storm::CuddDdManagerEnvironment::setReorderingTechnique);
 }

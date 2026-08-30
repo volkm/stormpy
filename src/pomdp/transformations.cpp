@@ -55,7 +55,7 @@ void define_transformations_nt(py::module &m) {
         .value("SIMPLE_LOG", storm::transformer::PomdpFscApplicationMode::SIMPLE_LOG)
         .value("FULL", storm::transformer::PomdpFscApplicationMode::FULL)
         .finalize();
-    py::class_<storm::pomdp::ObservationTraceUnfolderOptions> options(m, "ObservationTraceUnfolderOptions", "Options for unfolding observation traces");
+    py::classh<storm::pomdp::ObservationTraceUnfolderOptions> options(m, "ObservationTraceUnfolderOptions", "Options for unfolding observation traces");
     options.def(py::init<>());
     options.def_readwrite("restart_semantics", &storm::pomdp::ObservationTraceUnfolderOptions::useRestartSemantics,
                           "Use restart semantics instead of a sink state");
@@ -73,11 +73,11 @@ void define_transformations(py::module &m, std::string const &vtSuffix) {
 
 template<typename ValueType>
 void define_transformations_int(py::module &m, std::string const &vtSuffix) {
-    py::class_<storm::pomdp::ObservationTraceUnfolder<ValueType>> unfolder(m, ("ObservationTraceUnfolder" + vtSuffix).c_str(),
+    py::classh<storm::pomdp::ObservationTraceUnfolder<ValueType>> unfolder(m, ("ObservationTraceUnfolder" + vtSuffix).c_str(),
                                                                            "Unfolds observation traces in models");
-    unfolder.def(py::init<storm::models::sparse::Pomdp<ValueType>, std::vector<ValueType> const &, std::shared_ptr<storm::expressions::ExpressionManager> &,
+    unfolder.def(py::init<storm::models::sparse::Pomdp<ValueType>, std::vector<ValueType> const &, std::shared_ptr<storm::expressions::ExpressionManager>,
                           storm::pomdp::ObservationTraceUnfolderOptions const &>(),
-                 py::arg("model"), py::arg("risk"), py::arg("expression_manager"), py::arg("options"), py::keep_alive<2, 1>());
+                 py::arg("model"), py::arg("risk"), py::arg("expression_manager"), py::arg("options"));
     unfolder.def("is_restart_semantics_set", &storm::pomdp::ObservationTraceUnfolder<ValueType>::isRestartSemanticsSet);
     unfolder.def("transform", &storm::pomdp::ObservationTraceUnfolder<ValueType>::transform, py::arg("trace"));
     unfolder.def("reset", &storm::pomdp::ObservationTraceUnfolder<ValueType>::reset, py::arg("new_observation"));

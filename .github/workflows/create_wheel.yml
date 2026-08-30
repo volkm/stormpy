@@ -1,5 +1,8 @@
 name: Build and test wheels
 
+env:
+  NR_JOBS: "4"
+
 on:
   # needed to reuse the workflow from another one
   workflow_call:
@@ -100,10 +103,10 @@ jobs:
     steps:
       - name: Git clone (default current repo)
         if: ${{ inputs.repo == '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Git clone (custom repo)
         if: ${{ inputs.repo != '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.repo }}
           ref: ${{ inputs.ref }}
@@ -115,29 +118,31 @@ jobs:
         run: perl -i -pe 's/__version__ = "[^"]+"/__version__ = "'"${{ inputs.version }}"'"/' lib/stormpy/_version.py
       - name: Build wheels (development)
         if: ${{ !inputs.full_build }}
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.2.0
         env:
           CIBW_PLATFORM: ${{ matrix.platform }}
           CIBW_ARCHS: ${{ matrix.archs }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
           # Build development version only on latest Python versions
           CIBW_BUILD: "cp313-* cp314-*"
-          CIBW_CONFIG_SETTINGS: cmake.build-type=${{ inputs.build_type }}
           CIBW_ENVIRONMENT: >-
             STORM_VERSION=${{ inputs.storm_version }}
-            NR_JOBS=4
+            NR_JOBS=${{ env.NR_JOBS }}
+            CMAKE_BUILD_PARALLEL_LEVEL=${{ env.NR_JOBS }}
+            SKBUILD_CMAKE_BUILD_TYPE=${{ inputs.build_type }}
             CMAKE_BUILD_TYPE=${{ inputs.build_type }}
       - name: Build wheels (stable)
         if: ${{ inputs.full_build }}
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.2.0
         env:
           CIBW_PLATFORM: ${{ matrix.platform }}
           CIBW_ARCHS: ${{ matrix.archs }}
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deploy_target }}
-          CIBW_CONFIG_SETTINGS: cmake.build-type=${{ inputs.build_type }}
           CIBW_ENVIRONMENT: >-
             STORM_VERSION=${{ inputs.storm_version }}
-            NR_JOBS=4
+            NR_JOBS=${{ env.NR_JOBS }}
+            CMAKE_BUILD_PARALLEL_LEVEL=${{ env.NR_JOBS }}
+            SKBUILD_CMAKE_BUILD_TYPE=${{ inputs.build_type }}
             CMAKE_BUILD_TYPE=${{ inputs.build_type }}
       - uses: actions/upload-artifact@v7
         with:
@@ -151,10 +156,10 @@ jobs:
     steps:
       - name: Git clone (default current repo)
         if: ${{ inputs.repo == '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Git clone (custom repo)
         if: ${{ inputs.repo != '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.repo }}
           ref: ${{ inputs.ref }}
@@ -200,14 +205,14 @@ jobs:
           merge-multiple: true
       - name: Checkout test files (default current repo)
         if: ${{ inputs.repo == '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: dist/test_files
           sparse-checkout: |
             tests
       - name: Checkout test files (custom repo)
         if: ${{ inputs.repo != '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.repo }}
           ref: ${{ inputs.ref }}
@@ -306,14 +311,14 @@ jobs:
           python3 -m pip install "$WHEEL"
       - name: Checkout test files (default current repo)
         if: ${{ inputs.repo == '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: dist/test_files
           sparse-checkout: |
             tests
       - name: Checkout test files (custom repo)
         if: ${{ inputs.repo != '' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.repo }}
           ref: ${{ inputs.ref }}

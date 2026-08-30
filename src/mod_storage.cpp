@@ -30,7 +30,8 @@ PYBIND11_MODULE(_storage, m) {
 #endif
 
     define_bitvector(m);
-    define_dd<storm::dd::DdType::Sylvan>(m, "Sylvan");
+    auto ddSylvan = define_dd<storm::dd::DdType::Sylvan>(m, "Sylvan");
+    define_dd_typed<storm::dd::DdType::Sylvan, double>(m, "Sylvan", "_Double", ddSylvan);
     define_dd_nt(m);
     define_model(m);
     define_sparse_model<double>(m, "");
@@ -38,8 +39,8 @@ PYBIND11_MODULE(_storage, m) {
     define_sparse_model<storm::Interval>(m, "Interval");
     define_sparse_model<storm::RationalFunction>(m, "Parametric");
     define_sparse_model<storm::RationalInterval>(m, "RationalInterval");
-    define_statevaluation(m);
-    define_statevaluation_transformer(m);
+    define_valuation(m);
+    define_valuation_transformer(m);
     define_simplevaluation(m);
     define_sparse_matrix<double>(m, "");
     define_sparse_matrix<storm::RationalNumber>(m, "Exact");

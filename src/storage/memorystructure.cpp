@@ -7,35 +7,33 @@
 #include <storm/storage/memorystructure/SparseModelMemoryProduct.h>
 #include <storm/storage/memorystructure/SparseModelMemoryProductReverseData.h>
 
+template<typename ValueType>
+void define_memorystructure_product_each(py::classh<storm::storage::MemoryStructure>& memoryStructure,
+                                         py::classh<storm::storage::SparseModelMemoryProductReverseData>& reverseData, std::string const& vtSuffix) {
+    memoryStructure.def(
+        ("_product_model" + vtSuffix).c_str(),
+        [](storm::storage::MemoryStructure& ms, storm::models::sparse::Model<ValueType> const& sparseModel) { return ms.product(sparseModel); });
+    reverseData.def(("_reverse_scheduler" + vtSuffix).c_str(),
+                    &storm::storage::SparseModelMemoryProductReverseData::createMemorySchedulerFromProductScheduler<ValueType>, py::arg("product_scheduler"));
+}
+
 void define_memorystructure_untyped(py::module& m) {
     typedef storm::storage::MemoryStructure MemoryStructure;
-    py::class_<MemoryStructure, std::shared_ptr<MemoryStructure>> memoryStructure(m, "MemoryStructure");
+    py::classh<MemoryStructure> memoryStructure(m, "MemoryStructure");
     memoryStructure.def("product", [](MemoryStructure& ms, MemoryStructure const& memModel) { return ms.product(memModel); });
-    memoryStructure.def("_product_model_double",
-                        [](MemoryStructure& ms, storm::models::sparse::Model<double> const& sparseModel) { return ms.product(sparseModel); });
-    memoryStructure.def("_product_model_exact",
-                        [](MemoryStructure& ms, storm::models::sparse::Model<storm::RationalNumber> const& sparseModel) { return ms.product(sparseModel); });
-    memoryStructure.def("_product_model_parametric",
-                        [](MemoryStructure& ms, storm::models::sparse::Model<storm::RationalFunction> const& sparseModel) { return ms.product(sparseModel); });
     memoryStructure.def_property_readonly("nr_states", &MemoryStructure::getNumberOfStates);
     memoryStructure.def_property_readonly("state_labeling", &MemoryStructure::getStateLabeling);
 
-    py::class_<storm::storage::SparseModelMemoryProductReverseData> memoryProductReverseData(m, "SparseModelMemoryProductReverseData");
-    memoryProductReverseData.def("_reverse_scheduler_double",
-                                 &storm::storage::SparseModelMemoryProductReverseData::createMemorySchedulerFromProductScheduler<double>,
-                                 py::arg("product_scheduler"));
-    memoryProductReverseData.def("_reverse_scheduler_exact",
-                                 &storm::storage::SparseModelMemoryProductReverseData::createMemorySchedulerFromProductScheduler<storm::RationalNumber>,
-                                 py::arg("product_scheduler"));
-    memoryProductReverseData.def("_reverse_scheduler_parametric",
-                                 &storm::storage::SparseModelMemoryProductReverseData::createMemorySchedulerFromProductScheduler<storm::RationalFunction>,
-                                 py::arg("product_scheduler"));
+    py::classh<storm::storage::SparseModelMemoryProductReverseData> memoryProductReverseData(m, "SparseModelMemoryProductReverseData");
+    define_memorystructure_product_each<double>(memoryStructure, memoryProductReverseData, "_double");
+    define_memorystructure_product_each<storm::RationalNumber>(memoryStructure, memoryProductReverseData, "_exact");
+    define_memorystructure_product_each<storm::RationalFunction>(memoryStructure, memoryProductReverseData, "_parametric");
 }
 
 template<typename VT>
 void define_memorystructure_typed(py::module& m, std::string const& vtSuffix) {
     typedef storm::storage::MemoryStructureBuilder<VT> MemoryStructureBuilder;
-    py::class_<MemoryStructureBuilder, std::shared_ptr<MemoryStructureBuilder>> msb(m, ("MemoryStructureBuilder" + vtSuffix).c_str());
+    py::classh<MemoryStructureBuilder> msb(m, ("MemoryStructureBuilder" + vtSuffix).c_str());
     msb.def(py::init<uint_fast64_t, storm::models::sparse::Model<VT> const&, bool>(), py::arg("nr_memory_states"), py::arg("model"),
             py::arg("only_initial_states_relevant") = true);
     msb.def("build", &MemoryStructureBuilder::build);
@@ -45,7 +43,7 @@ void define_memorystructure_typed(py::module& m, std::string const& vtSuffix) {
     msb.def("set_initial_memory_state", &MemoryStructureBuilder::setInitialMemoryState, py::arg("state"), py::arg("value"));
 
     typedef storm::storage::SparseModelMemoryProduct<VT> MemoryStructureProduct;
-    py::class_<MemoryStructureProduct, std::shared_ptr<MemoryStructureProduct>> msp(m, ("MemoryStructureProduct" + vtSuffix).c_str());
+    py::classh<MemoryStructureProduct> msp(m, ("MemoryStructureProduct" + vtSuffix).c_str());
     msp.def("build", &MemoryStructureProduct::build, py::arg("preserve_model_type") = false);
     msp.def("set_build_full_product", &MemoryStructureProduct::setBuildFullProduct,
             "Enforces that every state is considered reachable and thus constructed. This causes the product to have the size of the product of the original "

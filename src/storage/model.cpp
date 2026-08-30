@@ -91,6 +91,52 @@ storm::models::sparse::StateLabeling& getLabeling(SparseModel<ValueType>& model)
     return model.getStateLabeling();
 }
 
+template<typename ValueType>
+void define_model_as_sparse(py::classh<ModelBase>& modelBase) {
+    std::string prefix;
+    if constexpr (std::is_same_v<ValueType, double>)
+        prefix = "";
+    else if constexpr (std::is_same_v<ValueType, storm::RationalNumber>)
+        prefix = "exact_";
+    else if constexpr (std::is_same_v<ValueType, storm::Interval>)
+        prefix = "i";
+    else if constexpr (std::is_same_v<ValueType, storm::RationalInterval>)
+        prefix = "exact_i";
+    else if constexpr (std::is_same_v<ValueType, storm::RationalFunction>)
+        prefix = "p";
+
+    modelBase.def(("_as_sparse_" + prefix + "dtmc").c_str(), [](ModelBase& m) { return m.template as<SparseDtmc<ValueType>>(); }, "Get model as sparse DTMC");
+    modelBase.def(("_as_sparse_" + prefix + "mdp").c_str(), [](ModelBase& m) { return m.template as<SparseMdp<ValueType>>(); }, "Get model as sparse MDP");
+    modelBase.def(("_as_sparse_" + prefix + "pomdp").c_str(), [](ModelBase& m) { return m.template as<SparsePomdp<ValueType>>(); },
+                  "Get model as sparse POMDP");
+    modelBase.def(("_as_sparse_" + prefix + "ctmc").c_str(), [](ModelBase& m) { return m.template as<SparseCtmc<ValueType>>(); }, "Get model as sparse CTMC");
+    modelBase.def(("_as_sparse_" + prefix + "ma").c_str(), [](ModelBase& m) { return m.template as<SparseMarkovAutomaton<ValueType>>(); },
+                  "Get model as sparse MA");
+    modelBase.def(("_as_sparse_" + prefix + "smg").c_str(), [](ModelBase& m) { return m.template as<SparseSmg<ValueType>>(); }, "Get model as sparse SMG");
+}
+
+template<typename ValueType>
+void define_model_as_symbolic(py::classh<ModelBase>& modelBase) {
+    std::string prefix;
+    if constexpr (std::is_same_v<ValueType, double>)
+        prefix = "";
+    else if constexpr (std::is_same_v<ValueType, storm::RationalNumber>)
+        prefix = "exact_";
+    else if constexpr (std::is_same_v<ValueType, storm::RationalFunction>)
+        prefix = "p";
+    else
+        return;
+
+    modelBase.def(("_as_symbolic_" + prefix + "dtmc").c_str(), [](ModelBase& m) { return m.template as<SymbolicDtmc<storm::dd::DdType::Sylvan, ValueType>>(); },
+                  "Get model as symbolic DTMC");
+    modelBase.def(("_as_symbolic_" + prefix + "mdp").c_str(), [](ModelBase& m) { return m.template as<SymbolicMdp<storm::dd::DdType::Sylvan, ValueType>>(); },
+                  "Get model as symbolic MDP");
+    modelBase.def(("_as_symbolic_" + prefix + "ctmc").c_str(), [](ModelBase& m) { return m.template as<SymbolicCtmc<storm::dd::DdType::Sylvan, ValueType>>(); },
+                  "Get model as symbolic CTMC");
+    modelBase.def(("_as_symbolic_" + prefix + "ma").c_str(),
+                  [](ModelBase& m) { return m.template as<SymbolicMarkovAutomaton<storm::dd::DdType::Sylvan, ValueType>>(); }, "Get model as symbolic MA");
+}
+
 // Bindings for general models
 void define_model(py::module& m) {
     // ModelType
@@ -104,7 +150,7 @@ void define_model(py::module& m) {
         .finalize();
 
     // ModelBase
-    py::class_<ModelBase, std::shared_ptr<ModelBase>> modelBase(m, "_ModelBase", "Base class for all models");
+    py::classh<ModelBase> modelBase(m, "_ModelBase", "Base class for all models");
     modelBase.def_property_readonly("nr_states", &ModelBase::getNumberOfStates, "Number of states")
         .def_property_readonly("nr_transitions", &ModelBase::getNumberOfTransitions, "Number of transitions")
         .def_property_readonly("nr_choices", &ModelBase::getNumberOfChoices, "Number of choices")
@@ -116,124 +162,21 @@ void define_model(py::module& m) {
         .def_property_readonly("is_sparse_model", &ModelBase::isSparseModel, "Flag whether the model is stored as a sparse model")
         .def_property_readonly("is_symbolic_model", &ModelBase::isSymbolicModel, "Flag whether the model is stored using decision diagrams")
         .def_property_readonly("is_discrete_time_model", &ModelBase::isDiscreteTimeModel, "Flag whether the model is a discrete time model")
-        .def_property_readonly("is_nondeterministic_model", &ModelBase::isNondeterministicModel, "Flag whether the model contains nondeterminism")
-        .def(
-            "_as_sparse_dtmc", [](ModelBase& modelbase) { return modelbase.as<SparseDtmc<double>>(); }, "Get model as sparse DTMC")
-        .def(
-            "_as_sparse_exact_dtmc", [](ModelBase& modelbase) { return modelbase.as<SparseDtmc<storm::RationalNumber>>(); }, "Get model as sparse exact DTMC")
-        .def(
-            "_as_sparse_idtmc", [](ModelBase& modelbase) { return modelbase.as<SparseDtmc<storm::Interval>>(); }, "Get model as sparse interval DTMC")
-        .def(
-            "_as_sparse_pdtmc", [](ModelBase& modelbase) { return modelbase.as<SparseDtmc<storm::RationalFunction>>(); }, "Get model as sparse parametric DTMC")
-        .def(
-            "_as_sparse_idtmc", [](ModelBase& modelbase) { return modelbase.as<SparseDtmc<storm::Interval>>(); }, "Get model as sparse interval DTMC")
-        .def(
-            "_as_sparse_exact_idtmc", [](ModelBase& modelbase) { return modelbase.as<SparseDtmc<storm::RationalInterval>>(); },
-            "Get model as sparse exact interval DTMC")
-        .def(
-            "_as_sparse_mdp", [](ModelBase& modelbase) { return modelbase.as<SparseMdp<double>>(); }, "Get model as sparse MDP")
-        .def(
-            "_as_sparse_exact_mdp", [](ModelBase& modelbase) { return modelbase.as<SparseMdp<storm::RationalNumber>>(); }, "Get model as sparse exact MDP")
-        .def(
-            "_as_sparse_imdp", [](ModelBase& modelbase) { return modelbase.as<SparseMdp<storm::Interval>>(); }, "Get model as sparse interval MDP")
-        .def(
-            "_as_sparse_exact_imdp", [](ModelBase& modelbase) { return modelbase.as<SparseMdp<storm::RationalInterval>>(); },
-            "Get model as sparse exact interval MDP")
-        .def(
-            "_as_sparse_pmdp", [](ModelBase& modelbase) { return modelbase.as<SparseMdp<storm::RationalFunction>>(); }, "Get model as sparse parametric MDP")
-        .def(
-            "_as_sparse_pomdp", [](ModelBase& modelbase) { return modelbase.as<SparsePomdp<double>>(); }, "Get model as sparse POMDP")
-        .def(
-            "_as_sparse_ipomdp", [](ModelBase& modelbase) { return modelbase.as<SparsePomdp<storm::Interval>>(); }, "Get model as sparse interval POMDP")
-        .def(
-            "_as_sparse_exact_ipomdp", [](ModelBase& modelbase) { return modelbase.as<SparsePomdp<storm::RationalInterval>>(); },
-            "Get model as sparse interval exact POMDP")
-        .def(
-            "_as_sparse_exact_pomdp", [](ModelBase& modelbase) { return modelbase.as<SparsePomdp<storm::RationalNumber>>(); },
-            "Get model as sparse exact POMDP")
-        .def(
-            "_as_sparse_ppomdp", [](ModelBase& modelbase) { return modelbase.as<SparsePomdp<storm::RationalFunction>>(); },
-            "Get model as sparse parametric POMDP")
-        .def(
-            "_as_sparse_ctmc", [](ModelBase& modelbase) { return modelbase.as<SparseCtmc<double>>(); }, "Get model as sparse CTMC")
-        .def(
-            "_as_sparse_exact_ctmc", [](ModelBase& modelbase) { return modelbase.as<SparseCtmc<storm::RationalNumber>>(); }, "Get model as sparse exact CTMC")
-        .def(
-            "_as_sparse_ictmc", [](ModelBase& modelbase) { return modelbase.as<SparseCtmc<storm::Interval>>(); }, "Get model as sparse interval CTMC")
-        .def(
-            "_as_sparse_exact_ictmc", [](ModelBase& modelbase) { return modelbase.as<SparseCtmc<storm::RationalInterval>>(); },
-            "Get model as sparse exact interval CTMC")
-        .def(
-            "_as_sparse_pctmc", [](ModelBase& modelbase) { return modelbase.as<SparseCtmc<storm::RationalFunction>>(); }, "Get model as sparse parametric CTMC")
-        .def(
-            "_as_sparse_ma", [](ModelBase& modelbase) { return modelbase.as<SparseMarkovAutomaton<double>>(); }, "Get model as sparse MA")
-        .def(
-            "_as_sparse_exact_ma", [](ModelBase& modelbase) { return modelbase.as<SparseMarkovAutomaton<storm::RationalNumber>>(); },
-            "Get model as sparse exact MA")
-        .def(
-            "_as_sparse_ima", [](ModelBase& modelbase) { return modelbase.as<SparseMarkovAutomaton<storm::Interval>>(); }, "Get model as sparse interval MA")
-        .def(
-            "_as_sparse_exact_ima", [](ModelBase& modelbase) { return modelbase.as<SparseMarkovAutomaton<storm::RationalInterval>>(); },
-            "Get model as sparse exact interval MA")
-        .def(
-            "_as_sparse_pma", [](ModelBase& modelbase) { return modelbase.as<SparseMarkovAutomaton<storm::RationalFunction>>(); },
-            "Get model as sparse parametric MA")
-        .def(
-            "_as_sparse_smg", [](ModelBase& modelbase) { return modelbase.as<SparseSmg<double>>(); }, "Get model as sparse SMG")
-        .def(
-            "_as_sparse_exact_smg", [](ModelBase& modelbase) { return modelbase.as<SparseSmg<storm::RationalNumber>>(); }, "Get model as sparse exact SMG")
-        .def(
-            "_as_sparse_ismg", [](ModelBase& modelbase) { return modelbase.as<SparseSmg<storm::Interval>>(); }, "Get model as sparse interval SMG")
-        .def(
-            "_as_sparse_exact_ismg", [](ModelBase& modelbase) { return modelbase.as<SparseSmg<storm::RationalInterval>>(); },
-            "Get model as sparse exact interval SMG")
-        .def(
-            "_as_sparse_psmg", [](ModelBase& modelbase) { return modelbase.as<SparseSmg<storm::RationalFunction>>(); }, "Get model as sparse parametric SMG")
-        .def(
-            "_as_symbolic_dtmc", [](ModelBase& modelbase) { return modelbase.as<SymbolicDtmc<storm::dd::DdType::Sylvan, double>>(); },
-            "Get model as symbolic DTMC")
-        .def(
-            "_as_symbolic_exact_dtmc", [](ModelBase& modelbase) { return modelbase.as<SymbolicDtmc<storm::dd::DdType::Sylvan, storm::RationalNumber>>(); },
-            "Get model as symbolic exact DTMC")
-        .def(
-            "_as_symbolic_pdtmc", [](ModelBase& modelbase) { return modelbase.as<SymbolicDtmc<storm::dd::DdType::Sylvan, storm::RationalFunction>>(); },
-            "Get model as symbolic parametric DTMC")
-        .def(
-            "_as_symbolic_mdp", [](ModelBase& modelbase) { return modelbase.as<SymbolicMdp<storm::dd::DdType::Sylvan, double>>(); },
-            "Get model as symbolic MDP")
-        .def(
-            "_as_symbolic_exact_mdp", [](ModelBase& modelbase) { return modelbase.as<SymbolicMdp<storm::dd::DdType::Sylvan, storm::RationalNumber>>(); },
-            "Get model as symbolic exact MDP")
-        .def(
-            "_as_symbolic_pmdp", [](ModelBase& modelbase) { return modelbase.as<SymbolicMdp<storm::dd::DdType::Sylvan, storm::RationalFunction>>(); },
-            "Get model as symbolic parametric MDP")
-        .def(
-            "_as_symbolic_ctmc", [](ModelBase& modelbase) { return modelbase.as<SymbolicCtmc<storm::dd::DdType::Sylvan, double>>(); },
-            "Get model as symbolic CTMC")
-        .def(
-            "_as_symbolic_exact_ctmc", [](ModelBase& modelbase) { return modelbase.as<SymbolicCtmc<storm::dd::DdType::Sylvan, storm::RationalNumber>>(); },
-            "Get model as symbolic exact CTMC")
-        .def(
-            "_as_symbolic_pctmc", [](ModelBase& modelbase) { return modelbase.as<SymbolicCtmc<storm::dd::DdType::Sylvan, storm::RationalFunction>>(); },
-            "Get model as symbolic parametric CTMC")
-        .def(
-            "_as_symbolic_ma", [](ModelBase& modelbase) { return modelbase.as<SymbolicMarkovAutomaton<storm::dd::DdType::Sylvan, double>>(); },
-            "Get model as symbolic MA")
-        .def(
-            "_as_symbolic_exact_ma",
-            [](ModelBase& modelbase) { return modelbase.as<SymbolicMarkovAutomaton<storm::dd::DdType::Sylvan, storm::RationalNumber>>(); },
-            "Get model as symbolic exact MA")
-        .def(
-            "_as_symbolic_pma",
-            [](ModelBase& modelbase) { return modelbase.as<SymbolicMarkovAutomaton<storm::dd::DdType::Sylvan, storm::RationalFunction>>(); },
-            "Get model as symbolic parametric MA");
+        .def_property_readonly("is_nondeterministic_model", &ModelBase::isNondeterministicModel, "Flag whether the model contains nondeterminism");
+    define_model_as_sparse<double>(modelBase);
+    define_model_as_sparse<storm::RationalNumber>(modelBase);
+    define_model_as_sparse<storm::Interval>(modelBase);
+    define_model_as_sparse<storm::RationalInterval>(modelBase);
+    define_model_as_sparse<storm::RationalFunction>(modelBase);
+    define_model_as_symbolic<double>(modelBase);
+    define_model_as_symbolic<storm::RationalNumber>(modelBase);
+    define_model_as_symbolic<storm::RationalFunction>(modelBase);
 }
 
 // Bindings for sparse models
 template<typename ValueType>
 void define_sparse_model(py::module& m, std::string const& vtSuffix) {
-    py::class_<SparseModel<ValueType>, std::shared_ptr<SparseModel<ValueType>>, ModelBase> model(m, ("_Sparse" + vtSuffix + "Model").c_str(),
-                                                                                                 "A probabilistic model in a sparse matrix representation");
+    py::classh<SparseModel<ValueType>, ModelBase> model(m, ("_Sparse" + vtSuffix + "Model").c_str(), "A probabilistic model in a sparse matrix representation");
     model.def_property_readonly("supports_uncertainty", &SparseModel<ValueType>::supportsUncertainty, "Flag whether model supports uncertainty via intervals")
         .def_property_readonly("labeling", &getLabeling<ValueType>, "Labels")
         .def(
@@ -321,18 +264,15 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
                 },
                 py::arg("parameter"), "Find states with a particular parameter");
     }
-    py::class_<SparseDeterministicModel<ValueType>, std::shared_ptr<SparseDeterministicModel<ValueType>>> detModel(
-        m, ("_SparseDeterministic" + vtSuffix + "Model").c_str(), "Deterministic sparse model", model);
-    py::class_<SparseNondeterministicModel<ValueType>, std::shared_ptr<SparseNondeterministicModel<ValueType>>> nondetModel(
-        m, ("_SparseNondeterministic" + vtSuffix + "Model").c_str(), "Nondeterministic sparse model", model);
+    py::classh<SparseDeterministicModel<ValueType>> detModel(m, ("_SparseDeterministic" + vtSuffix + "Model").c_str(), "Deterministic sparse model", model);
+    py::classh<SparseNondeterministicModel<ValueType>> nondetModel(m, ("_SparseNondeterministic" + vtSuffix + "Model").c_str(), "Nondeterministic sparse model",
+                                                                   model);
 
-    py::class_<SparseDtmc<ValueType>, std::shared_ptr<SparseDtmc<ValueType>>>(m, ("Sparse" + vtSuffix + "Dtmc").c_str(), "DTMC in sparse representation",
-                                                                              detModel)
+    py::classh<SparseDtmc<ValueType>>(m, ("Sparse" + vtSuffix + "Dtmc").c_str(), "DTMC in sparse representation", detModel)
         .def(py::init<SparseDtmc<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def("__str__", &getModelInfoPrinter);
-    py::class_<SparseMdp<ValueType>, std::shared_ptr<SparseMdp<ValueType>>> mdp(m, ("Sparse" + vtSuffix + "Mdp").c_str(), "MDP in sparse representation",
-                                                                                nondetModel);
+    py::classh<SparseMdp<ValueType>> mdp(m, ("Sparse" + vtSuffix + "Mdp").c_str(), "MDP in sparse representation", nondetModel);
     mdp.def(py::init<SparseMdp<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&, storm::models::ModelType>(), py::arg("components"), py::arg("type") = storm::models::ModelType::Mdp)
         .def_property_readonly("nondeterministic_choice_indices", [](SparseMdp<ValueType> const& mdp) { return mdp.getNondeterministicChoiceIndices(); })
@@ -353,8 +293,7 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
             },
             "apply scheduler", "scheduler"_a, "drop_unreachable_states"_a = true)
         .def("__str__", &getModelInfoPrinter);
-    py::class_<SparsePomdp<ValueType>, std::shared_ptr<SparsePomdp<ValueType>>>(m, ("Sparse" + vtSuffix + "Pomdp").c_str(), "POMDP in sparse representation",
-                                                                                mdp)
+    py::classh<SparsePomdp<ValueType>>(m, ("Sparse" + vtSuffix + "Pomdp").c_str(), "POMDP in sparse representation", mdp)
         .def(py::init<SparsePomdp<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&, bool>(), py::arg("components"), py::arg("canonic_flag") = false)
         .def("__str__", &getModelInfoPrinter)
@@ -363,15 +302,13 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
         .def_property_readonly("nr_observations", &SparsePomdp<ValueType>::getNrObservations)
         .def("has_observation_valuations", &SparsePomdp<ValueType>::hasObservationValuations)
         .def_property_readonly("observation_valuations", &SparsePomdp<ValueType>::getObservationValuations);
-    py::class_<SparseCtmc<ValueType>, std::shared_ptr<SparseCtmc<ValueType>>>(m, ("Sparse" + vtSuffix + "Ctmc").c_str(), "CTMC in sparse representation",
-                                                                              detModel)
+    py::classh<SparseCtmc<ValueType>>(m, ("Sparse" + vtSuffix + "Ctmc").c_str(), "CTMC in sparse representation", detModel)
         .def(py::init<SparseCtmc<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def_property_readonly("exit_rates", [](SparseCtmc<ValueType> const& ctmc) { return ctmc.getExitRateVector(); })
         .def("probability_matrix", &SparseCtmc<ValueType>::computeProbabilityMatrix)
         .def("__str__", &getModelInfoPrinter);
-    py::class_<SparseMarkovAutomaton<ValueType>, std::shared_ptr<SparseMarkovAutomaton<ValueType>>>(m, ("Sparse" + vtSuffix + "MA").c_str(),
-                                                                                                    "MA in sparse representation", nondetModel)
+    py::classh<SparseMarkovAutomaton<ValueType>>(m, ("Sparse" + vtSuffix + "MA").c_str(), "MA in sparse representation", nondetModel)
         .def(py::init<SparseMarkovAutomaton<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def_property_readonly("exit_rates", [](SparseMarkovAutomaton<ValueType> const& ma) { return ma.getExitRates(); })
@@ -392,14 +329,13 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
                                "Check whether the MA can be converted into a CTMC.")
         .def("convert_to_ctmc", &SparseMarkovAutomaton<ValueType>::convertToCtmc, "Convert the MA into a CTMC.");
 
-    py::class_<SparseSmg<ValueType>, std::shared_ptr<SparseSmg<ValueType>>>(m, ("Sparse" + vtSuffix + "Smg").c_str(), "SMG in sparse representation",
-                                                                            nondetModel)
+    py::classh<SparseSmg<ValueType>>(m, ("Sparse" + vtSuffix + "Smg").c_str(), "SMG in sparse representation", nondetModel)
         .def(py::init<SparseSmg<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def("get_state_player_indications", &SparseSmg<ValueType>::getStatePlayerIndications, "Get for each state its corresponding player")
         .def("get_player_of_state", &SparseSmg<ValueType>::getPlayerOfState, py::arg("state"), "Get player for the given state");
 
-    py::class_<SparseRewardModel<ValueType>>(m, ("Sparse" + vtSuffix + "RewardModel").c_str(), "Reward structure for sparse models")
+    py::classh<SparseRewardModel<ValueType>>(m, ("Sparse" + vtSuffix + "RewardModel").c_str(), "Reward structure for sparse models")
         .def(py::init<std::optional<std::vector<ValueType>> const&, std::optional<std::vector<ValueType>> const&,
                       std::optional<storm::storage::SparseMatrix<ValueType>> const&>(),
              py::arg("optional_state_reward_vector") = std::nullopt, py::arg("optional_state_action_reward_vector") = std::nullopt,
@@ -428,8 +364,8 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
 // Bindings for symbolic models
 template<storm::dd::DdType DdType, typename ValueType>
 void define_symbolic_model(py::module& m, std::string vt_suffix) {
-    py::class_<SymbolicModel<DdType, ValueType>, std::shared_ptr<SymbolicModel<DdType, ValueType>>, ModelBase> model(
-        m, ("_Symbolic" + vt_suffix + "Model").c_str(), "A probabilistic model in a symbolic representation");
+    py::classh<SymbolicModel<DdType, ValueType>, ModelBase> model(m, ("_Symbolic" + vt_suffix + "Model").c_str(),
+                                                                  "A probabilistic model in a symbolic representation");
     model.def_property_readonly(
              "reward_models", [](SymbolicModel<DdType, ValueType>& model) { return model.getRewardModels(); }, "Reward models")
         .def_property_readonly("dd_manager", &SymbolicModel<DdType, ValueType>::getManager, "dd manager")
@@ -451,20 +387,16 @@ void define_symbolic_model(py::module& m, std::string vt_suffix) {
     if constexpr (std::is_same_v<ValueType, storm::RationalFunction>) {
         model.def("get_parameters", &SymbolicModel<DdType, ValueType>::getParameters, "Get parameters");
     }
-    py::class_<SymbolicDtmc<DdType, ValueType>, std::shared_ptr<SymbolicDtmc<DdType, ValueType>>>(m, ("Symbolic" + vt_suffix + "Dtmc").c_str(),
-                                                                                                  "DTMC in symbolic representation", model)
+    py::classh<SymbolicDtmc<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "Dtmc").c_str(), "DTMC in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
-    py::class_<SymbolicMdp<DdType, ValueType>, std::shared_ptr<SymbolicMdp<DdType, ValueType>>>(m, ("Symbolic" + vt_suffix + "Mdp").c_str(),
-                                                                                                "MDP in symbolic representation", model)
+    py::classh<SymbolicMdp<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "Mdp").c_str(), "MDP in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
-    py::class_<SymbolicCtmc<DdType, ValueType>, std::shared_ptr<SymbolicCtmc<DdType, ValueType>>>(m, ("Symbolic" + vt_suffix + "Ctmc").c_str(),
-                                                                                                  "CTMC in symbolic representation", model)
+    py::classh<SymbolicCtmc<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "Ctmc").c_str(), "CTMC in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
-    py::class_<SymbolicMarkovAutomaton<DdType, ValueType>, std::shared_ptr<SymbolicMarkovAutomaton<DdType, ValueType>>>(
-        m, ("Symbolic" + vt_suffix + "MA").c_str(), "MA in symbolic representation", model)
+    py::classh<SymbolicMarkovAutomaton<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "MA").c_str(), "MA in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
 
-    py::class_<SymbolicRewardModel<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "RewardModel").c_str(), "Reward structure for symbolic models")
+    py::classh<SymbolicRewardModel<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "RewardModel").c_str(), "Reward structure for symbolic models")
         .def_property_readonly("has_state_rewards", &SymbolicRewardModel<DdType, ValueType>::hasStateRewards)
         .def_property_readonly("has_state_action_rewards", &SymbolicRewardModel<DdType, ValueType>::hasStateActionRewards)
         .def_property_readonly("has_transition_rewards", &SymbolicRewardModel<DdType, ValueType>::hasTransitionRewards);
