@@ -8,7 +8,6 @@ void define_memory(py::module& m) {
     py::classh<storm::storage::PomdpMemory> memory(m, "PomdpMemory", "Memory for POMDP policies");
     memory.def_property_readonly("nr_states", &storm::storage::PomdpMemory::getNumberOfStates, "How many states does the memory structure have");
 
-    // Trivial, FixedCounter, SelectiveCounter, FixedRing, SelectiveRing, SettableBits, Full
     py::native_enum<storm::storage::PomdpMemoryPattern>(m, "PomdpMemoryPattern", "enum.Enum", "Memory pattern for POMDP memory")
         .value("TRIVIAL", storm::storage::PomdpMemoryPattern::Trivial)
         .value("FIXED_COUNTER", storm::storage::PomdpMemoryPattern::FixedCounter)

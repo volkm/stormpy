@@ -15,10 +15,7 @@ The following contains some general guidelines for developers.
   The CI automatically checks for proper formatting as well.
 
 ### Enum naming
-- Enum values exposed to Python via `py::native_enum` must use `UPPER_CASE_WITH_UNDERSCORES`.
-  The string name in `.value("NAME", ...)` calls must match `[A-Z][A-Z0-9]*(_[A-Z0-9]+)*`.
-  Compound words must use underscores (e.g., `POWER_ITERATION`, not `POWERITERATION` or `power_iteration`).
-  Short abbreviations (e.g., `DTMC`, `SOR`, `EQ`) are acceptable.
+- Enum values exposed to Python via `py::native_enum` must use `UPPER_CASE_WITH_UNDERSCORES` in the string name in `.value("NAME", ...)`.
 
 
 ## Dependencies
