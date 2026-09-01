@@ -38,9 +38,9 @@ You have two choices for stormpy depending on the version of Storm you are using
    Note that due to ongoing development in Storm, after some commits, the stormpy `master` might not work with the Storm `master` anymore.
    We will fix such issues as fast as possible.
 
-:::{warning}
+```{warning}
 Unfortunately, Stormpy currently does not work in conjunction with a homebrew installation of Storm.
-:::
+```
 
 
 ### Virtual Environments
@@ -122,8 +122,7 @@ To get started, continue with our [Getting Started](getting_started), consult th
 
 
 ## Building stormpy documentation
-To build this documentation, you need a local installation of stormpy.
-In addition, the [pandoc](https://pandoc.org) library is required as well as additional Python libraries.
+To build this documentation, you need a local installation of stormpy and additional Python libraries.
 You can install the required Python dependencies automatically with:
 ```bash
 pip install .[doc,numpy]
