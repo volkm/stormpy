@@ -53,6 +53,10 @@ class TestValueType:
         value = stormpy._core._valuetype_rationalfunction()
         assert type(value) is stormpy.RationalFunction
         assert type(value) is ratfunc_package().FactorizedRationalFunction
+        # Also test RationalFunctionCoefficient
+        value_rf = stormpy._core._valuetype_rationalfunctioncoefficient()
+        assert type(value_rf) is stormpy.RationalFunctionCoefficient
+        assert type(value_rf) is ratfunc_package().Rational
 
     def test_interval(self):
         value = stormpy._core._valuetype_interval()
@@ -86,6 +90,7 @@ class TestValueTypeMatrix:
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "parametric_die.pm"))
         model = stormpy.build_parametric_model(program)
         assert type(first_matrix_value(model)) is stormpy.RationalFunction
+        assert type(first_matrix_value(model).constant_part()) is ratfunc_package().Rational
 
     def test_interval(self):
         program = stormpy.parse_prism_program(get_example_path("idtmc", "die-intervals.pm"))

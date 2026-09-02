@@ -14,6 +14,9 @@ void define_value_types(py::module& m) {
     m.def(
         "_valuetype_rationalfunction", []() { return storm::utility::one<storm::RationalFunction>(); },
         "Representative value of C++ type 'storm::RationalFunction'");
+    m.def(
+        "_valuetype_rationalfunctioncoefficient", []() { return storm::utility::one<storm::RationalFunctionCoefficient>(); },
+        "Representative value of C++ type 'storm::RationalFunctionCoefficient'");
     m.def("_valuetype_interval", []() { return storm::utility::one<storm::Interval>(); }, "Representative value of C++ type 'storm::Interval'");
     m.def(
         "_valuetype_rationalinterval", []() { return storm::utility::one<storm::RationalInterval>(); },
