@@ -42,8 +42,11 @@ cd ..
 # resulting libspot.so/libbddx.so with patchelf --print-needed).
 export LIBS="-l:libatomic.a"
 
+# TEMPORARY, for validation only -- point at volkm's storm fork to test the
+# include_spot.cmake fix (LIBS=-l:libatomic.a on Spot's configure) before it's merged
+# upstream. Revert to stormchecker/storm once that PR lands.
 # Install Storm
-git clone https://github.com/stormchecker/storm.git -b ${STORM_VERSION}
+git clone https://github.com/volkm/storm.git -b ${STORM_VERSION}
 cd storm
 mkdir build
 cd build
