@@ -19,6 +19,23 @@ make -j ${NR_JOBS}
 make install
 cd ..
 
+# TEMPORARY, for validation only -- see plan/PR discussion. The permanent fix belongs
+# in Storm's resources/3rdparty/include_spot.cmake (single source of truth for every
+# Storm consumer); this stormpy-side copy exists only to confirm the flag actually
+# works using stormpy's own CI before opening that PR, and will be reverted once the
+# Storm-side fix is merged.
+#
+# Spot (a Storm dependency, built below) links against libatomic when the target CPU
+# isn't guaranteed to support CMPXCHG16B -- relevant here because Storm is built with
+# -DSTORM_PORTABLE=ON, i.e. for a generic baseline CPU (see spot/m4/l_atomic.m4,
+# CHECK_ATOMIC: it probes with AC_LINK_IFELSE and only appends "-latomic" to LIBS if a
+# plain std::atomic compare-exchange fails to link without it). Pre-seed LIBS here with
+# a *statically* linked libatomic so that first link check already succeeds, and Spot's
+# ./configure never appends its own dynamic -latomic. Otherwise libspot.so ends up with
+# a runtime dependency on libatomic.so.1 that's missing by default on some
+# distributions (e.g. plain ubuntu/fedora images), breaking `import stormpy` there.
+export LIBS="-Wl,-Bstatic -latomic -Wl,-Bdynamic"
+
 # Install Storm
 git clone https://github.com/stormchecker/storm.git -b ${STORM_VERSION}
 cd storm
