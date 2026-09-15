@@ -31,10 +31,16 @@ cd ..
 # CHECK_ATOMIC: it probes with AC_LINK_IFELSE and only appends "-latomic" to LIBS if a
 # plain std::atomic compare-exchange fails to link without it). Pre-seed LIBS here with
 # a *statically* linked libatomic so that first link check already succeeds, and Spot's
-# ./configure never appends its own dynamic -latomic. Otherwise libspot.so ends up with
-# a runtime dependency on libatomic.so.1 that's missing by default on some
+# ./configure never appends its own dynamic -latomic. Otherwise libspot.so/libbddx.so
+# end up with a runtime dependency on libatomic.so.1 that's missing by default on some
 # distributions (e.g. plain ubuntu/fedora images), breaking `import stormpy` there.
-export LIBS="-Wl,-Bstatic -latomic -Wl,-Bdynamic"
+# Use "-l:libatomic.a" (not -Wl,-Bstatic ... -Wl,-Bdynamic) -- libtool's --mode=link
+# splits -Wl,... flags away from the -l flags they're meant to bracket, silently
+# turning a "static" -latomic back into an ordinary dynamic one. -l:libatomic.a is a
+# single, indivisible token that survives libtool's link-line reordering intact
+# (verified by rebuilding the real Spot 2.16 source both ways and inspecting the
+# resulting libspot.so/libbddx.so with patchelf --print-needed).
+export LIBS="-l:libatomic.a"
 
 # Install Storm
 git clone https://github.com/stormchecker/storm.git -b ${STORM_VERSION}
