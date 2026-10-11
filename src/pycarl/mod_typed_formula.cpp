@@ -4,12 +4,12 @@
 #include "src/pycarl/typed_formula/formula.h"
 
 PYBIND11_MODULE(_formula, m) {
-    m.attr("__name__") = "stormpy.pycarl.formula";
+    m.attr("__name__") = "stormpy.numbers.developer.formula";
     m.doc() = "pycarl formula typed functions";
 
     // Constraint relies on Rational
-    m.import("stormpy.pycarl");
-    m.import("stormpy.pycarl.formula");
+    m.import("stormpy.numbers.developer");
+    m.import("stormpy.numbers.developer.formula");
 
     define_constraint(m);
     define_simple_constraint(m);

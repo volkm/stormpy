@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 
 from stormpy import developer, storage
-from stormpy._config import Rational
+from stormpy import Rational
 from stormpy.core._common import PathLike, _path
 from stormpy.developer import Property, SymbolicModelDescription
 from stormpy.exceptions import StormError

@@ -34,6 +34,7 @@ class TestPublicApi:
             "prob01min_states",
             "make_weighted_objective_mdp_model_checker",
             "eliminate_end_components",
+            "pycarl",
             "EndComponentEliminatorReturnType",
             "parse_properties_for_prism_program",
             "SparseMatrixBuilder",

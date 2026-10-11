@@ -9,6 +9,7 @@ Work in progress!
 api/core
 api/core_developer
 api/info
+api/numbers
 api/exceptions
 api/logic
 api/simulator
@@ -21,8 +22,8 @@ api/gspn
 api/pars
 api/pomdp
 
-api/pycarl/core
-api/pycarl/convert
-api/pycarl/formula
-api/pycarl/parse
+api/numbers_developer/core
+api/numbers_developer/convert
+api/numbers_developer/formula
+api/numbers_developer/parse
 ```

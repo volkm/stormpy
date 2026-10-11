@@ -33,9 +33,8 @@ class TestDft:
         assert type(builder) is stormpy.dft.developer.ExplicitDFTModelBuilder[float]
 
     def test_parametric_dft(self):
-        from stormpy import pycarl
 
-        pycarl.clear_pools()
+        stormpy.numbers.clear_pools()
         env = stormpy.dft.DftEnvironment()
         generic_dft = stormpy.dft.load_dft_json_file[stormpy.RationalFunction](get_example_path("dft", "and.json"))
         assert type(generic_dft) is stormpy.dft.DFT[stormpy.RationalFunction]

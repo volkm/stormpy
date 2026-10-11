@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from stormpy import developer, storage
 from stormpy.core._common import PathLike, _formulas, _path
 from stormpy.core._modelchecking import Engine
-from stormpy._config import Interval, Rational, RationalFunction, RationalInterval
+from stormpy import Interval, Rational, RationalFunction, RationalInterval
 from stormpy._template import _deduce_default, _template_function
 from stormpy.developer import (
     DirectEncodingParserOptions,

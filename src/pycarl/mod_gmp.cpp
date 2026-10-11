@@ -11,7 +11,7 @@
 #include "src/pycarl/types.h"
 
 PYBIND11_MODULE(_gmp, m) {
-    m.attr("__name__") = "stormpy.pycarl.gmp";
+    m.attr("__name__") = "stormpy.numbers.developer.gmp";
     m.doc() = "pycarl core gmp-typed data and functions";
 
     define_gmp_integer(m);

@@ -4,8 +4,12 @@ This module provides the public API for the core functionality of Storm:
 parsing symbolic models and properties, building models, model checking and transforming models.
 """
 
-# Value types (needed by the native modules and therefore imported first)
-from ._config import Interval, Polynomial, Rational, RationalFunction, RationalFunctionCoefficient, RationalInterval, RawPolynomial
+# Number types (needed by the native modules and therefore imported first)
+from . import numbers
+
+# The value types are also available directly as stormpy.X (same objects as stormpy.numbers.X).
+# Must be imported before the native modules and the core modules, which look up the value types as stormpy.X
+from .numbers import Interval, Polynomial, Rational, RationalFunction, RationalFunctionCoefficient, RationalInterval, RawPolynomial
 
 from . import developer
 from . import exceptions
@@ -104,7 +108,7 @@ from .core._io import export_to_drn, export_to_umb
 from .core._settings import reset_timeout, set_log_level, set_timeout
 
 __all__ = [
-    # Value types
+    # Value types (re-exported from stormpy.numbers)
     "Interval",
     "Polynomial",
     "Rational",

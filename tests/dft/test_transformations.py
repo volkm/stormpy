@@ -1,7 +1,6 @@
 import math
 
 import stormpy
-from stormpy import pycarl
 from helpers.helper import get_example_path
 from configurations import dft
 
@@ -9,7 +8,7 @@ from configurations import dft
 @dft
 class TestTransformations:
     def test_instantiate_dft(self):
-        pycarl.clear_pools()
+        stormpy.numbers.clear_pools()
         dft = stormpy.dft.load_dft_galileo_file[stormpy.RationalFunction](get_example_path("dft", "symmetry_param.dft"))
         assert dft.nr_elements() == 7
         assert dft.nr_basic_elements() == 4
@@ -18,8 +17,8 @@ class TestTransformations:
         instantiator = stormpy.dft.DftInstantiator(dft)
         assert type(instantiator) is instantiator_type
         assert instantiator_type is stormpy.dft.developer._DftInstantiator_RationalFunction_Double
-        x = pycarl.variable_with_name("x")
-        y = pycarl.variable_with_name("y")
+        x = stormpy.numbers.variable_with_name("x")
+        y = stormpy.numbers.variable_with_name("y")
         valuation = {x: stormpy.RationalFunctionCoefficient("5"), y: stormpy.RationalFunctionCoefficient("0.01")}
         inst_dft = instantiator.instantiate(valuation)
         assert inst_dft.nr_elements() == 7

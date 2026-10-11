@@ -2,8 +2,6 @@ import stormpy
 import stormpy.info
 import stormpy.pomdp
 
-from stormpy import pycarl
-
 import stormpy.examples
 import stormpy.examples.files
 

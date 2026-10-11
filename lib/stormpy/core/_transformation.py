@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 from stormpy import developer, storage
 from stormpy.core._common import _formulas, _value_type_of_model
-from stormpy._config import Interval, Rational, RationalInterval
+from stormpy import Rational
 from stormpy.developer import (
     AddUncertainty,
     BisimulationOptions,

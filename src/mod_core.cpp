@@ -18,7 +18,6 @@
 #include "src/core/storage.h"
 #include "src/core/transformer.h"
 #include "src/core/utility.h"
-#include "src/core/valuetype.h"
 
 PYBIND11_MODULE(_core, m) {
     m.doc() = "Functionality of the core library of Storm";
@@ -30,8 +29,8 @@ PYBIND11_MODULE(_core, m) {
 
     using namespace stormpy;
 
-    // Imports stormpy.storage, which registers types (such as DdType) required by the following bindings
-    define_value_types(m);
+    // Import stormpy.storage, which registers types (such as DdType) required by the following bindings
+    m.attr("DdType") = py::module::import("stormpy.storage._storage").attr("DdType");
     // Solver enums and storage classes are used as default arguments by other classes
     define_solver(m);
     define_storage(m);
