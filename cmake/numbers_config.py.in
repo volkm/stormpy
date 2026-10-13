@@ -4,6 +4,7 @@
 
 # Each name refers to matching Storm C++ type.
 Rational = pycarl.@PYCARL_EA_PACKAGE@.Rational
+Integer = pycarl.@PYCARL_EA_PACKAGE@.Integer
 RationalFunctionCoefficient = pycarl.@PYCARL_RF_PACKAGE@.Rational
 RawPolynomial = pycarl.@PYCARL_RF_PACKAGE@.Polynomial
 Polynomial = pycarl.@PYCARL_RF_PACKAGE@.FactorizedPolynomial

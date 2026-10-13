@@ -43,6 +43,11 @@ class TestValueType:
         assert type(value) is stormpy.numbers.Rational
         assert type(value) is exact_package().Rational
 
+    def test_integer(self):
+        value = stormpy.numbers.developer._numbers._valuetype_integer()
+        assert type(value) is stormpy.numbers.Integer
+        assert type(value) is exact_package().Integer
+
     def test_gmprationalnumber(self):
         value = stormpy.numbers.developer._numbers._valuetype_gmprationalnumber()
         assert type(value) is pycarl.gmp.Rational

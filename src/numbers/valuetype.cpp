@@ -3,6 +3,7 @@
 #include <storm/adapters/IntervalAdapter.h>
 #include <storm/adapters/RationalFunctionAdapter.h>
 #include <storm/adapters/RationalNumberAdapter.h>
+#include <storm/utility/NumberTraits.h>
 #include <storm/utility/constants.h>
 
 namespace stormpy::numbers {
@@ -13,6 +14,9 @@ void define_value_types(py::module& m) {
     m.def("_valuetype_double", []() { return storm::utility::one<double>(); }, "Representative value of C++ type 'double'");
     m.def(
         "_valuetype_rationalnumber", []() { return storm::utility::one<storm::RationalNumber>(); }, "Representative value of C++ type 'storm::RationalNumber'");
+    m.def(
+        "_valuetype_integer", []() { return storm::NumberTraits<storm::RationalNumber>::IntegerType(1); },
+        "Representative value of C++ type 'storm::NumberTraits<storm::RationalNumber>::IntegerType'");
     m.def(
         "_valuetype_rationalfunction", []() { return storm::utility::one<storm::RationalFunction>(); },
         "Representative value of C++ type 'storm::RationalFunction'");
