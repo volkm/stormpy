@@ -7,9 +7,11 @@ Work in progress!
 :caption: Stormpy modules:
 
 api/core
+api/core_developer
 api/info
 api/exceptions
 api/logic
+api/simulator
 api/storage
 api/utility
 

@@ -12,7 +12,7 @@ def example_parametric_models_04():
 
     formula_str = "P=? [F s=7 & d=2]"
     properties = stormpy.parse_properties(formula_str, prism_program)
-    model = stormpy.build_parametric_model(prism_program, properties)
+    model = stormpy.build_model[stormpy.RationalFunction](prism_program, properties)
 
     # Modify
     i = 0

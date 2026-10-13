@@ -7,8 +7,8 @@ from configurations import pomdp
 class TestPomdpTransformations:
     def test_make_canonic_exact(self):
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
-        formulas = stormpy.parse_properties_for_prism_program('P=? [F "goal"]', program)
-        model = stormpy.build_sparse_exact_model(program, formulas)
+        formulas = stormpy.parse_properties('P=? [F "goal"]', program)
+        model = stormpy.build_model[stormpy.Rational](program, formulas)
         assert type(model) is stormpy.SparsePomdp[stormpy.Rational]
         canonic = stormpy.pomdp.make_canonic(model)
         assert type(canonic) is stormpy.SparsePomdp[stormpy.Rational]
@@ -29,7 +29,7 @@ class TestPomdpTransformations:
         model = stormpy.build_model(program)
         assert type(model) is stormpy.SparsePomdp[float]
         risk = [0.0] * model.nr_observations
-        expr_manager = stormpy.ExpressionManager()
+        expr_manager = stormpy.storage.ExpressionManager()
         options = stormpy.pomdp.ObservationTraceUnfolderOptions()
         unfolder = stormpy.pomdp.create_observation_trace_unfolder(model, risk, expr_manager, options)
         unfolder.transform([6])
@@ -39,7 +39,7 @@ class TestPomdpTransformations:
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         model = stormpy.build_model(program)
         risk = [0.0] * model.nr_observations
-        expr_manager = stormpy.ExpressionManager()
+        expr_manager = stormpy.storage.ExpressionManager()
         options = stormpy.pomdp.ObservationTraceUnfolderOptions()
         options.restart_semantics = False
         unfolder = stormpy.pomdp.create_observation_trace_unfolder(model, risk, expr_manager, options)

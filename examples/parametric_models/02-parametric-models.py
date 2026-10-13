@@ -17,19 +17,19 @@ def example_parametric_models_02():
     prism_program = stormpy.parse_prism_program(path)
 
     formula_str = "P=? [F s=7 & d=2]"
-    properties = stormpy.parse_properties_for_prism_program(formula_str, prism_program)
-    model = stormpy.build_parametric_model(prism_program, properties)
+    properties = stormpy.parse_properties(formula_str, prism_program)
+    model = stormpy.build_model[stormpy.RationalFunction](prism_program, properties)
 
     initial_state = model.initial_states[0]
     result = stormpy.model_checking(model, properties[0])
-    print("Result: {}".format(result.at(initial_state)))
+    print("Result: {}".format(result[initial_state]))
 
     collector = stormpy.ConstraintCollector(model)
     print("Well formed constraints:")
-    for formula in collector.wellformed_constraints:
+    for formula in collector.get_wellformed_constraints():
         print(formula.get_constraint())
     print("Graph preserving constraints:")
-    for formula in collector.graph_preserving_constraints:
+    for formula in collector.get_graph_preserving_constraints():
         print(formula.get_constraint())
 
 

@@ -31,7 +31,7 @@ import stormpy
 Since we want to build a nondeterministic model, we create a transition matrix with a custom row group for each state:
 
 ```{code-cell} python3
-builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+builder = stormpy.storage.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 ```
 
 We need more than one row for the transitions starting in state 0 because a nondeterministic choice over the actions is available.
@@ -132,7 +132,7 @@ In this reward model the length of the action rewards coincides with the number 
 ```{code-cell} python3
 reward_models = {}
 action_reward = [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+reward_models["coin_flips"] = stormpy.storage.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 ```
 
 ## Building the Model
@@ -140,7 +140,7 @@ reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_re
 We collect the components:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(
+components = stormpy.storage.SparseModelComponents(
     transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models, rate_transitions=False
 )
 components.choice_labeling = choice_labeling

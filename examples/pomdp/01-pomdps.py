@@ -23,7 +23,7 @@ def example_pomdps_01():
     # prism_program = stormpy.parse_prism_program(path)
     #
     # formula_str = "P=? [!\"bad\" U \"goal\"]"
-    # properties = stormpy.parse_properties_for_prism_program(formula_str, prism_program)
+    # properties = stormpy.parse_properties(formula_str, prism_program)
     # # construct the POMDP
     # pomdp = stormpy.build_model(prism_program, properties)
     # # make its representation canonic.
@@ -45,12 +45,12 @@ def example_pomdps_01():
     prism_program = stormpy.parse_prism_program(path)
 
     formula_str = 'P=? [!"bad" U "goal"]'
-    properties = stormpy.parse_properties_for_prism_program(formula_str, prism_program)
+    properties = stormpy.parse_properties(formula_str, prism_program)
     # construct the pPOMDP
-    options = stormpy.BuilderOptions([p.raw_formula for p in properties])
+    options = stormpy.BuilderOptions(properties)
     options.set_build_state_valuations()
     options.set_build_choice_labels()
-    pomdp = stormpy.build_sparse_parametric_model_with_options(prism_program, options)
+    pomdp = stormpy.build_model[stormpy.RationalFunction](prism_program, options=options)
     # make its representation canonic.
     pomdp = stormpy.pomdp.make_canonic(pomdp)
 
@@ -69,7 +69,7 @@ def example_pomdps_01():
     if export_pmc:
         export_options = stormpy.DirectEncodingExporterOptions()
         export_options.allow_placeholders = False
-        stormpy.export_to_drn(pmc, "test.out", export_options)
+        stormpy.export_to_drn(pmc, "test.out", options=export_options)
 
 
 if __name__ == "__main__":

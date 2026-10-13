@@ -95,6 +95,31 @@ pybind11::classh<Class, Options...> bindInternalClass(pybind11::module_& module,
 }
 
 /**
+ * Bind a descriptively named native function without registering a template
+ * instantiation.
+ *
+ * Binding a function with an existing name adds an overload to the existing
+ * native function object. This can be used to add further overloads to an
+ * instantiation registered via `bindTemplateFunction`.
+ *
+ * @tparam Function Type of the bound C++ function or callable.
+ * @tparam Extra Types of additional arguments forwarded to `pybind11::module_::def`,
+ *     such as `pybind11::arg` or call guards.
+ * @param module Native module receiving the function.
+ * @param name Complete native Python function name.
+ * @param function C++ function to bind.
+ * @param description Python function docstring.
+ * @param extra Additional arguments forwarded to `pybind11::module_::def`.
+ * @return The native function object.
+ */
+template<typename Function, typename... Extra>
+pybind11::object bindInternalFunction(pybind11::module_& module, std::string const& name, Function&& function, std::string const& description,
+                                      Extra&&... extra) {
+    module.def(name.c_str(), std::forward<Function>(function), description.c_str(), std::forward<Extra>(extra)...);
+    return module.attr(name.c_str());
+}
+
+/**
  * Return the registration dictionary for a template family, creating it when
  * necessary.
  *
@@ -160,6 +185,38 @@ pybind11::classh<Class, Options...> bindTemplateClass(pybind11::module_& module,
     auto result = bindInternalClass<Class, Options...>(module, templateClassName(family, index), description, std::forward<Extra>(extra)...);
     instantiations[index.key] = result;
     return result;
+}
+
+/**
+ * Bind and register one concrete instantiation of a template function family.
+ *
+ * The function receives a stable descriptive native name and is inserted into the
+ * module registration table under `index.key`. Registering the same function family
+ * and key twice is an error. Further overloads of a registered instantiation are
+ * added with `bindInternalFunction` using the same native name, as pybind11 adds
+ * them to the registered function object.
+ *
+ * @tparam Function Type of the bound C++ function or callable.
+ * @tparam Extra Types of additional arguments forwarded to `pybind11::module_::def`,
+ *     such as `pybind11::arg` or call guards.
+ * @param module Native module receiving the function and registration.
+ * @param family Public template-family name.
+ * @param index Complete specialization lookup and naming index.
+ * @param function C++ function to bind.
+ * @param description Python function docstring.
+ * @param extra Additional arguments forwarded to `pybind11::module_::def`.
+ * @throws std::runtime_error If the family already contains `index.key`.
+ */
+template<typename Function, typename... Extra>
+void bindTemplateFunction(pybind11::module_& module, std::string_view family, TemplateIndex const& index, Function&& function, std::string const& description,
+                          Extra&&... extra) {
+    pybind11::dict instantiations = templateInstantiations(module, family);
+    if (instantiations.contains(index.key)) {
+        throw std::runtime_error("Duplicate native template function instantiation for " + std::string(family) + " and " + index.label);
+    }
+
+    instantiations[index.key] =
+        bindInternalFunction(module, templateClassName(family, index), std::forward<Function>(function), description, std::forward<Extra>(extra)...);
 }
 
 }  // namespace stormpy::bindings

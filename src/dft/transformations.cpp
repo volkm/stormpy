@@ -7,6 +7,8 @@
 #include "src/binding_type_index.h"
 #include "src/helpers.h"
 
+namespace stormpy::dft {
+
 using DFTInstantiator = storm::dft::transformations::DftInstantiator<storm::RationalFunction, double>;
 
 void define_transformations(py::module& m) {
@@ -15,3 +17,5 @@ void define_transformations(py::module& m) {
     instantiator.def(py::init<storm::dft::storage::DFT<storm::RationalFunction> const&>(), "Initialize with parametric DFT", py::arg("dft"))
         .def("instantiate", &DFTInstantiator::instantiate, "Instantiate parametric DFT and obtain concrete DFT", py::arg("valuation"));
 }
+
+}  // namespace stormpy::dft

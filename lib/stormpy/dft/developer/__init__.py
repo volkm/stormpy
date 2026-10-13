@@ -7,7 +7,6 @@ The naming of functions and classes of the bindings mirrors the corresponding ``
 """
 
 from stormpy.info import _config
-from stormpy import Property
 from stormpy.exceptions import StormError
 import warnings
 
@@ -22,7 +21,7 @@ for _name, _value in vars(_dft).items():
         globals()[_name] = _value
 del _name, _value
 
-from stormpy._template import _TemplateClass, _deduce_from_first_argument, _deduce_from_object
+from stormpy._template import _TemplateClass, _TemplateFunction, _deduce_default, _deduce_from_first_argument, _deduce_from_object
 
 # Define templated classes
 DFT = _TemplateClass(
@@ -84,7 +83,7 @@ DftInstantiator = _TemplateClass(
     deduce=_deduce_dft_instantiator,
 )
 
-
-# Add additional functions
-def compute_relevant_events(properties, *args, **kwargs):
-    return _dft.compute_relevant_events([(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties], *args, **kwargs)
+# Define templated functions (value type cannot be deduced from the arguments)
+load_dft_galileo_file = _TemplateFunction("stormpy.dft.developer.load_dft_galileo_file", _dft, parameters=("ValueType",), deduce=_deduce_default(float))
+load_dft_json_file = _TemplateFunction("stormpy.dft.developer.load_dft_json_file", _dft, parameters=("ValueType",), deduce=_deduce_default(float))
+load_dft_json_string = _TemplateFunction("stormpy.dft.developer.load_dft_json_string", _dft, parameters=("ValueType",), deduce=_deduce_default(float))

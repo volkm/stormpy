@@ -8,6 +8,49 @@ The following contains some general guidelines for developers.
 - The Sphinx documentation can be found in ``doc/source``.
 
 
+## Public API and developer bindings
+Each library ``xy`` of Storm (e.g. core or DFTs) is split into two layers:
+- ``stormpy.xy.developer`` contains the raw pybind11 bindings defined in ``src/xy``.
+  They mirror the C++ API of Storm (naming, arguments and default values).
+- ``stormpy.xy`` is the public API built on top of ``stormpy.xy.developer``.
+  It contains only the strictly necessary functions and classes, and each of them is documented.
+  The public names are declared in ``__all__`` of the module.
+  Only names listed in ``__all__`` are part of the public API and appear in the API documentation.
+
+### Extending the public API
+When adding a name to the public API, import it in ``__init__.py``, add it to ``__all__`` and document it with a docstring.
+Functions must document each parameter with ``:param <name>:``.
+
+### Templated classes and functions
+C++ templates are bound once per instantiation and grouped in Python into a subscriptable family, e.g. ``stormpy.ExplicitQuantitativeCheckResult[float]``.
+- Classes are bound with ``bindTemplateClass`` (``src/template_binding.h``) and exposed as ``_TemplateClass`` (``lib/stormpy/_template.py``).
+- Functions whose template parameters cannot be deduced from their arguments (e.g. because the value type only occurs in the return type) are bound with ``bindTemplateFunction`` and exposed as ``_TemplateFunction``,
+  e.g. ``stormpy.developer.build_sparse_model[stormpy.Rational](program, formulas)``.
+  Do not encode the template parameters in the function name.
+- Public Python functions with a template parameter, e.g. ``stormpy.build_model[stormpy.Rational](program)``, are defined with the decorator ``_template_function`` (``lib/stormpy/_template.py``).
+  The decorated function takes the template parameters as leading arguments, and one instantiation is created per supported parameter.
+
+The families of the bindings are defined in the ``__init__.py`` of the developer module.
+A deduction guide (e.g. ``_deduce_default(float)``) determines the instantiation used when the family is called without subscript.
+
+### Tests of the public APIs
+The generic checks of all public APIs are given in ``tests/test_public_apis.py``.
+For each registered module, they check that
+- all names in ``__all__`` exist and are unique,
+- ``__all__`` contains no private names (starting with ``_``) and no modules (such as ``developer``),
+- every public function has a docstring documenting all of its parameters,
+- every public class (and every instantiation of a templated class) has a docstring.
+
+The modules are registered in ``_PUBLIC_MODULES`` at the top of the file.
+When converting a further library into the public/developer structure, add one entry consisting of
+- the module name, e.g. ``"stormpy.pars"``,
+- whether the module is available in the current build, e.g. ``has_pars`` from ``tests/configurations.py``,
+- a predicate for names which are documented in other modules and are therefore skipped by the docstring checks.
+
+Tests which are specific to one module, e.g. names which were removed from the public API or the availability of developer bindings,
+belong to the tests of that module, e.g. ``tests/core/test_api.py``.
+
+
 ## Coding conventions
 ### Formatting
 - Code should be formatted according to the given rules set by [black](https://black.readthedocs.io) (for Python).

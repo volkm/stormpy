@@ -5,10 +5,13 @@
 #include <storm/adapters/RationalNumberAdapter.h>
 #include <storm/utility/constants.h>
 
+namespace stormpy {
+
 // Bindings that return a representative value of each Storm C++ ValueType back to Python.
 // These are used to check that Storm's C++ ValueTypes match stormpy's Python types.
 void define_value_types(py::module& m) {
     m.attr("DdType") = py::module::import("stormpy.storage._storage").attr("DdType");
+
     m.def("_valuetype_double", []() { return storm::utility::one<double>(); }, "Representative value of C++ type 'double'");
     m.def(
         "_valuetype_rationalnumber", []() { return storm::utility::one<storm::RationalNumber>(); }, "Representative value of C++ type 'storm::RationalNumber'");
@@ -32,3 +35,5 @@ void define_value_types(py::module& m) {
         "Representative value of C++ type 'storm::ClnRationalNumber'");
 #endif
 }
+
+}  // namespace stormpy

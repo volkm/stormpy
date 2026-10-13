@@ -1,71 +1,16 @@
-from ._config import *
+"""Python bindings for the probabilistic model checker Storm.
 
-from . import _core
-from ._core import *
-from . import storage
-from .storage import *
-from .logic import *
+This module provides the public API for the core functionality of Storm:
+parsing symbolic models and properties, building models, model checking and transforming models.
+"""
+
+# Value types (needed by the native modules and therefore imported first)
+from ._config import Interval, Polynomial, Rational, RationalFunction, RationalFunctionCoefficient, RationalInterval, RawPolynomial
+
+from . import developer
 from . import exceptions
-
-from ._template import (
-    _TemplateClass,
-    _TemplateParameter,
-    _deduce_default,
-    _deduce_from_object,
-)
-
-# src/core/core.cpp
-ExplicitModelBuilderOptions = _TemplateClass("stormpy.ExplicitModelBuilderOptions", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-ExplicitModelBuilder = _TemplateClass("stormpy.ExplicitModelBuilder", _core, parameters=("ValueType",))
-ActionMask = _TemplateClass("stormpy.ActionMask", _core, parameters=("ValueType",))
-StateValuationFunctionActionMask = _TemplateClass("stormpy.StateValuationFunctionActionMask", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-
-# src/core/modelchecking.cpp
-CheckTask = _TemplateClass("stormpy.CheckTask", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-ExplicitModelCheckerHint = _TemplateClass("stormpy.ExplicitModelCheckerHint", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-
-# src/core/result.cpp
-ExplicitQualitativeCheckResult = _TemplateClass("stormpy.ExplicitQualitativeCheckResult", _core, parameters=("ValueType",))
-SymbolicQualitativeCheckResult = _TemplateClass("stormpy.SymbolicQualitativeCheckResult", _core, parameters=(_TemplateParameter("DdType", kind="value"),))
-QuantitativeCheckResult = _TemplateClass("stormpy.QuantitativeCheckResult", _core, parameters=("ValueType",))
-ExplicitQuantitativeCheckResult = _TemplateClass("stormpy.ExplicitQuantitativeCheckResult", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-SymbolicQuantitativeCheckResult = _TemplateClass(
-    "stormpy.SymbolicQuantitativeCheckResult", _core, parameters=(_TemplateParameter("DdType", kind="value"), "ValueType")
-)
-HybridQuantitativeCheckResult = _TemplateClass(
-    "stormpy.HybridQuantitativeCheckResult", _core, parameters=(_TemplateParameter("DdType", kind="value"), "ValueType")
-)
-ParetoCurveCheckResult = _TemplateClass("stormpy.ParetoCurveCheckResult", _core, parameters=("ValueType",))
-ExplicitParetoCurveCheckResult = _TemplateClass("stormpy.ExplicitParetoCurveCheckResult", _core, parameters=("ValueType",))
-
-# src/core/simulator.cpp
-DiscreteTimeSparseModelSimulator = _TemplateClass(
-    "stormpy.DiscreteTimeSparseModelSimulator", _core, parameters=("ValueType",), deduce=_deduce_from_object(storage.parameters_of_model, keyword="model")
-)
-DiscreteTimePrismProgramSimulator = _TemplateClass("stormpy.DiscreteTimePrismProgramSimulator", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-
-# src/core/multiobjective.cpp
-WeightedObjectiveMdpModelChecker = _TemplateClass("stormpy.WeightedObjectiveMdpModelChecker", _core, parameters=("ValueType",))
-
-# src/core/transformation.cpp
-SubsystemBuilderReturnType = _TemplateClass("stormpy.SubsystemBuilderReturnType", _core, parameters=("ValueType",))
-EndComponentEliminatorReturnType = _TemplateClass("stormpy.EndComponentEliminatorReturnType", _core, parameters=("ValueType",))
-AddUncertainty = _TemplateClass(
-    "stormpy.AddUncertainty", _core, parameters=("ValueType",), deduce=_deduce_from_object(storage.parameters_of_model, keyword="model")
-)
-
-# src/core/analysis.cpp
-ConstraintCollector = _TemplateClass(
-    "stormpy.ConstraintCollector", _core, parameters=("ValueType",), deduce=_deduce_from_object(storage.parameters_of_model, keyword="model")
-)
-
-# src/core/counterexample.cpp
-SMTCounterExampleGeneratorStats = _TemplateClass("stormpy.SMTCounterExampleGeneratorStats", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-SMTCounterExampleGeneratorOptions = _TemplateClass("stormpy.SMTCounterExampleGeneratorOptions", _core, parameters=("ValueType",), deduce=_deduce_default(float))
-SMTCounterExampleGenerator = _TemplateClass("stormpy.SMTCounterExampleGenerator", _core, parameters=("ValueType",))
-SMTCounterExampleInput = _TemplateClass("stormpy.SMTCounterExampleInput", _core, parameters=("ValueType",))
-
-from enum import Enum
+from . import logic
+from . import storage
 
 try:
     from ._version import __version__
@@ -73,739 +18,188 @@ except ImportError:
     # We're running in a tree that doesn't have a _version.py, so we don't know what our version is.
     __version__ = "unknown"
 
-_core._set_up("")
-
-
-class _ValueType(Enum):
-    """
-    Value type for models.
-    """
-
-    DOUBLE = 1
-    EXACT = 2
-    PARAMETRIC = 3
-    INTERVAL = 4
-    EXACT_INTERVAL = 5
-
-
-def _convert_sparse_model(model, value_type=_ValueType.DOUBLE):
-    """
-    Convert (parametric) model in sparse representation into model corresponding to exact model type.
-    :param model: Sparse model.
-    :param parametric: Flag indicating if the model is parametric.
-    :return: Model corresponding to exact model type.
-    """
-    match value_type:
-        case _ValueType.DOUBLE:
-            assert not model.supports_parameters
-            assert not model.supports_uncertainty
-            if model.model_type == ModelType.DTMC:
-                return model._as_sparse_dtmc()
-            elif model.model_type == ModelType.MDP:
-                return model._as_sparse_mdp()
-            elif model.model_type == ModelType.POMDP:
-                return model._as_sparse_pomdp()
-            elif model.model_type == ModelType.CTMC:
-                return model._as_sparse_ctmc()
-            elif model.model_type == ModelType.MA:
-                return model._as_sparse_ma()
-            elif model.model_type == ModelType.SMG:
-                return model._as_sparse_smg()
-            else:
-                raise stormpy.exceptions.StormError("Not supported non-parametric model constructed")
-        case _ValueType.EXACT:
-            assert not model.supports_parameters
-            assert not model.supports_uncertainty
-            if model.model_type == ModelType.DTMC:
-                return model._as_sparse_exact_dtmc()
-            elif model.model_type == ModelType.MDP:
-                return model._as_sparse_exact_mdp()
-            elif model.model_type == ModelType.POMDP:
-                return model._as_sparse_exact_pomdp()
-            elif model.model_type == ModelType.CTMC:
-                return model._as_sparse_exact_ctmc()
-            elif model.model_type == ModelType.MA:
-                return model._as_sparse_exact_ma()
-            elif model.model_type == ModelType.SMG:
-                return model._as_sparse_exact_smg()
-            else:
-                raise stormpy.exceptions.StormError("Not supported non-parametric model constructed")
-        case _ValueType.PARAMETRIC:
-            assert model.supports_parameters
-            if model.model_type == ModelType.DTMC:
-                return model._as_sparse_pdtmc()
-            elif model.model_type == ModelType.MDP:
-                return model._as_sparse_pmdp()
-            elif model.model_type == ModelType.POMDP:
-                return model._as_sparse_ppomdp()
-            elif model.model_type == ModelType.CTMC:
-                return model._as_sparse_pctmc()
-            elif model.model_type == ModelType.MA:
-                return model._as_sparse_pma()
-            elif model.model_type == ModelType.SMG:
-                return model._as_sparse_psmg()
-            else:
-                raise stormpy.exceptions.StormError("Not supported parametric model constructed")
-        case _ValueType.INTERVAL:
-            assert model.supports_uncertainty
-            if model.model_type == ModelType.DTMC:
-                return model._as_sparse_idtmc()
-            elif model.model_type == ModelType.MDP:
-                return model._as_sparse_imdp()
-            elif model.model_type == ModelType.POMDP:
-                return model._as_sparse_ipomdp()
-            elif model.model_type == ModelType.CTMC:
-                return model._as_sparse_ictmc()
-            elif model.model_type == ModelType.MA:
-                return model._as_sparse_ima()
-            elif model.model_type == ModelType.SMG:
-                return model._as_sparse_ismg()
-            else:
-                raise stormpy.exceptions.StormError("Not supported interval model constructed")
-        case _ValueType.EXACT_INTERVAL:
-            assert model.supports_uncertainty and model.is_exact
-            if model.model_type == ModelType.DTMC:
-                return model._as_sparse_exact_idtmc()
-            elif model.model_type == ModelType.MDP:
-                return model._as_sparse_exact_imdp()
-            elif model.model_type == ModelType.POMDP:
-                return model._as_sparse_exact_ipomdp()
-            elif model.model_type == ModelType.CTMC:
-                return model._as_sparse_exact_ictmc()
-            elif model.model_type == ModelType.MA:
-                return model._as_sparse_exact_ima()
-            elif model.model_type == ModelType.SMG:
-                return model._as_sparse_exact_ismg()
-            else:
-                raise stormpy.exceptions.StormError("Not supported exact interval model constructed")
-        case _:
-            raise stormpy.exceptions.StormError("Not supported model type constructed")
-
-
-def _convert_symbolic_model(model, parametric=False):
-    """
-    Convert (parametric) model in symbolic representation into model corresponding to exact model type.
-    :param model: Symbolic model.
-    :param parametric: Flag indicating if the model is parametric.
-    :return: Model corresponding to exact model type.
-    """
-    if parametric:
-        assert model.supports_parameters
-        if model.model_type == ModelType.DTMC:
-            return model._as_symbolic_pdtmc()
-        elif model.model_type == ModelType.MDP:
-            return model._as_symbolic_pmdp()
-        elif model.model_type == ModelType.CTMC:
-            return model._as_symbolic_pctmc()
-        elif model.model_type == ModelType.MA:
-            return model._as_symbolic_pma()
-        else:
-            raise stormpy.exceptions.StormError("Not supported parametric model constructed")
-    else:
-        assert not model.supports_parameters
-        if model.model_type == ModelType.DTMC:
-            return model._as_symbolic_dtmc()
-        elif model.model_type == ModelType.MDP:
-            return model._as_symbolic_mdp()
-        elif model.model_type == ModelType.CTMC:
-            return model._as_symbolic_ctmc()
-        elif model.model_type == ModelType.MA:
-            return model._as_symbolic_ma()
-        else:
-            raise stormpy.exceptions.StormError("Not supported non-parametric model constructed")
-
-
-def build_model(symbolic_description, properties=None):
-    """
-    Build a model in sparse representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Model in sparse representation.
-    """
-    return build_sparse_model(symbolic_description, properties=properties)
-
-
-def build_parametric_model(symbolic_description, properties=None):
-    """
-    Build a parametric model in sparse representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Parametric model in sparse representation.
-    """
-    return build_sparse_parametric_model(symbolic_description, properties=properties)
-
-
-def build_sparse_model(symbolic_description, properties=None):
-    """
-    Build a model in sparse representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Model in sparse representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-        intermediate = _core._build_sparse_model_from_symbolic_description(symbolic_description, formulae)
-    else:
-        intermediate = _core._build_sparse_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.DOUBLE)
-
-
-def build_sparse_exact_model(symbolic_description, properties=None):
-    """
-    Build a model in sparse exact representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Model in sparse exact representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-        intermediate = _core._build_sparse_exact_model_from_symbolic_description(symbolic_description, formulae)
-    else:
-        intermediate = _core._build_sparse_exact_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.EXACT)
-
-
-def build_sparse_parametric_model(symbolic_description, properties=None):
-    """
-    Build a parametric model in sparse representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Parametric model in sparse representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-        intermediate = _core._build_sparse_parametric_model_from_symbolic_description(symbolic_description, formulae)
-    else:
-        intermediate = _core._build_sparse_parametric_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.PARAMETRIC)
-
-
-def build_sparse_interval_model(symbolic_description, properties=None):
-    """
-    Build an interval model in sparse representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Interval model in sparse representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-        intermediate = _core._build_sparse_interval_model_from_symbolic_description(symbolic_description, formulae)
-    else:
-        intermediate = _core._build_sparse_interval_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.INTERVAL)
-
-
-def build_sparse_exact_interval_model(symbolic_description, properties=None):
-    """
-    Build an exact interval model in sparse representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :return: Exact interval model in sparse representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-        intermediate = _core._build_sparse_exact_interval_model_from_symbolic_description(symbolic_description, formulae)
-    else:
-        intermediate = _core._build_sparse_exact_interval_model_from_symbolic_description(symbolic_description)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.EXACT_INTERVAL)
-
-
-def build_symbolic_model(symbolic_description, properties=None, environment=Environment()):
-    """
-    Build a model in symbolic representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :param environment: Environment configuring Dd libraries.
-    :return: Model in symbolic representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    formulae = []
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-    intermediate = _core._build_symbolic_model_from_symbolic_description(symbolic_description, formulae, environment)
-    return _convert_symbolic_model(intermediate, parametric=False)
-
-
-def build_symbolic_parametric_model(symbolic_description, properties=None, environment=Environment()):
-    """
-    Build a parametric model in symbolic representation from a symbolic description.
-
-    :param symbolic_description: Symbolic model description to translate into a model.
-    :param List[Property] properties: List of properties that should be preserved during the translation. If None, then all properties are preserved.
-    :param environment: Environment configuring Dd libraries.
-    :return: Parametric model in symbolic representation.
-    """
-    if not symbolic_description.undefined_constants_are_graph_preserving:
-        raise stormpy.exceptions.StormError("Program still contains undefined constants")
-
-    formulae = []
-    if properties:
-        formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-    intermediate = _core._build_symbolic_parametric_model_from_symbolic_description(symbolic_description, formulae, environment)
-    return _convert_symbolic_model(intermediate, parametric=True)
-
-
-def build_model_from_drn(file, options=DirectEncodingParserOptions()):
-    """
-    Build a model in sparse representation from the explicit DRN representation.
-
-    :param String file: DRN file containing the model.
-    :param DirectEncodingParserOptions: Options for the parser.
-    :return: Model in sparse representation.
-    """
-    intermediate = _core._build_sparse_model_from_drn(file, options)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.DOUBLE)
-
-
-def build_parametric_model_from_drn(file, options=DirectEncodingParserOptions()):
-    """
-    Build a parametric model in sparse representation from the explicit DRN representation.
-
-    :param String file: DRN file containing the model.
-    :param DirectEncodingParserOptions: Options for the parser.
-    :return: Parametric model in sparse representation.
-    """
-    intermediate = _core._build_sparse_parametric_model_from_drn(file, options)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.PARAMETRIC)
-
-
-def build_interval_model_from_drn(file, options=DirectEncodingParserOptions()):
-    """
-    Build an interval model in sparse representation from the explicit DRN representation.
-
-    :param String file: DRN file containing the model.
-    :param DirectEncodingParserOptions: Options for the parser.
-    :return: Interval model in sparse representation.
-    """
-    intermediate = _core._build_sparse_interval_model_from_drn(file, options)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.INTERVAL)
-
-
-def build_exact_interval_model_from_drn(file, options=DirectEncodingParserOptions()):
-    """
-    Build an exact interval model in sparse representation from the explicit DRN representation.
-
-    :param String file: DRN file containing the model.
-    :param DirectEncodingParserOptions: Options for the parser.
-    :return: Exact Interval model in sparse representation.
-    """
-    intermediate = _core._build_sparse_exact_interval_model_from_drn(file, options)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.EXACT_INTERVAL)
-
-
-def perform_bisimulation(model, properties, options=None):
-    """
-    Perform bisimulation on model.
-    :param model: Model.
-    :param properties: Properties to preserve during bisimulation.
-    :param options: Options for bisimulation. Defaults to BisimulationOptions() if None.
-    :return: Model after bisimulation.
-    """
-    return perform_sparse_bisimulation(model, properties, options)
-
-
-def perform_sparse_bisimulation(model, properties, options=None):
-    """
-    Perform bisimulation on model in sparse representation.
-    :param model: Model.
-    :param properties: Properties to preserve during bisimulation.
-    :param options: Options for bisimulation. Defaults to BisimulationOptions() if None.
-    :return: Model after bisimulation.
-    """
-    if options is None:
-        options = stormpy.BisimulationOptions()
-    formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-    return _core._perform_bisimulation(model, formulae, options)
-
-
-def perform_symbolic_bisimulation(model, properties, quotient_format=stormpy.QuotientFormat.DD, bisimulation_options=None):
-    """
-    Perform bisimulation on model in symbolic representation.
-    :param model: Model.
-    :param properties: Properties to preserve during bisimulation.
-    :param quotient_format: Return format of quotient.
-    :param bisimulation_options: Additional options for symbolic bisimulation. Defaults to BisimulationOptionsDd() if None.
-    :return: Model after bisimulation.
-    """
-    if bisimulation_options is None:
-        bisimulation_options = stormpy.BisimulationOptionsDd()
-    formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-    bisimulation_type = BisimulationType.STRONG
-    return _core._perform_symbolic_bisimulation(model, formulae, bisimulation_type, quotient_format, bisimulation_options)
-
-
-def model_checking(model, property, only_initial_states=False, extract_scheduler=False, force_fully_observable=False, environment=Environment()):
-    """
-    Perform model checking on model for property.
-    :param model: Model.
-    :param property: Property to check for.
-    :param only_initial_states: If True, only results for initial states are computed, otherwise for all states.
-    :param extract_scheduler: If True, try to extract a scheduler
-    :return: Model checking result.
-    :rtype: CheckResult
-    """
-    if model.is_sparse_model:
-        return check_model_sparse(
-            model,
-            property,
-            only_initial_states=only_initial_states,
-            extract_scheduler=extract_scheduler,
-            force_fully_observable=force_fully_observable,
-            environment=environment,
-        )
-    else:
-        assert model.is_symbolic_model
-        if extract_scheduler:
-            raise stormpy.exceptions.StormError("Model checking based on dd engine does not support extracting schedulers right now.")
-        return check_model_dd(model, property, only_initial_states=only_initial_states, environment=environment)
-
-
-def check_model_sparse(model, property, only_initial_states=False, extract_scheduler=False, force_fully_observable=False, hint=None, environment=Environment()):
-    """
-    Perform model checking on model for property.
-    :param model: Model.
-    :param property: Property to check for.
-    :param only_initial_states: If True, only results for initial states are computed, otherwise for all states.
-    :param extract_scheduler: If True, try to extract a scheduler
-    :param hint: If not None, this hint is used by the model checker
-    :param force_fully_observable: If True, treat a POMDP as an MDP
-    :return: Model checking result.
-    :rtype: CheckResult
-    """
-    formula = property.raw_formula if isinstance(property, Property) else property
-    if model.is_partially_observable:
-        if not force_fully_observable:
-            raise RuntimeError("Model checking of partially observable models is handled via dedicated methods, unless the force fully-observable is set.")
-        if model.supports_parameters:
-            raise NotImplementedError("Model checking of partially observable models is not supported for parametric models.")
-        if model.supports_uncertainty:
-            raise NotImplementedError("Model checking of partially observable models is not supported for interval models.")
-    elif model.supports_uncertainty:
-        raise NotImplementedError("Model checking of interval models is handled via dedicated methods.")
-    elif formula.is_multi_objective_formula and not model.supports_parameters:
-        return _core._multi_objective_model_checking(model, formula, environment=environment)
-    task = CheckTask[storage.parameters_of_model(model)](formula, only_initial_states)
-    task.set_produce_schedulers(extract_scheduler)
-    if hint:
-        task.set_hint(hint)
-    if model.is_partially_observable:
-        return _core._model_checking_fully_observable(model, task, environment=environment)
-    return _core._model_checking_sparse_engine(model, task, environment=environment)
-
-
-def check_model_dd(model, property, only_initial_states=False, environment=Environment()):
-    """
-    Perform model checking using dd engine.
-    :param model: Model.
-    :param property: Property to check for.
-    :param only_initial_states: If True, only results for initial states are computed, otherwise for all states.
-    :return: Model checking result.
-    :rtype: CheckResult
-    """
-    formula = property.raw_formula if isinstance(property, Property) else property
-    value_type = RationalFunction if model.supports_parameters else (Rational if model.is_exact else float)
-    task = CheckTask[value_type](formula, only_initial_states)
-    return _core._model_checking_dd_engine(model, task, environment=environment)
-
-
-def check_model_hybrid(model, property, only_initial_states=False, environment=Environment()):
-    """
-    Perform model checking using hybrid engine.
-    :param model: Model.
-    :param property: Property to check for.
-    :param only_initial_states: If True, only results for initial states are computed, otherwise for all states.
-    :return: Model checking result.
-    :rtype: CheckResult
-    """
-    formula = property.raw_formula if isinstance(property, Property) else property
-    value_type = RationalFunction if model.supports_parameters else (Rational if model.is_exact else float)
-    task = CheckTask[value_type](formula, only_initial_states)
-    return _core._model_checking_hybrid_engine(model, task, environment=environment)
-
-
-def set_state_valuations(model, new_state_valuations):
-    """
-    Creates a copy of the model with the new state valuations.
-    """
-    if model.model_type not in [stormpy.ModelType.MDP, stormpy.ModelType.DTMC]:
-        raise RuntimeError(f"Only MDPs/DTMCs are currently supported, got {model.model_type}")
-
-    components = stormpy.SparseModelComponents(
-        transition_matrix=model.transition_matrix, state_labeling=model.labeling, reward_models=model.reward_models, rate_transitions=False
-    )
-    components.state_valuations = new_state_valuations
-    if model.has_choice_labeling():
-        components.choice_labeling = model.choice_labeling
-    if model.has_choice_origins():
-        components.choice_origins = model.choice_origins
-
-    return type(model)(components)
-
-
-def transform_to_sparse_model(model):
-    """
-    Transform model in symbolic representation into model in sparse representation.
-    :param model: Symbolic model.
-    :return: Sparse model.
-    """
-    return _core._transform_to_sparse_model(model)
-
-
-def transform_to_discrete_time_model(model, properties):
-    """
-    Transform continuous-time model to discrete time model.
-    :param model: Continuous-time model.
-    :param properties: List of properties to transform as well.
-    :return: Tuple (Discrete-time model, converted properties).
-    """
-    formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-    return _core._transform_to_discrete_time_model(model, formulae)
-
-
-def eliminate_non_markovian_chains(ma, properties, label_behavior):
-    """
-    Eliminate chains of non-Markovian states if possible.
-    :param ma: Markov automaton.
-    :param properties: List of properties to transform as well.
-    :param label_behavior: Behavior of labels while elimination.
-    :return: Tuple (converted MA, converted properties).
-    """
-    formulae = [(prop.raw_formula if isinstance(prop, Property) else prop) for prop in properties]
-    return _core._eliminate_non_markovian_chains(ma, formulae, label_behavior)
-
-
-def prob01min_states(model, eventually_formula):
-    assert type(eventually_formula) == logic.EventuallyFormula
-    labelform = eventually_formula.subformula
-    labelprop = _core.Property("label-prop", labelform)
-    phiStates = BitVector(model.nr_states, True)
-    psiStates = model_checking(model, labelprop).get_truth_values()
-    return compute_prob01min_states(model, phiStates, psiStates)
-
-
-def prob01max_states(model, eventually_formula):
-    assert type(eventually_formula) == logic.EventuallyFormula
-    labelform = eventually_formula.subformula
-    labelprop = _core.Property("label-prop", labelform)
-    phiStates = BitVector(model.nr_states, True)
-    psiStates = model_checking(model, labelprop).get_truth_values()
-    return compute_prob01max_states(model, phiStates, psiStates)
-
-
-def compute_prob01_states(model, phi_states, psi_states):
-    """
-    Compute prob01 states for properties of the form phi_states until psi_states
-
-    :param SparseDTMC model:
-    :param BitVector phi_states:
-    :param BitVector psi_states: Target states
-    """
-    if model.model_type != ModelType.DTMC:
-        raise stormpy.exceptions.StormError("Prob 01 is only defined for DTMCs -- model must be a DTMC")
-
-    return _core._compute_prob01states(model, phi_states, psi_states)
-
-
-def compute_prob01min_states(model, phi_states, psi_states):
-    if model.model_type == ModelType.DTMC:
-        return compute_prob01_states(model, phi_states, psi_states)
-    return _core._compute_prob01states_min(model, phi_states, psi_states)
-
-
-def compute_prob01max_states(model, phi_states, psi_states):
-    if model.model_type == ModelType.DTMC:
-        return compute_prob01_states(model, phi_states, psi_states)
-    return _core._compute_prob01states_max(model, phi_states, psi_states)
-
-
-def topological_sort(model, forward=True, initial=[]):
-    """
-
-    :param model: A sparse model
-    :param forward: A flag whether the sorting should be forward or backwards
-    :param initial: a list of states
-    :return: A topological sort of the states
-    """
-    if not model.is_sparse_model:
-        raise NotImplementedError("Topological sorting is only supported for sparse models.")
-    matrix = model.transition_matrix if forward else model.backward_transition_matrix
-    return storage._storage._topological_sort(matrix, initial)
-
-
-def get_reachable_states(model, initial_states, constraint_states, target_states, maximal_steps=None, choice_filter=None):
-    """
-    Get the states that are reachable in a sparse model
-
-    :param model: A model
-    :param initial_states: Which states should be definitively reachable
-    :param constraint_states:
-    :param target_states: Which states should be considered absorbing
-    :param maximal_steps: The maximal depth to explore
-    :param choice_filter:
-    :return:
-    """
-    return _core._get_reachable_states(model, initial_states, constraint_states, target_states, maximal_steps, choice_filter)
-
-
-def compute_expected_number_of_visits(environment, model):
-    """
-    Compute the number of expected visits. Model must be deterministic.
-
-    :param environment: An model checking environment
-    :param model: A DTMC or CTMC
-    :return: A vector with the expected number of visits
-    """
-    if model.supports_parameters:
-        raise NotImplementedError("Expected number of visits is not implemented for parametric models")
-    return _core._compute_expected_number_of_visits(environment, model)
-
-
-def compute_steady_state_distribution(environment, model):
-    """
-    Compute the steady-state (aka stationary) distribution. Model must be deterministic.
-
-    :param environment: A model checking environment
-    :param model: A DTMC or CTMC
-    :return: A vector with the steady-state distribution
-    """
-    if model.supports_parameters:
-        raise NotImplementedError("Steady-state distribution is not implemented for parametric models")
-    return _core._compute_steady_state_distribution(environment, model)
-
-
-def construct_submodel(model, states, actions, keep_unreachable_states=True, options=SubsystemBuilderOptions()):
-    """
-
-    :param model: The model
-    :param states: Which states should be preserved
-    :param actions: Which actions should be preserved
-    :param keep_unreachable_states: If False, run a reachability analysis.
-    :param options: An options object of type SubsystemBuilderOptions
-    :return: A model with fewer states/actions
-    """
-    return _core._construct_subsystem(model, states, actions, keep_unreachable_states, options)
-
-
-def make_weighted_objective_mdp_model_checker(environment, model, formula, compute_scheduler):
-    """
-
-    :param environment: The environment to configure the model checker
-    :param model: The model that will be evaluated. Can be exact or double.
-    :param formula: The (multiobjective) formula
-    :param compute_scheduler: Whether to produce a scheduler
-    :return: A tuple of a model checker and a mapping that allows mapping the scheduler back to the model as passed into the system as a postprocessing step.
-    """
-    if model.supports_parameters or model.supports_uncertainty:
-        raise ValueError("Parameters and intervals are not supported.")
-    return _core._make_weighted_objective_mdp_model_checker(environment, model, formula, compute_scheduler)
-
-
-def eliminate_ECs(matrix, subsystem, possible_ecs, add_sink_row_states, add_self_loop_at_sink_states=False):
-    """
-    For each such EC (that is not contained in another EC), we add a new state and redirect all incoming and outgoing
-             transitions of the EC to (and from) this state.
-
-    :param matrix:
-    :param subsystem: BitVector with states many entries. Only states in the given subsystem are kept. Transitions leading to a state outside of the subsystem will be
-             removed (but the corresponding row is kept, possibly yielding empty rows).
-             The ECs are then identified on the subsystem.
-    :param possible_ecs: BitVector with rows many entries. Only ECs for which possible_ecs is true for all choices are considered.
-             Furthermore, the rows that contain a transition leading outside of the subsystem are not considered for an EC.
-    :param add_sink_row_states: BitVector with states many entries. If add_sink_row_states is true for at least one state of an eliminated EC, a row is added to the new state (representing the choice to stay at the EC forever).
-    :param add_self_loop_at_sink_states: if true, such rows get a selfloop (with value 1). Otherwise, the row remains empty.
-    :return: A container with various information.
-    """
-    assert matrix.nr_columns == subsystem.size(), "subsystem vector should have an entry for every state."
-    assert matrix.nr_rows == possible_ecs.size(), "possible_ecs vector should have an entry for every row."
-    assert matrix.nr_columns == add_sink_row_states.size(), "add_sink_row_states vector should have an entry for every state."
-    return _core._eliminate_end_components(matrix, subsystem, possible_ecs, add_sink_row_states, add_self_loop_at_sink_states)
-
-
-def parse_properties(properties, context=None, filters=None):
-    """
-
-    :param properties: A string with the pctl properties
-    :param context: A symbolic model that gives meaning to variables and constants.
-    :param filters: filters, if applicable.
-    :return: A list of properties
-    """
-    if context is None:
-        return _core.parse_properties_without_context(properties, filters)
-    elif type(context) == _core.SymbolicModelDescription:
-        if context.is_prism_program:
-            return _core.parse_properties_for_prism_program(properties, context.as_prism_program(), filters)
-        else:
-            return _core.parse_properties_for_jani_program(properties, context.as_jani_model(), filters)
-    elif type(context) == storage.PrismProgram:
-        return _core.parse_properties_for_prism_program(properties, context, filters)
-    elif type(context) == storage.JaniModel:
-        return _core.parse_properties_for_jani_model(properties, context, filters)
-    else:
-        raise stormpy.exceptions.StormError("Unclear context. Please pass a symbolic model description")
-
-
-def export_to_drn(model, file, options=DirectEncodingExporterOptions()):
-    """
-    Export a model to DRN format
-    :param model: The model
-    :param file: A path
-    :param options: DirectEncodingExporterOptions
-    :return:
-    """
-    return _core._export_to_drn(model, file, options)
-
-
-def export_to_umb(model, path, options=UmbExportOptions()):
-    """
-    Export a model to a UMB archive.
-
-    :param model: Sparse model to export.
-    :param path: Path to the output UMB archive.
-    :param options: UmbExportOptions controlling value type, compression, etc.
-    """
-    umb = sparse_model_to_umb(model, options)
-    umb_to_archive(umb, path, options)
-
-
-def build_from_umb(path, options=UmbImportOptions()):
-    """
-    Build a sparse model from a UMB archive.
-
-    :param path: Path to the UMB archive.
-    :param options: UmbImportOptions controlling value type and what to build.
-    :return: Sparse model in the concrete typed representation.
-    """
-    umb = import_umb(path, options)
-    intermediate = sparse_model_from_umb(umb, options)
-    if intermediate.is_exact and intermediate.supports_uncertainty:
-        return _convert_sparse_model(intermediate, value_type=_ValueType.EXACT_INTERVAL)
-    if intermediate.is_exact:
-        return _convert_sparse_model(intermediate, value_type=_ValueType.EXACT)
-    if intermediate.supports_uncertainty:
-        return _convert_sparse_model(intermediate, value_type=_ValueType.INTERVAL)
-    return _convert_sparse_model(intermediate, value_type=_ValueType.DOUBLE)
+developer._set_up("")
+
+# Re-export frequently used classes of stormpy.storage
+from .storage import (
+    BitVector,
+    DdType,
+    ModelType,
+    SparseCtmc,
+    SparseDtmc,
+    SparseMA,
+    SparseMdp,
+    SparsePomdp,
+    SparseSmg,
+    SymbolicCtmc,
+    SymbolicDtmc,
+    SymbolicMA,
+    SymbolicMdp,
+)
+
+# Import classes from developer (and republish templated classes under stormpy.X)
+Property = developer.Property
+SymbolicModelDescription = developer.SymbolicModelDescription
+JaniModelType = developer.JaniModelType
+
+DirectEncodingParserOptions = developer.DirectEncodingParserOptions
+ExplicitModelParserOptions = developer.ExplicitModelParserOptions
+DirectEncodingExporterOptions = developer.DirectEncodingExporterOptions
+
+Environment = developer.Environment
+EquationSolverType = developer.EquationSolverType
+NativeLinearEquationSolverMethod = developer.NativeLinearEquationSolverMethod
+MinMaxMethod = developer.MinMaxMethod
+MultiObjectiveMethod = developer.MultiObjectiveMethod
+SteadyStateDistributionAlgorithm = developer.SteadyStateDistributionAlgorithm
+PrecomputationType = developer.PrecomputationType
+NextStateHeuristic = developer.NextStateHeuristic
+OptimizationDirection = developer.OptimizationDirection
+UncertaintyResolutionMode = developer.UncertaintyResolutionMode
+ModelCheckerHint = developer.ModelCheckerHint
+ExplicitModelCheckerHint = developer.ExplicitModelCheckerHint.publish_as("stormpy.ExplicitModelCheckerHint")
+
+CheckResult = developer.CheckResult
+QualitativeCheckResult = developer.QualitativeCheckResult
+ExplicitQualitativeCheckResult = developer.ExplicitQualitativeCheckResult.publish_as("stormpy.ExplicitQualitativeCheckResult")
+ExplicitQuantitativeCheckResult = developer.ExplicitQuantitativeCheckResult.publish_as("stormpy.ExplicitQuantitativeCheckResult")
+SymbolicQualitativeCheckResult = developer.SymbolicQualitativeCheckResult.publish_as("stormpy.SymbolicQualitativeCheckResult")
+SymbolicQuantitativeCheckResult = developer.SymbolicQuantitativeCheckResult.publish_as("stormpy.SymbolicQuantitativeCheckResult")
+HybridQuantitativeCheckResult = developer.HybridQuantitativeCheckResult.publish_as("stormpy.HybridQuantitativeCheckResult")
+ExplicitParetoCurveCheckResult = developer.ExplicitParetoCurveCheckResult.publish_as("stormpy.ExplicitParetoCurveCheckResult")
+PcaaWeightVectorChecker = developer.PcaaWeightVectorChecker.publish_as("stormpy.PcaaWeightVectorChecker")
+
+BisimulationType = developer.BisimulationType
+BisimulationOptions = developer.BisimulationOptions
+StateLabelPreservation = developer.StateLabelPreservation
+QuotientFormat = developer.QuotientFormat
+EliminationLabelBehavior = developer.EliminationLabelBehavior
+SubsystemBuilderOptions = developer.SubsystemBuilderOptions
+SubsystemBuilderReturnType = developer.SubsystemBuilderReturnType.publish_as("stormpy.SubsystemBuilderReturnType")
+ConstraintCollector = developer.ConstraintCollector.publish_as("stormpy.ConstraintCollector")
+
+LogLevel = developer.LogLevel
+
+# Import public functions
+from .core._parsing import instantiate_constants, parse_jani_model, parse_jani_model_from_string, parse_prism_program, parse_properties
+from .core._building import BuilderOptions, build_model, build_model_from_drn, build_model_from_explicit, build_model_from_umb, build_symbolic_model
+from .core._modelchecking import Engine, create_filter, create_filter_initial_states, filter_initial_states, model_checking
+from .core._analysis import (
+    compute_prob01_states,
+    compute_expected_number_of_visits,
+    compute_steady_state_distribution,
+    create_weight_vector_checker,
+    topological_sort,
+)
+from .core._transformation import (
+    add_uncertainty,
+    build_submodel,
+    eliminate_non_markovian_chains,
+    perform_bisimulation,
+    set_state_valuations,
+    transform_to_discrete_time_model,
+    transform_to_sparse_model,
+)
+from .core._io import export_to_drn, export_to_umb
+from .core._settings import reset_timeout, set_log_level, set_timeout
+
+__all__ = [
+    # Value types
+    "Interval",
+    "Polynomial",
+    "Rational",
+    "RationalFunction",
+    "RationalFunctionCoefficient",
+    "RationalInterval",
+    "RawPolynomial",
+    # Re-exports from stormpy.storage
+    "BitVector",
+    "DdType",
+    "ModelType",
+    "SparseCtmc",
+    "SparseDtmc",
+    "SparseMA",
+    "SparseMdp",
+    "SparsePomdp",
+    "SparseSmg",
+    "SymbolicCtmc",
+    "SymbolicDtmc",
+    "SymbolicMA",
+    "SymbolicMdp",
+    # Parsing
+    "Property",
+    "SymbolicModelDescription",
+    "JaniModelType",
+    "parse_prism_program",
+    "parse_jani_model",
+    "parse_jani_model_from_string",
+    "parse_properties",
+    "instantiate_constants",
+    # Building
+    "BuilderOptions",
+    "DirectEncodingParserOptions",
+    "ExplicitModelParserOptions",
+    "build_model",
+    "build_symbolic_model",
+    "build_model_from_drn",
+    "build_model_from_explicit",
+    "build_model_from_umb",
+    # Model checking
+    "Engine",
+    "Environment",
+    "EquationSolverType",
+    "NativeLinearEquationSolverMethod",
+    "MinMaxMethod",
+    "MultiObjectiveMethod",
+    "SteadyStateDistributionAlgorithm",
+    "PrecomputationType",
+    "NextStateHeuristic",
+    "OptimizationDirection",
+    "UncertaintyResolutionMode",
+    "ModelCheckerHint",
+    "ExplicitModelCheckerHint",
+    "CheckResult",
+    "QualitativeCheckResult",
+    "ExplicitQualitativeCheckResult",
+    "ExplicitQuantitativeCheckResult",
+    "SymbolicQualitativeCheckResult",
+    "SymbolicQuantitativeCheckResult",
+    "HybridQuantitativeCheckResult",
+    "ExplicitParetoCurveCheckResult",
+    "model_checking",
+    "create_filter_initial_states",
+    "filter_initial_states",
+    "create_filter",
+    # Analysis
+    "PcaaWeightVectorChecker",
+    "ConstraintCollector",
+    "topological_sort",
+    "compute_prob01_states",
+    "compute_expected_number_of_visits",
+    "compute_steady_state_distribution",
+    "create_weight_vector_checker",
+    # Transformations
+    "BisimulationType",
+    "BisimulationOptions",
+    "StateLabelPreservation",
+    "QuotientFormat",
+    "EliminationLabelBehavior",
+    "SubsystemBuilderOptions",
+    "SubsystemBuilderReturnType",
+    "perform_bisimulation",
+    "transform_to_sparse_model",
+    "transform_to_discrete_time_model",
+    "eliminate_non_markovian_chains",
+    "build_submodel",
+    "add_uncertainty",
+    "set_state_valuations",
+    # Export
+    "DirectEncodingExporterOptions",
+    "export_to_drn",
+    "export_to_umb",
+    # Settings
+    "LogLevel",
+    "set_log_level",
+    "set_timeout",
+    "reset_timeout",
+]

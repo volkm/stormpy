@@ -51,7 +51,7 @@ print("DFT has {} BEs and {} dynamic elements.".format(dft.nr_basic_elements(), 
 
 [01-dfts.py](https://github.com/stormchecker/stormpy/blob/master/examples/dfts/01-dfts.py)
 
-The next step is to analyze the DFT via `analyze_dft(env, dft, formula)`.
+The next step is to analyze the DFT via `analyze_dft(dft, formulas, environment=env)`.
 Here we can use all standard properties as described in [Building properties](../getting_started.md#building-properties).
 In our example we compute the Mean-time-to-failure (MTTF):
 
@@ -59,7 +59,7 @@ In our example we compute the Mean-time-to-failure (MTTF):
 formula_str = 'T=? [ F "failed" ]'
 formulas = stormpy.parse_properties(formula_str)
 env = stormpy.dft.DftEnvironment()
-results = stormpy.dft.analyze_dft(env, dft, formulas)
+results = stormpy.dft.analyze_dft(dft, formulas, environment=env)
 result = results[0]
 print("MTTF: {:.2f}".format(result))
 ```

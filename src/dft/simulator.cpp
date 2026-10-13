@@ -6,6 +6,8 @@
 #include "src/binding_type_index.h"
 #include "src/helpers.h"
 
+namespace stormpy::dft {
+
 template<typename ValueType>
 using Simulator = storm::dft::simulator::DFTTraceSimulator<ValueType>;
 typedef storm::dft::storage::DFTStateGenerationInfo DFTStateInfo;
@@ -51,3 +53,5 @@ void define_simulator_typed(py::module& m) {
 
 template void define_simulator_typed<double>(py::module& m);
 template void define_simulator_typed<storm::RationalFunction>(py::module& m);
+
+}  // namespace stormpy::dft

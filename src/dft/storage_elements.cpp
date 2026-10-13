@@ -6,6 +6,8 @@
 #include "src/binding_type_index.h"
 #include "src/helpers.h"
 
+namespace stormpy::dft {
+
 template<typename ValueType>
 using DFTElement = storm::dft::storage::elements::DFTElement<ValueType>;
 template<typename ValueType>
@@ -54,3 +56,5 @@ void define_storage_elements_typed(py::module& m) {
 
 template void define_storage_elements_typed<double>(py::module& m);
 template void define_storage_elements_typed<storm::RationalFunction>(py::module& m);
+
+}  // namespace stormpy::dft

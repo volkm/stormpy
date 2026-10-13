@@ -20,14 +20,14 @@ class TestPLA:
     def test_pla(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P<=0.84 [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.has_parameters
         env = stormpy.Environment()
-        checker = stormpy.pars.create_region_checker(env, model, formulas[0].raw_formula)
+        checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)
@@ -43,14 +43,14 @@ class TestPLA:
     def test_pla_region_valuation(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P<=0.84 [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
         assert model.model_type == stormpy.ModelType.DTMC
         assert model.has_parameters
         env = stormpy.Environment()
-        checker = stormpy.pars.create_region_checker(env, model, formulas[0].raw_formula)
+        checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         for par in parameters:
@@ -79,29 +79,29 @@ class TestPLA:
     def test_pla_bounds(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P=? [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
         env = stormpy.Environment()
-        checker = stormpy.pars.create_region_checker(env, model, formulas[0].raw_formula)
+        checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)
         result = checker.get_bound(env, region, True)
         assert math.isclose(float(result), 0.8369631383670559, rel_tol=1e-6)
         result_vec = checker.get_bound_all_states(env, region, True)
-        result = result_vec.at(model.initial_states[0])
+        result = result_vec[model.initial_states[0]]
         assert math.isclose(result, 0.8369631383670559, rel_tol=1e-6)
 
     def test_pla_manual(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P=? [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
         env = stormpy.Environment()
         checker = stormpy.pars.DtmcParameterLiftingModelChecker()
-        checker.specify(env, model, formulas[0].raw_formula)
+        checker.specify(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)
@@ -111,12 +111,12 @@ class TestPLA:
     def test_pla_manual_no_simplification(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P=? [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
         env = stormpy.Environment()
         checker = stormpy.pars.DtmcParameterLiftingModelChecker()
-        checker.specify(env, model, formulas[0].raw_formula, allow_model_simplification=False)
+        checker.specify(env, model, formulas[0].get_raw_formula(), allow_model_simplification=False)
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)
@@ -126,31 +126,31 @@ class TestPLA:
     def test_pla_state_bounds(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P=? [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
         env = stormpy.Environment()
         checker = stormpy.pars.DtmcParameterLiftingModelChecker()
-        checker.specify(env, model, formulas[0].raw_formula, allow_model_simplification=False)
+        checker.specify(env, model, formulas[0].get_raw_formula(), allow_model_simplification=False)
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)
         result_vec = checker.get_bound_all_states(env, region, True)
-        assert len(result_vec.get_values()) == model.nr_states
-        assert math.isclose(result_vec.at(model.initial_states[0]), 0.836963056082918, rel_tol=1e-6)
+        assert len(result_vec.get_finite_value_vector()) == model.nr_states
+        assert math.isclose(result_vec[model.initial_states[0]], 0.836963056082918, rel_tol=1e-6)
 
     def test_compute_extremum(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         prop = "P=? [F s=5 ]"
-        formulas = stormpy.parse_properties_for_prism_program(prop, program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties(prop, program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
         env = stormpy.Environment()
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)
 
-        refinement_checker = stormpy.pars.create_region_refinement_checker(env, model, formulas[0].raw_formula)
+        refinement_checker = stormpy.pars.create_region_refinement_checker(env, model, formulas[0].get_raw_formula())
         precision = stormpy.RationalFunctionCoefficient(1e-6)
         value, point = refinement_checker.compute_extremum(env, region, stormpy.OptimizationDirection.MAXIMIZE, precision, False)
         assert isinstance(value, stormpy.RationalFunctionCoefficient)

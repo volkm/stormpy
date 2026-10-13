@@ -21,7 +21,7 @@ class TestStateLabeling:
 
     def test_label(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        formulas = stormpy.parse_properties_for_prism_program('P=? [ F "one" ]', program)
+        formulas = stormpy.parse_properties('P=? [ F "one" ]', program)
         model = stormpy.build_model(program, formulas)
         labeling = model.labeling
         labels = labeling.get_labels()
@@ -35,8 +35,8 @@ class TestStateLabeling:
 
     def test_label_parametric(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
-        formulas = stormpy.parse_properties_for_prism_program("P=? [ F s=5 ]", program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties("P=? [ F s=5 ]", program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         labels = model.labeling.get_labels()
         assert len(labels) == 3
         assert "init" in labels
@@ -52,10 +52,10 @@ class TestStateLabeling:
 class TestChoiceLabeling:
     def test_label(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "brp-16-2.pm"))
-        properties = stormpy.parse_properties_for_prism_program("P=? [ F s=5 ]", program)
-        options = stormpy.BuilderOptions([p.raw_formula for p in properties])
+        properties = stormpy.parse_properties("P=? [ F s=5 ]", program)
+        options = stormpy.BuilderOptions(properties)
         options.set_build_choice_labels(True)
-        model = stormpy.build_sparse_model_with_options(program, options)
+        model = stormpy.build_model(program, options=options)
         clabeling = model.choice_labeling
         clabels = clabeling.get_labels()
         assert len(clabels) == 7

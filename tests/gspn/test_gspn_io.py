@@ -31,7 +31,7 @@ class TestGSPNJani:
         jani_program = jani_builder.build()
 
         # Set properties
-        properties = stormpy.parse_properties_for_jani_model("P=? [F<=10 eating1=1]", jani_program)
+        properties = stormpy.parse_properties("P=? [F<=10 eating1=1]", jani_program)
 
         # Build model
         model = stormpy.build_model(jani_program, properties)
@@ -40,7 +40,7 @@ class TestGSPNJani:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, properties[0])
-        assert math.isclose(result.at(initial_state), 0.4372171069840004)
+        assert math.isclose(result[initial_state], 0.4372171069840004)
 
     @xml
     def test_standard_properties(self):
@@ -59,8 +59,7 @@ class TestGSPNJani:
         properties = jani_builder.create_deadlock_properties(jani_program)
 
         # Instantiate constants
-        jani_program, properties = stormpy.preprocess_symbolic_input(jani_program, properties, "TIME_BOUND=1")
-        jani_program = jani_program.as_jani_model()
+        jani_program, properties = stormpy.instantiate_constants(jani_program, "TIME_BOUND=1", properties)
 
         # Build model
         # Leads to incorrect result
@@ -71,8 +70,8 @@ class TestGSPNJani:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, properties[0])
-        assert math.isclose(result.at(initial_state), 1.0)
+        assert math.isclose(result[initial_state], 1.0)
         result = stormpy.model_checking(model, properties[1])
-        assert math.isclose(result.at(initial_state), 0.09123940783)
+        assert math.isclose(result[initial_state], 0.09123940783)
         result = stormpy.model_checking(model, properties[2])
-        assert math.isclose(result.at(initial_state), 5.445544554455446)
+        assert math.isclose(result[initial_state], 5.445544554455446)

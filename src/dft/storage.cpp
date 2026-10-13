@@ -14,6 +14,8 @@
 #include "src/binding_type_index.h"
 #include "src/helpers.h"
 
+namespace stormpy::dft {
+
 template<typename ValueType>
 using DFT = storm::dft::storage::DFT<ValueType>;
 template<typename ValueType>
@@ -22,10 +24,14 @@ typedef storm::dft::storage::FailableElements Failable;
 typedef storm::dft::storage::FailableElements::const_iterator FailableIter;
 using DftIndependentModule = storm::dft::storage::DftIndependentModule;
 
+namespace {
+
 // requires pycarl.Variable
 std::set<storm::RationalFunctionVariable> getParameters(DFT<storm::RationalFunction> const& dft) {
     return storm::dft::storage::getParameters(dft);
 }
+
+}  // namespace
 
 void define_dft(py::module& m) {
     m.def("get_parameters", &getParameters, "Collect parameters in parametric DFT", py::arg("dft"));
@@ -150,3 +156,5 @@ template void define_dft_typed<double>(py::module& m);
 template void define_dft_typed<storm::RationalFunction>(py::module& m);
 template void define_dft_state<double>(py::module& m);
 template void define_dft_state<storm::RationalFunction>(py::module& m);
+
+}  // namespace stormpy::dft

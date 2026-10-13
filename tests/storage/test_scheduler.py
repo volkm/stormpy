@@ -8,12 +8,9 @@ from configurations import spot
 class TestScheduler:
     def test_scheduler_mdp(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
-        formulas = stormpy.parse_properties_for_prism_program('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
-        options = stormpy.BuilderOptions(True, True)
-        options.set_build_state_valuations()
-        options.set_build_choice_labels()
-        options.set_build_with_choice_origins()
-        model = stormpy.build_sparse_model_with_options(program, options)
+        formulas = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
+        options = stormpy.BuilderOptions(build_full=True)
+        model = stormpy.build_model(program, options=options)
         assert model.nr_states == 272
         assert model.nr_transitions == 492
         assert model.nr_choices == 400
@@ -23,7 +20,7 @@ class TestScheduler:
 
         result = stormpy.model_checking(model, formulas[0], extract_scheduler=True)
         assert result.has_scheduler
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.memoryless
         assert scheduler.memory_size == 1
         assert scheduler.deterministic
@@ -41,13 +38,13 @@ class TestScheduler:
             assert str(distribution).startswith("{[1:")
 
     def test_scheduler_ma_via_mdp(self):
-        program = stormpy.parse_prism_program(get_example_path("ma", "simple.ma"), False, True)
-        formulas = stormpy.parse_properties_for_prism_program("Tmin=? [ F s=4 ]", program)
-        options = stormpy.BuilderOptions([f.raw_formula for f in formulas])
+        program = stormpy.parse_prism_program(get_example_path("ma", "simple.ma"))
+        formulas = stormpy.parse_properties("Tmin=? [ F s=4 ]", program)
+        options = stormpy.BuilderOptions(formulas)
         options.set_build_state_valuations()
         options.set_build_choice_labels()
-        options.set_build_with_choice_origins()
-        ma = stormpy.build_sparse_model_with_options(program, options)
+        options.set_build_choice_origins()
+        ma = stormpy.build_model(program, options=options)
         assert ma.nr_states == 5
         assert ma.nr_transitions == 8
         assert ma.model_type == stormpy.ModelType.MA
@@ -62,9 +59,9 @@ class TestScheduler:
         assert initial_state == 0
 
         result = stormpy.model_checking(mdp, mdp_formulas[0], extract_scheduler=True)
-        assert math.isclose(result.at(initial_state), 0.08333333333)
+        assert math.isclose(result[initial_state], 0.08333333333)
         assert result.has_scheduler
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.memoryless
         assert scheduler.memory_size == 1
         assert scheduler.deterministic
@@ -80,7 +77,7 @@ class TestScheduler:
 
     def test_apply_scheduler_mdp(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
-        formulas = stormpy.parse_properties_for_prism_program('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
+        formulas = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
         model = stormpy.build_model(program, formulas)
         assert model.nr_states == 272
         assert model.nr_transitions == 492
@@ -89,7 +86,7 @@ class TestScheduler:
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0], extract_scheduler=True)
         assert result.has_scheduler
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.memoryless
         assert scheduler.memory_size == 1
         assert scheduler.deterministic
@@ -104,11 +101,11 @@ class TestScheduler:
     @spot
     def test_apply_scheduler_mdp_ltl(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "slipgrid.nm"))
-        properties = stormpy.parse_properties_for_prism_program('Pmax=? [ GF "target" & GF "goal" ]', program)
+        properties = stormpy.parse_properties('Pmax=? [ GF "target" & GF "goal" ]', program)
         mdp = stormpy.build_model(program, properties)
         result = stormpy.model_checking(mdp, properties[0], extract_scheduler=True)
         assert result.has_scheduler
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.memory_size == 8
         assert scheduler.deterministic
         induced = mdp.apply_scheduler(scheduler)
@@ -116,20 +113,20 @@ class TestScheduler:
 
     def test_scheduler_to_str(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
-        formulas = stormpy.parse_properties_for_prism_program('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
+        formulas = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
         model = stormpy.build_model(program, formulas)
         result = stormpy.model_checking(model, formulas[0], extract_scheduler=True)
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         s = scheduler.to_str(model)
         assert isinstance(s, str)
         assert len(s) > 0
 
     def test_scheduler_get_memoryless_for_memory_state(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
-        formulas = stormpy.parse_properties_for_prism_program('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
+        formulas = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
         model = stormpy.build_model(program, formulas)
         result = stormpy.model_checking(model, formulas[0], extract_scheduler=True)
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.memoryless
         assert scheduler.memory_size == 1
         memoryless = scheduler.get_memoryless_scheduler_for_memory_state(0)
@@ -139,18 +136,18 @@ class TestScheduler:
 
     def test_scheduler_cast_to_exact_interval_datatype(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
-        formulas = stormpy.parse_properties_for_prism_program('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
+        formulas = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
         model = stormpy.build_model(program, formulas)
         result = stormpy.model_checking(model, formulas[0], extract_scheduler=True)
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.deterministic
         exact_interval_scheduler = scheduler.cast_to_exact_interval_datatype()
         assert exact_interval_scheduler.deterministic
         assert exact_interval_scheduler.memoryless
 
     def test_apply_scheduler_ma(self):
-        program = stormpy.parse_prism_program(get_example_path("ma", "simple.ma"), False, True)
-        formulas = stormpy.parse_properties_for_prism_program("Tmin=? [ F s=4 ]", program)
+        program = stormpy.parse_prism_program(get_example_path("ma", "simple.ma"))
+        formulas = stormpy.parse_properties("Tmin=? [ F s=4 ]", program)
         ma = stormpy.build_model(program, formulas)
         assert ma.nr_states == 5
         assert ma.nr_transitions == 8
@@ -159,9 +156,9 @@ class TestScheduler:
         assert initial_state == 0
 
         result = stormpy.model_checking(ma, formulas[0], extract_scheduler=True)
-        assert math.isclose(result.at(initial_state), 0.08333333333)
+        assert math.isclose(result[initial_state], 0.08333333333)
         assert result.has_scheduler
-        scheduler = result.scheduler
+        scheduler = result.get_scheduler()
         assert scheduler.memoryless
         assert scheduler.memory_size == 1
         assert scheduler.deterministic

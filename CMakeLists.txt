@@ -175,8 +175,8 @@ else()
     set(RELPOS_STRING "$ORIGIN")
 endif()
 set(CMAKE_INSTALL_RPATH
-    "${RELPOS_STRING}/lib"          # Root extensions, e.g. stormpy/_core.so
-    "${RELPOS_STRING}/../lib"       # Depth-one extensions, e.g. stormpy/info/_info.so
+    "${RELPOS_STRING}/lib"          # Root extensions
+    "${RELPOS_STRING}/../lib"       # Depth-one extensions, e.g. stormpy/developer/_core.so
     "${RELPOS_STRING}/../../lib"    # Depth-two extensions, e.g. stormpy/pycarl/cln/_cln.so
     "${RELPOS_STRING}/../../../lib" # Depth-three extensions, e.g. stormpy/pycarl/cln/formula/_formula.so
 )
@@ -338,7 +338,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/pycarl/definitions.h.in ${CMAKE_C
 # Build stormpy
 ######
 # Build stormpy modules
-stormpy_module(core "." "${storm-counterexamples_INCLUDE_DIR}" storm-counterexamples)
+stormpy_module(core "developer" "${storm-counterexamples_INCLUDE_DIR}" storm-counterexamples)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/core_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_config.py @ONLY)
 stormpy_module(info info "${storm-version-info_INCLUDE_DIR}" storm-version-info)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/info_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/info/_config.py @ONLY)

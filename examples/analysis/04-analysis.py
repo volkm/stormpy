@@ -11,9 +11,9 @@ def example_analysis_04():
     formula_str = "P=? [F s=7 & d=2]"
     properties = stormpy.parse_properties(formula_str, prism_program)
 
-    options = stormpy.BuilderOptions([p.raw_formula for p in properties])
+    options = stormpy.BuilderOptions(properties)
     options.set_build_state_valuations()
-    model = stormpy.build_sparse_model_with_options(prism_program, options)
+    model = stormpy.build_model(prism_program, options=options)
 
     result = stormpy.model_checking(model, properties[0])
 
@@ -21,7 +21,7 @@ def example_analysis_04():
 
     print("Model checking results:")
     for i in range(len(model.states)):
-        print("\tstate #{}\t {}:\t {}".format(i, model.state_valuations.get_string(i), result.at(i)))
+        print("\tstate #{}\t {}:\t {}".format(i, model.state_valuations.get_string(i), result[i]))
 
 
 if __name__ == "__main__":

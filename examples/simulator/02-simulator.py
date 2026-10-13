@@ -38,10 +38,8 @@ def example_simulator_02():
     for path in paths:
         print(" ".join(path))
 
-    options = stormpy.BuilderOptions()
-    options.set_build_state_valuations()
-    options.set_build_choice_labels(True)
-    model = stormpy.build_sparse_model_with_options(prism_program, options)
+    options = stormpy.BuilderOptions(build_full=True)
+    model = stormpy.build_model(prism_program, options=options)
     print(model)
     simulator = stormpy.simulator.create_simulator(model, seed=42)
     simulator.set_observation_mode(stormpy.simulator.SimulatorObservationMode.PROGRAM_LEVEL)

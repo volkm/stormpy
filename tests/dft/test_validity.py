@@ -19,7 +19,7 @@ class TestCheckDftValidity:
     def test_check_dft_validity_warns(self):
         dft = stormpy.dft.load_dft_galileo_file(get_example_path("dft", "rc2.dft"))
         dft = stormpy.dft.prepare_for_analysis(dft)
-        with pytest.warns(stormpy.dft.StormWarning):
+        with pytest.warns(stormpy.exceptions.StormWarning):
             valid = stormpy.dft.check_dft_validity(dft)
         assert valid is False
 
@@ -27,4 +27,4 @@ class TestCheckDftValidity:
         dft = stormpy.dft.load_dft_galileo_file(get_example_path("dft", "rc2.dft"))
         formulas = stormpy.parse_properties('T=? [ F "failed" ]')
         with pytest.raises(stormpy.exceptions.StormError):
-            stormpy.dft.analyze_dft(stormpy.dft.DftEnvironment(), dft, formulas)
+            stormpy.dft.analyze_dft(dft, formulas)

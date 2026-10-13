@@ -42,7 +42,7 @@ We can do model checking analogous to probabilities:
 ```{code-cell} python3
 initial_state = model.initial_states[0]
 result = stormpy.model_checking(model, properties[0])
-print("Result: {}".format(round(result.at(initial_state), 6)))
+print("Result: {}".format(round(result[initial_state], 6)))
 ```
 
 The reward model has a name which we can obtain as follows:

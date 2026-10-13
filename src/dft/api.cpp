@@ -5,7 +5,13 @@
 #include <storm-dft/api/transformation.h>
 #include <storm-dft/environment/DftEnvironment.h>
 #include <storm/adapters/RationalFunctionAdapter.h>
-#include <storm/utility/ExtendedNumber.h>
+
+#include "src/binding_type_index.h"
+#include "src/numbers.h"
+
+namespace stormpy::dft {
+
+namespace {
 
 // Thin wrapper for DFT analysis
 template<typename ValueType>
@@ -20,11 +26,11 @@ std::vector<py::object> analyzeDFT(storm::dft::DftEnvironment const& env, storm:
     class AnalysisResultVisitor : public boost::static_visitor<py::object> {
        public:
         py::object operator()(typename Checker::ExtendedValueType const& exact) const {
-            return py::cast(storm::utility::narrow<ValueType>(exact));
+            return py::cast(exact);
         }
 
         py::object operator()(typename Checker::approximation_result const& approx) const {
-            return py::cast(std::make_pair(storm::utility::narrow<ValueType>(approx.first), storm::utility::narrow<ValueType>(approx.second)));
+            return py::cast(approx);
         }
     } visitor;
     for (auto const& result : dftResults) {
@@ -33,17 +39,18 @@ std::vector<py::object> analyzeDFT(storm::dft::DftEnvironment const& env, storm:
     return results;
 }
 
-void define_api_io_input(py::module& m) {
-    // Load DFT input
-    m.def("load_dft_galileo_file", &storm::dft::api::loadDFTGalileoFile<double>, "Load DFT from Galileo file", py::arg("path"));
-    m.def("load_parametric_dft_galileo_file", &storm::dft::api::loadDFTGalileoFile<storm::RationalFunction>, "Load parametric DFT from Galileo file",
-          py::arg("path"));
-    // Parse Jani model
-    m.def("load_dft_json_file", &storm::dft::api::loadDFTJsonFile<double>, "Load DFT from JSON file", py::arg("path"));
-    m.def("load_dft_json_string", &storm::dft::api::loadDFTJsonString<double>, "Load DFT from JSON string", py::arg("json_string"));
-    m.def("load_parametric_dft_json_file", &storm::dft::api::loadDFTJsonFile<storm::RationalFunction>, "Load parametric DFT from JSON file", py::arg("path"));
-    m.def("load_parametric_dft_json_string", &storm::dft::api::loadDFTJsonString<storm::RationalFunction>, "Load parametric DFT from JSON string",
-          py::arg("json_string"));
+}  // namespace
+
+template<typename ValueType>
+void define_api_io_input_typed(py::module& m) {
+    // Value type cannot be deduced from the arguments -> bind as template function families
+    auto const index = stormpy::bindings::typeIndex<ValueType>();
+    stormpy::bindings::bindTemplateFunction(m, "load_dft_galileo_file", index, &storm::dft::api::loadDFTGalileoFile<ValueType>, "Load DFT from Galileo file",
+                                            py::arg("path"));
+    stormpy::bindings::bindTemplateFunction(m, "load_dft_json_file", index, &storm::dft::api::loadDFTJsonFile<ValueType>, "Load DFT from JSON file",
+                                            py::arg("path"));
+    stormpy::bindings::bindTemplateFunction(m, "load_dft_json_string", index, &storm::dft::api::loadDFTJsonString<ValueType>, "Load DFT from JSON string",
+                                            py::arg("json_string"));
 }
 
 void define_api_io_output(py::module& m) {
@@ -78,7 +85,11 @@ void define_api_transformation_typed(py::module& m) {
           py::arg("dft"));
 }
 
+template void define_api_io_input_typed<double>(py::module& m);
+template void define_api_io_input_typed<storm::RationalFunction>(py::module& m);
 template void define_api_analysis_typed<double>(py::module& m);
 template void define_api_analysis_typed<storm::RationalFunction>(py::module& m);
 template void define_api_transformation_typed<double>(py::module& m);
 template void define_api_transformation_typed<storm::RationalFunction>(py::module& m);
+
+}  // namespace stormpy::dft

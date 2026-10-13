@@ -26,46 +26,46 @@ class TestValueType:
     """Check that Storm's C++ ValueTypes match stormpy's Python types."""
 
     def test_double(self):
-        value = stormpy._core._valuetype_double()
+        value = stormpy.developer._valuetype_double()
         assert type(value) is float
 
     def test_rationalnumber(self):
-        value = stormpy._core._valuetype_rationalnumber()
+        value = stormpy.developer._valuetype_rationalnumber()
         assert type(value) is stormpy.Rational
         assert type(value) is exact_package().Rational
 
     def test_gmprationalnumber(self):
-        value = stormpy._core._valuetype_gmprationalnumber()
+        value = stormpy.developer._valuetype_gmprationalnumber()
         assert type(value) is pycarl.gmp.Rational
 
     @pycarl_cln
     def test_clnrationalnumber(self):
-        value = stormpy._core._valuetype_clnrationalnumber()
+        value = stormpy.developer._valuetype_clnrationalnumber()
         assert type(value) is pycarl.cln.Rational
 
     def test_polynomial(self):
-        value = stormpy._core._valuetype_polynomial()
+        value = stormpy.developer._valuetype_polynomial()
         assert type(value) is stormpy.Polynomial
         assert type(value) is ratfunc_package().FactorizedPolynomial
         assert type(value) is not ratfunc_package().Polynomial
 
     def test_rationalfunction(self):
-        value = stormpy._core._valuetype_rationalfunction()
+        value = stormpy.developer._valuetype_rationalfunction()
         assert type(value) is stormpy.RationalFunction
         assert type(value) is ratfunc_package().FactorizedRationalFunction
         # Also test RationalFunctionCoefficient
-        value_rf = stormpy._core._valuetype_rationalfunctioncoefficient()
+        value_rf = stormpy.developer._valuetype_rationalfunctioncoefficient()
         assert type(value_rf) is stormpy.RationalFunctionCoefficient
         assert type(value_rf) is ratfunc_package().Rational
 
     def test_interval(self):
-        value = stormpy._core._valuetype_interval()
+        value = stormpy.developer._valuetype_interval()
         assert type(value) is stormpy.Interval
         assert type(value) is pycarl.Interval
         assert type(value) is not exact_package().Interval
 
     def test_rationalinterval(self):
-        value = stormpy._core._valuetype_rationalinterval()
+        value = stormpy.developer._valuetype_rationalinterval()
         assert type(value) is stormpy.RationalInterval
         assert type(value) is exact_package().Interval
         assert type(value) is not pycarl.Interval
@@ -81,23 +81,23 @@ class TestValueTypeMatrix:
 
     def test_rationalnumber(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        model = stormpy.build_sparse_exact_model(program)
+        model = stormpy.build_model[stormpy.Rational](program)
         assert type(first_matrix_value(model)) is stormpy.Rational
         assert type(first_matrix_value(model)) is exact_package().Rational
 
     @pars
     def test_rationalfunction(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "parametric_die.pm"))
-        model = stormpy.build_parametric_model(program)
+        model = stormpy.build_model[stormpy.RationalFunction](program)
         assert type(first_matrix_value(model)) is stormpy.RationalFunction
         assert type(first_matrix_value(model).constant_part()) is ratfunc_package().Rational
 
     def test_interval(self):
         program = stormpy.parse_prism_program(get_example_path("idtmc", "die-intervals.pm"))
-        model = stormpy.build_sparse_interval_model(program)
+        model = stormpy.build_model[stormpy.Interval](program)
         assert type(first_matrix_value(model)) is pycarl.Interval
 
     def test_rationalinterval(self):
         program = stormpy.parse_prism_program(get_example_path("idtmc", "die-intervals.pm"))
-        model = stormpy.build_sparse_exact_interval_model(program)
+        model = stormpy.build_model[stormpy.RationalInterval](program)
         assert type(first_matrix_value(model)) is exact_package().Interval

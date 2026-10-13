@@ -35,7 +35,7 @@ import stormpy.examples.files
 program = stormpy.parse_prism_program(stormpy.examples.files.prism_mdp_maze)
 prop = 'R=? [F "goal"]'
 
-properties = stormpy.parse_properties_for_prism_program(prop, program, None)
+properties = stormpy.parse_properties(prop, program)
 model = stormpy.build_model(program, properties)
 ```
 
@@ -68,7 +68,7 @@ import stormpy.examples.files
 
 program = stormpy.parse_prism_program(stormpy.examples.files.prism_pomdp_maze)
 prop = 'R=? [F "goal"]'
-properties = stormpy.parse_properties_for_prism_program(prop, program, None)
+properties = stormpy.parse_properties(prop, program)
 model = stormpy.build_model(program, properties)
 ```
 

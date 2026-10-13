@@ -19,7 +19,7 @@ class ModelWithKnownShortestPaths:
         program_path = get_example_path("dtmc", "die.pm")
         raw_formula = 'P=? [ F "' + self.target_label + '" ]'
         program = stormpy.parse_prism_program(program_path)
-        formulas = stormpy.parse_properties_for_prism_program(raw_formula, program)
+        formulas = stormpy.parse_properties(raw_formula, program)
 
         self.model = stormpy.build_model(program, formulas)
 

@@ -46,12 +46,11 @@ result = stormpy.model_checking(model, properties[0])
 To access the result, the result has to be filtered:
 
 ```{code-cell} python3
-filter = stormpy.create_filter_initial_states_symbolic(model)
-result.filter(filter)
-assert result.min == result.max
+stormpy.filter_initial_states(result, model)
+assert result.get_min() == result.get_max()
 ```
 
-Then, result.min (or result.max) contains the result. Notice that if there are multiple initial states, result.min will not be equal to result.max.
+Then, result.get_min() (or result.get_max()) contains the result. Notice that if there are multiple initial states, result.get_min() will not be equal to result.get_max().
 
 Besides this analysis on the DD, there are approaches that combine both representation.
 Stormpy does support them, but we have not yet documented them.
@@ -71,8 +70,8 @@ We can also vary the model checking algorithm:
 
 ```{code-cell} python3
 env = stormpy.Environment()
-env.solver_environment.set_linear_equation_solver_type(stormpy.EquationSolverType.NATIVE)
-env.solver_environment.native_solver_environment.method = stormpy.NativeLinearEquationSolverMethod.POWER_ITERATION
+env.solver().set_linear_equation_solver_type(stormpy.EquationSolverType.NATIVE)
+env.solver().native().method = stormpy.NativeLinearEquationSolverMethod.POWER
 result = stormpy.model_checking(model, properties[0], environment=env)
 ```
 
@@ -80,7 +79,7 @@ Finally, we allow to change some parameters of the algorithms. E.g., in iterativ
 we allow to change the number of iterations:
 
 ```{code-cell} python3
-env.solver_environment.native_solver_environment.maximum_iterations = 3
+env.solver().native().maximal_number_of_iterations = 3
 result = stormpy.model_checking(model, properties[0])
 ```
 

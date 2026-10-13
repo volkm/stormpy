@@ -16,7 +16,7 @@ def example_building_models_02():
         # And the parametric
 
     path = stormpy.examples.files.drn_pdtmc_die
-    model = stormpy.build_parametric_model_from_drn(path)
+    model = stormpy.build_model_from_drn[stormpy.RationalFunction](path)
 
     parameters = model.collect_all_parameters()
     bar_parameters = dict()

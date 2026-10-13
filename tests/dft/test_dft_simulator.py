@@ -323,3 +323,17 @@ class TestSimulator:
         assert res == stormpy.dft.SimulationStepResult.SUCCESSFUL
         res = simulator.let_fail("Second2")
         assert res == stormpy.dft.SimulationStepResult.INVALID
+
+    def test_state_and_be_types(self):
+        dft = stormpy.dft.load_dft_json_file(get_example_path("dft", "and.json"))
+        dft.set_relevant_events(stormpy.dft.developer.RelevantEvents(), False)
+        info = dft.build_state_generation_info(stormpy.dft.developer.DftSymmetries())
+        generator = stormpy.dft.developer.RandomGenerator.create(5)
+        simulator = stormpy.dft.developer.DFTTraceSimulator(dft, info, generator)
+        state = simulator.get_state()
+        assert isinstance(state, stormpy.dft.DFTState[float])
+        failable = next(iter(state.get_failable_elements()))
+        assert not failable.is_due_dependency()
+        be = failable.as_be(dft)
+        assert isinstance(be, stormpy.dft.DFTBE[float])
+        assert isinstance(be, stormpy.dft.DFTElement[float])

@@ -2,8 +2,11 @@
 
 #include "src/core/common.h"
 
-template<typename ValueType>
-void define_sparse_model_simulator(py::module& m);
+namespace stormpy {
 
 template<typename ValueType>
-void define_prism_program_simulator(py::module& m);
+void define_simulator_sparse_typed(py::module& m);
+template<typename ValueType>
+void define_simulator_prism_typed(py::module& m);
+
+}  // namespace stormpy

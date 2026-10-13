@@ -63,5 +63,5 @@ def prepare_multiobjective_result_for_plotting(result, lower_corner, upper_corne
     :param formula: The multiobjective formula
     :return: A tuple with two sets of points representing an under- and overapproximation of the vertices
     """
-    results = [result.get_underapproximation(), result.get_overapproximation()]
+    results = [result.get_under_approximation(), result.get_over_approximation()]
     return [_prepare_points_for_convex_pareto_plotting(h.vertices, lower_corner, upper_corner, formula) for h in results]

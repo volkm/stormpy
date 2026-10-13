@@ -45,7 +45,7 @@ transitions = np.array([[0, 1, 0, 0, 0], [0.8, 0, 0.2, 0, 0], [0.9, 0, 0, 0.1, 0
 When building the matrix we define a custom row grouping by passing a list containing the starting row of each row group in ascending order:
 
 ```{code-cell} python3
-transition_matrix = stormpy.build_sparse_matrix(transitions, [0, 2, 3, 4, 5])
+transition_matrix = stormpy.storage.build_sparse_matrix(transitions, [0, 2, 3, 4, 5])
 print(transition_matrix)
 ```
 
@@ -89,7 +89,7 @@ exit_rates = [0.0, 10.0, 12.0, 1.0, 1.0]
 Now, we can collect all components:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, markovian_states=markovian_states)
+components = stormpy.storage.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, markovian_states=markovian_states)
 components.choice_labeling = choice_labeling
 components.exit_rates = exit_rates
 ```

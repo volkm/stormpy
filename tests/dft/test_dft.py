@@ -37,17 +37,17 @@ class TestDft:
 
         pycarl.clear_pools()
         env = stormpy.dft.DftEnvironment()
-        generic_dft = stormpy.dft.load_parametric_dft_json_file(get_example_path("dft", "and.json"))
+        generic_dft = stormpy.dft.load_dft_json_file[stormpy.RationalFunction](get_example_path("dft", "and.json"))
         assert type(generic_dft) is stormpy.dft.DFT[stormpy.RationalFunction]
         assert stormpy.dft.DFT[stormpy.RationalFunction] is stormpy.dft.developer._DFT_RationalFunction
 
         builder = stormpy.dft.developer.ExplicitDFTModelBuilder(env, generic_dft, stormpy.dft.developer.DftSymmetries())
         assert type(builder) is stormpy.dft.developer.ExplicitDFTModelBuilder[stormpy.RationalFunction]
 
-        model = stormpy.dft.build_model(env, generic_dft)
+        model = stormpy.dft.build_model(generic_dft, environment=env)
         assert model.supports_parameters
 
-        dft = stormpy.dft.load_parametric_dft_galileo_file(get_example_path("dft", "symmetry_param.dft"))
+        dft = stormpy.dft.load_dft_galileo_file[stormpy.RationalFunction](get_example_path("dft", "symmetry_param.dft"))
         assert dft.nr_elements() == 7
         assert dft.nr_basic_elements() == 4
         assert dft.nr_dynamic_elements() == 0
@@ -83,6 +83,22 @@ class TestDftElement:
         dft = stormpy.dft.load_dft_galileo_file(get_example_path("dft", "hecs.dft"))
         spare = dft.get_element_by_name("n137")
         assert spare.type == stormpy.dft.DFTElementType.SPARE
+
+    def test_element_types(self):
+        dft = stormpy.dft.load_dft_json_file(get_example_path("dft", "and.json"))
+        assert isinstance(dft.top_level_element, stormpy.dft.DFTElement[float])
+        assert isinstance(stormpy.dft.modules(dft), stormpy.dft.DftIndependentModule)
+
+    def test_dependency(self):
+        dft = stormpy.dft.load_dft_galileo_file(get_example_path("dft", "pdep.dft"))
+        dependency = dft.get_element_by_name("Power")
+        assert dependency.type == stormpy.dft.DFTElementType.PDEP
+        assert isinstance(dependency, stormpy.dft.DFTDependency[float])
+        assert dependency.trigger_event.name == "B_Power"
+        assert [event.name for event in dependency.dependent_events] == ["P", "B"]
+        assert not dependency.is_fdep
+        dft = stormpy.dft.load_dft_galileo_file(get_example_path("dft", "fdep.dft"))
+        assert dft.get_element_by_name("Power").is_fdep
 
 
 @dft

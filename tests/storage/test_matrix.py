@@ -6,7 +6,7 @@ import math
 
 class TestMatrix:
     def test_matrix(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.transition_matrix
         assert type(matrix) is stormpy.storage.SparseMatrix[float]
         assert matrix.nr_rows == model.nr_states
@@ -17,7 +17,7 @@ class TestMatrix:
             assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
 
     def test_backward_matrix(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.backward_transition_matrix
         assert type(matrix) is stormpy.storage.SparseMatrix[float]
         assert matrix.nr_rows == model.nr_states
@@ -28,7 +28,7 @@ class TestMatrix:
             assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
 
     def test_matrix_row_groups(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         matrix = model.transition_matrix
         assert type(matrix) is stormpy.storage.SparseMatrix[float]
         assert matrix.nr_rows == 254
@@ -49,7 +49,7 @@ class TestMatrix:
             assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
 
     def test_change_matrix(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.transition_matrix
         for e in matrix:
             assert e.value() == 0.5 or e.value() == 0 or e.value() == 1
@@ -63,7 +63,7 @@ class TestMatrix:
             i += 0.1
 
     def test_change_matrix_modelchecking(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.transition_matrix
         # Check matrix
         for e in matrix:
@@ -71,7 +71,7 @@ class TestMatrix:
         # First model checking
         formulas = stormpy.parse_properties('P=? [ F "one" ]')
         result = stormpy.model_checking(model, formulas[0])
-        resValue = result.at(model.initial_states[0])
+        resValue = result[model.initial_states[0]]
         assert math.isclose(resValue, 0.16666666666666663)
 
         # Change probabilities
@@ -87,7 +87,7 @@ class TestMatrix:
             assert e.value() == 0.3 or e.value() == 0.7 or e.value() == 1 or e.value() == 0
         # Second model checking
         result = stormpy.model_checking(model, formulas[0])
-        resValue = result.at(model.initial_states[0])
+        resValue = result[model.initial_states[0]]
         assert math.isclose(resValue, 0.06923076923076932)
 
         # Change probabilities again
@@ -100,13 +100,13 @@ class TestMatrix:
                         transition.set_value(0.2)
         # Third model checking
         result = stormpy.model_checking(model, formulas[0])
-        resValue = result.at(model.initial_states[0])
+        resValue = result[model.initial_states[0]]
         assert math.isclose(resValue, 0.3555555555555556)
 
     def test_change_parametric_matrix_modelchecking(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
-        formulas = stormpy.parse_properties_for_prism_program("P=? [ F s=5 ]", program)
-        model = stormpy.build_parametric_model(program, formulas)
+        formulas = stormpy.parse_properties("P=? [ F s=5 ]", program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         initial_state = model.initial_states[0]
         assert initial_state == 0
         matrix = model.transition_matrix
@@ -118,7 +118,7 @@ class TestMatrix:
             assert e.value() == one or len(e.value().gather_variables()) > 0
         # First model checking
         result = stormpy.model_checking(model, formulas[0])
-        ratFunc = result.at(initial_state)
+        ratFunc = result[initial_state]
         assert len(ratFunc.gather_variables()) > 0
 
         # Change probabilities
@@ -132,11 +132,11 @@ class TestMatrix:
             assert e.value() == new_val or e.value() == one
         # Second model checking
         result = stormpy.model_checking(model, formulas[0])
-        ratFunc = result.at(initial_state)
+        ratFunc = result[initial_state]
         assert len(ratFunc.gather_variables()) == 0
 
     def test_submatrix(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.transition_matrix
         assert matrix.nr_rows == 13
         assert matrix.nr_columns == 13
@@ -154,7 +154,7 @@ class TestMatrix:
             assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 3)
 
     def test_submatrix_no_groups(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         matrix = model.transition_matrix
         assert type(matrix) is stormpy.storage.SparseMatrix[float]
         assert matrix.nr_rows == 254

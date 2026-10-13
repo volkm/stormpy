@@ -9,8 +9,12 @@
 
 #include "src/binding_type_index.h"
 
+namespace stormpy::dft {
+
 template<typename ValueType>
 using ExplicitDFTModelBuilder = storm::dft::builder::ExplicitDFTModelBuilder<ValueType>;
+
+namespace {
 
 // Thin wrapper for building state space from DFT
 template<typename ValueType>
@@ -22,6 +26,8 @@ std::shared_ptr<storm::models::sparse::Model<ValueType>> buildModel(storm::dft::
     builder.buildModel(0, 0.0);
     return builder.getModel();
 }
+
+}  // namespace
 
 void define_builder(py::module& m) {
     py::native_enum<storm::dft::builder::ApproximationHeuristic>(m, "ApproximationHeuristic", "enum.Enum", "Heuristic for selecting states to explore next")
@@ -50,3 +56,5 @@ void define_builder_typed(py::module& m) {
 
 template void define_builder_typed<double>(py::module& m);
 template void define_builder_typed<storm::RationalFunction>(py::module& m);
+
+}  // namespace stormpy::dft

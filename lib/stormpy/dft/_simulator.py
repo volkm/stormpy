@@ -19,7 +19,7 @@ class DFTSimulator:
     resolves failable elements to their BE/dependency names.
     """
 
-    def __init__(self, dft: DFT, seed: int = 42, relevant_events: Iterable[str] | None = None) -> None:
+    def __init__(self, dft: DFT, *, seed: int = 42, relevant_events: Iterable[str] | None = None) -> None:
         """
         Create simulator.
 
@@ -132,7 +132,7 @@ class DFTSimulator:
                 fail_be = self._as_be(f, self._dft)
                 self._fail_candidates[fail_be.name] = f
 
-    def let_fail(self, be: str, dependency_successful: bool = True) -> SimulationStepResult:
+    def let_fail(self, be: str, *, dependency_successful: bool = True) -> SimulationStepResult:
         """
         Let the given BE fail next.
         If the BE fails due to a probabilistic dependency, this failure forwarding can be either successful or unsuccessful.

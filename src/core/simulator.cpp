@@ -6,59 +6,58 @@
 
 #include "src/binding_type_index.h"
 
-template<typename ValueType>
-using PLSim = storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>;
+namespace stormpy {
 
 template<typename ValueType>
-void define_sparse_model_simulator(py::module& m) {
-    auto dtsmsd = stormpy::bindings::bindTemplateClass<storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>>(
-        m, "DiscreteTimeSparseModelSimulator", stormpy::bindings::typeIndex<ValueType>(), "Simulator for sparse discrete-time models in memory");
-    dtsmsd.def(py::init<storm::models::sparse::Model<ValueType> const&>());
-    dtsmsd.def("set_seed", &storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>::setSeed, py::arg("seed"));
-    dtsmsd.def("step", &storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>::step, py::arg("action"));
-    dtsmsd.def("random_step", &storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>::randomStep);
-    dtsmsd.def("get_last_reward", &storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>::getLastRewards);
-    dtsmsd.def("get_current_state", &storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>::getCurrentState);
-    dtsmsd.def("reset_to_initial_state", &storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>::resetToInitial);
+void define_simulator_sparse_typed(py::module& m) {
+    using Simulator = storm::simulator::DiscreteTimeSparseModelSimulator<ValueType>;
+    stormpy::bindings::bindTemplateClass<Simulator>(m, "DiscreteTimeSparseModelSimulator", stormpy::bindings::typeIndex<ValueType>(),
+                                                    "Simulator for sparse discrete-time models")
+        .def(py::init<storm::models::sparse::Model<ValueType> const&>(), "Create simulator", py::arg("model"))
+        .def("set_seed", &Simulator::setSeed, "Set the seed of the random generator", py::arg("seed"))
+        .def("step", &Simulator::step, "Make a step with the given action", py::arg("action"))
+        .def("random_step", &Simulator::randomStep, "Make a step with a randomly chosen action")
+        .def("get_last_rewards", &Simulator::getLastRewards, "Get the rewards obtained in the last step")
+        .def("get_current_state", &Simulator::getCurrentState, "Get the current state")
+        .def("reset_to_initial", &Simulator::resetToInitial, "Reset to the initial state");
 }
 
 template<typename ValueType>
-void define_prism_program_simulator(py::module& m) {
-    auto dtpps = stormpy::bindings::bindTemplateClass<storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>>(
-        m, "DiscreteTimePrismProgramSimulator", stormpy::bindings::typeIndex<ValueType>(), "Simulator for prism programs");
-    dtpps.def(py::init<storm::prism::Program const&, storm::builder::BuilderOptions const&>(), py::arg("program"), py::arg("options"));
-    dtpps.def("set_seed", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::setSeed, py::arg("seed"));
-    dtpps.def("step", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::step, py::arg("action_index"),
-              "Make a step and randomly select the successor. The action is given as an argument, the index reflects the index of the getChoices vector that "
-              "can be accessed.");
-    dtpps.def(
-        "get_action_indices",
-        [](storm::simulator::DiscreteTimePrismProgramSimulator<ValueType> const& sim) {
-            std::vector<uint64_t> actionIndices;
-            for (auto const& c : sim.getChoices()) {
-                actionIndices.push_back(c.getActionIndex());
-            }
-            return actionIndices;
-        },
-        "A list of choices that encode the possibilities in the current state.");
-    dtpps.def("get_number_of_current_choices",
-              [](storm::simulator::DiscreteTimePrismProgramSimulator<ValueType> const& sim) { return sim.getChoices().size(); });
-    dtpps.def("get_current_state", &PLSim<ValueType>::getCurrentState, "Get current state");
-    dtpps.def("get_current_state_as_json", [](storm::simulator::DiscreteTimePrismProgramSimulator<ValueType> const& sim) { return sim.getStateAsJson(); });
-    dtpps.def("get_current_observation_as_json",
-              [](storm::simulator::DiscreteTimePrismProgramSimulator<ValueType> const& sim) { return sim.getObservationAsJson(); });
-    dtpps.def("get_current_state_is_sink", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::isSinkState);
-    dtpps.def("get_current_labels", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::getCurrentStateLabelling,
-              "What are the state labels at the current state?");
-    dtpps.def("get_last_reward", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::getLastRewards);
-    dtpps.def("reset_to_initial_state", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::resetToInitial, "Reset to the initial state");
-    dtpps.def("_reset_to_state_from_valuation", [](PLSim<ValueType>& sim, storm::expressions::SimpleValuation const& state) { sim.resetToState(state); });
-    dtpps.def("_reset_to_state_from_compressed_state", [](PLSim<ValueType>& sim, storm::generator::CompressedState const& state) { sim.resetToState(state); });
-    dtpps.def("get_reward_names", &storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>::getRewardNames,
-              "Get names of the rewards provided by the simulator");
+void define_simulator_prism_typed(py::module& m) {
+    using Simulator = storm::simulator::DiscreteTimePrismProgramSimulator<ValueType>;
+    stormpy::bindings::bindTemplateClass<Simulator>(m, "DiscreteTimePrismProgramSimulator", stormpy::bindings::typeIndex<ValueType>(),
+                                                    "Simulator for Prism programs")
+        .def(py::init<storm::prism::Program const&, storm::builder::BuilderOptions const&>(), "Create simulator", py::arg("program"), py::arg("options"))
+        .def("set_seed", &Simulator::setSeed, "Set the seed of the random generator", py::arg("seed"))
+        .def(
+            // Thin wrapper as pybind11 does not support std::span
+            "get_choices",
+            [](Simulator const& sim) {
+                auto choices = sim.getChoices();
+                return std::vector<storm::generator::Choice<ValueType, uint32_t>>(choices.begin(), choices.end());
+            },
+            "Get the choices of the current state")
+        .def("is_sink_state", &Simulator::isSinkState, "Whether the current state is a sink state")
+        .def("step", &Simulator::step, "Make a step and randomly select the successor. The index of the choice is given as argument (see get_choices).",
+             py::arg("action_number"))
+        .def("get_last_rewards", &Simulator::getLastRewards, "Get the rewards obtained in the last step")
+        .def("get_current_state", &Simulator::getCurrentState, "Get the current state", py::return_value_policy::reference_internal)
+        .def("get_current_state_as_valuation", &Simulator::getCurrentStateAsValuation, "Get the current state as valuation")
+        .def("get_current_state_labelling", &Simulator::getCurrentStateLabelling, "Get the labels of the current state")
+        .def("get_state_as_json", &Simulator::getStateAsJson, "Get the current state as JSON")
+        .def("get_observation_as_json", &Simulator::getObservationAsJson, "Get the current observation as JSON")
+        .def("get_current_state_string", &Simulator::getCurrentStateString, "Get string representation of the current state")
+        .def("reset_to_initial", &Simulator::resetToInitial, "Reset to the initial state")
+        .def("reset_to_state", py::overload_cast<storm::generator::CompressedState const&>(&Simulator::resetToState), "Reset to the given state",
+             py::arg("compressed_state"))
+        .def("reset_to_state", py::overload_cast<storm::expressions::SimpleValuation const&>(&Simulator::resetToState), "Reset to the given state",
+             py::arg("valuation_state"))
+        .def("get_reward_names", &Simulator::getRewardNames, "Get the names of the rewards");
 }
 
-template void define_sparse_model_simulator<double>(py::module& m);
-template void define_sparse_model_simulator<storm::RationalNumber>(py::module& m);
+template void define_simulator_sparse_typed<double>(py::module& m);
+template void define_simulator_sparse_typed<storm::RationalNumber>(py::module& m);
 
-template void define_prism_program_simulator<double>(py::module& m);
+template void define_simulator_prism_typed<double>(py::module& m);
+
+}  // namespace stormpy

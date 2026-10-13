@@ -47,7 +47,7 @@ transitions = np.array(
 The following function call returns a sparse matrix with default row groups:
 
 ```{code-cell} python3
-transition_matrix = stormpy.build_sparse_matrix(transitions)
+transition_matrix = stormpy.storage.build_sparse_matrix(transitions)
 print(transition_matrix)
 ```
 
@@ -71,7 +71,7 @@ Now, we can collect all components, including the choice labeling.
 To let the transition values be interpreted as rates we set rate_transitions to True:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=True)
+components = stormpy.storage.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=True)
 ```
 
 And finally, we can build the model:

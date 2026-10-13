@@ -13,7 +13,7 @@ def example_building_models_01():
 
     # And the parametric
     path = stormpy.examples.files.drn_pdtmc_die
-    model = stormpy.build_parametric_model_from_drn(path)
+    model = stormpy.build_model_from_drn[stormpy.RationalFunction](path)
     print(model.model_type)
     print("Number of states: {}".format(model.nr_states))
 
@@ -26,8 +26,8 @@ def example_building_models_01():
     # POMDPs should be constructed with choice labels
     path = stormpy.examples.files.drn_pomdp_maze
     opts = stormpy.DirectEncodingParserOptions()
-    opts.build_choice_labels = True
-    pomdp = stormpy.build_model_from_drn(stormpy.examples.files.drn_pomdp_maze, opts)
+    opts.build_choice_labeling = True
+    pomdp = stormpy.build_model_from_drn(stormpy.examples.files.drn_pomdp_maze, options=opts)
     # POMDPs need to be in a canonic representation
     pomdp = stormpy.pomdp.make_canonic(pomdp)
 

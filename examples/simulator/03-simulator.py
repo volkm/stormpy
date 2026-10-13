@@ -12,7 +12,7 @@ Simulator for programs
 def example_simulator_03():
     path = stormpy.examples.files.prism_mdp_firewire
     prism_program = stormpy.parse_prism_program(path)
-    prism_program = stormpy.preprocess_symbolic_input(prism_program, [], "delay=10,fast=0.8")[0].as_prism_program()
+    prism_program = stormpy.instantiate_constants(prism_program, "delay=10,fast=0.8")[0]
 
     simulator = stormpy.simulator.create_simulator(prism_program, seed=42)
     simulator.set_action_mode(stormpy.simulator.SimulatorActionMode.GLOBAL_NAMES)

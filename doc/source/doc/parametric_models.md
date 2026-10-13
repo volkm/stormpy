@@ -29,7 +29,7 @@ path = stormpy.examples.files.prism_pdtmc_die
 prism_program = stormpy.parse_prism_program(path)
 formula_str = "P=? [F s=7 & d=2]"
 properties = stormpy.parse_properties(formula_str, prism_program)
-model = stormpy.build_parametric_model(prism_program, properties)
+model = stormpy.build_model[stormpy.RationalFunction](prism_program, properties)
 parameters = model.collect_all_parameters()
 for x in parameters:
     print(x)
@@ -52,7 +52,7 @@ for x in parameters:
     point[x] = stormpy.RationalFunctionCoefficient(0.4)
 instantiated_model = instantiator.instantiate(point)
 result = stormpy.model_checking(instantiated_model, properties[0])
-print(result.at(model.initial_states[0]))
+print(result[model.initial_states[0]])
 ```
 
 Initial states and labels are set as for the parameter-free case.
@@ -66,7 +66,7 @@ It is also possible to check the parametric model directly, similar as before in
 ```{code-cell} python3
 result = stormpy.model_checking(model, properties[0])
 initial_state = model.initial_states[0]
-func = result.at(initial_state)
+func = result[initial_state]
 print(func)
 ```
 
@@ -80,9 +80,9 @@ if stormpy.info.storm_ratfunc_use_cln():
 else:
     import stormpy.pycarl.gmp.formula
 collector = stormpy.ConstraintCollector(model)
-for formula in collector.wellformed_constraints:
+for formula in collector.get_wellformed_constraints():
     print(formula)
-for formula in collector.graph_preserving_constraints:
+for formula in collector.get_graph_preserving_constraints():
     print(formula)
 ```
 

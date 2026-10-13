@@ -2,4 +2,8 @@
 
 #include "src/core/common.h"
 
-void define_graph_constraints(py::module& m);
+namespace stormpy {
+
+void define_analysis(py::module& m);
+
+}  // namespace stormpy

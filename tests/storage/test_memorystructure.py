@@ -14,7 +14,7 @@ class TestMemoryStructure:
 
     def test_memory_structure_builder(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        formulas = stormpy.parse_properties_for_prism_program('P=? [ F "one" ]', program)
+        formulas = stormpy.parse_properties('P=? [ F "one" ]', program)
         model = stormpy.build_model(program, formulas)
         goalstates = model.labeling.get_states("one")
         memorystructure = self._build_memory_structure(model, goalstates)
@@ -22,7 +22,7 @@ class TestMemoryStructure:
 
     @pytest.mark.parametrize("keyword", [False, True])
     def test_memory_structure_builder_exact_interval(self, keyword):
-        model = stormpy.build_exact_interval_model_from_drn(get_example_path("imdp", "tiny-01.drn"))
+        model = stormpy.build_model_from_drn[stormpy.RationalInterval](get_example_path("imdp", "tiny-01.drn"))
         if keyword:
             builder = stormpy.storage.MemoryStructureBuilder(nr_memory_states=1, model=model)
         else:
@@ -34,7 +34,7 @@ class TestMemoryStructure:
 
     def test_product_memorystructure(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        formulas = stormpy.parse_properties_for_prism_program('P=? [ F "one"|"two" ]', program)
+        formulas = stormpy.parse_properties('P=? [ F "one"|"two" ]', program)
         model = stormpy.build_model(program, formulas)
         goalstates = model.labeling.get_states("one")
         memorystructure_one = self._build_memory_structure(model, goalstates)
@@ -46,7 +46,7 @@ class TestMemoryStructure:
     @pytest.mark.parametrize("keyword", [False, True])
     def test_product_model(self, keyword):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        formulas = stormpy.parse_properties_for_prism_program('P=? [ F "one" ]', program)
+        formulas = stormpy.parse_properties('P=? [ F "one" ]', program)
         model = stormpy.build_model(program, formulas)
         goalstates = model.labeling.get_states("one")
         memorystructure_one = self._build_memory_structure(model, goalstates)
