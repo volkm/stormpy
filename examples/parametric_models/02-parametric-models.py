@@ -1,7 +1,6 @@
 import stormpy
 import stormpy.info
 import stormpy.pars
-from stormpy.numbers.developer.formula import FormulaType, Relation
 
 if stormpy.info.storm_ratfunc_use_cln():
     from stormpy.numbers.developer.cln import formula
