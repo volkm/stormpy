@@ -20,8 +20,6 @@ from stormpy._template import _TemplateClass, _TemplateFunction, _TemplateParame
 _deduce_from_model = _deduce_from_object(storage.parameters_of_model, keyword=("model", "original_model"))
 
 # Define templated classes
-ConstraintCollector = _TemplateClass("stormpy.developer.ConstraintCollector", _core, parameters=("ValueType",), deduce=_deduce_from_model)
-
 ExplicitModelBuilderOptions = _TemplateClass("stormpy.developer.ExplicitModelBuilderOptions", _core, parameters=("ValueType",), deduce=_deduce_default(float))
 ExplicitModelBuilder = _TemplateClass("stormpy.developer.ExplicitModelBuilder", _core, parameters=("ValueType",))
 

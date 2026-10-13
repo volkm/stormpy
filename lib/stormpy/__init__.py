@@ -76,7 +76,7 @@ QuotientFormat = developer.QuotientFormat
 EliminationLabelBehavior = developer.EliminationLabelBehavior
 SubsystemBuilderOptions = developer.SubsystemBuilderOptions
 SubsystemBuilderReturnType = developer.SubsystemBuilderReturnType.publish_as("stormpy.SubsystemBuilderReturnType")
-ConstraintCollector = developer.ConstraintCollector.publish_as("stormpy.ConstraintCollector")
+ConstraintCollector = developer.ConstraintCollector
 
 LogLevel = developer.LogLevel
 
