@@ -11,12 +11,16 @@ import pytest
 import stormpy
 from configurations import has_dft
 
-_VALUE_TYPES = {"Interval", "Polynomial", "Rational", "RationalFunction", "RationalFunctionCoefficient", "RationalInterval", "RawPolynomial"}
-
 
 def _core_documented_elsewhere(name):
-    # Value types (from pycarl) and re-exports from stormpy.storage are documented in their respective modules
-    return name in _VALUE_TYPES or hasattr(stormpy.storage, name)
+    # Value types (from stormpy.numbers) and re-exports from stormpy.storage are documented in their respective modules
+    return name in stormpy.numbers.__all__ or hasattr(stormpy.storage, name)
+
+
+def _numbers_documented_elsewhere(name):
+    # The number types and Variable are classes of the carl bindings and are documented in stormpy.numbers.developer
+    obj = getattr(stormpy.numbers, name)
+    return isinstance(obj, type) and obj.__module__.startswith("stormpy.numbers.developer")
 
 
 def _not_documented_elsewhere(_name):
@@ -27,6 +31,7 @@ def _not_documented_elsewhere(_name):
 _PUBLIC_MODULES = {
     "stormpy": (True, _core_documented_elsewhere),
     "stormpy.dft": (has_dft, _not_documented_elsewhere),
+    "stormpy.numbers": (True, _numbers_documented_elsewhere),
 }
 
 _UNAVAILABLE = pytest.mark.skip(reason="Module not available in this build of Storm")

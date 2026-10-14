@@ -1,12 +1,11 @@
 import stormpy
 import stormpy.info
 import stormpy.pars
-from stormpy.pycarl.formula import FormulaType, Relation
 
 if stormpy.info.storm_ratfunc_use_cln():
-    from stormpy.pycarl.cln import formula
+    from stormpy.numbers.developer.cln import formula
 else:
-    from stormpy.pycarl.gmp import formula
+    from stormpy.numbers.developer.gmp import formula
 
 import stormpy.examples
 import stormpy.examples.files

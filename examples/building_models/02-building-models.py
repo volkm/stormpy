@@ -1,7 +1,6 @@
 import stormpy
 import stormpy.info
 import stormpy.pars
-from stormpy import pycarl
 
 import stormpy.examples
 import stormpy.examples.files
@@ -22,8 +21,8 @@ def example_building_models_02():
     bar_parameters = dict()
     for p in parameters:
         # Ensure that variables with that name are not recognized by pycarl.
-        assert pycarl.variable_with_name(p.name + "_bar").is_no_variable
-        bar_parameters[p] = pycarl.Variable(p.name + "_bar")
+        assert stormpy.numbers.variable_with_name(p.name + "_bar").is_no_variable
+        bar_parameters[p] = stormpy.numbers.Variable(p.name + "_bar")
 
     substitutions = dict([[stormpy.RawPolynomial(1) - p, bar_parameters[p]] for p in parameters])
     print(substitutions)

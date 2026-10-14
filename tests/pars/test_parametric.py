@@ -39,9 +39,9 @@ class TestParametric:
 
         # Create rational function for comparison
         if stormpy.info.storm_ratfunc_use_cln():
-            from stormpy.pycarl import cln as pc
+            from stormpy.numbers.developer import cln as pc
         else:
-            from stormpy.pycarl import gmp as pc
+            from stormpy.numbers.developer import gmp as pc
         parameters = model.collect_all_parameters()
         for par in parameters:
             if par.name == "p":

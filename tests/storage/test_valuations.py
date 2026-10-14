@@ -50,19 +50,19 @@ class TestValuationsExtendedTypes:
         var_big = manager.create_integer_variable(name="big")
         assert var_big.has_integer_type()
 
-        lower = stormpy.pycarl.gmp.Integer(str(-(10**30)))
-        upper = stormpy.pycarl.gmp.Integer(str(10**30))
+        lower = stormpy.numbers.Integer(str(-(10**30)))
+        upper = stormpy.numbers.Integer(str(10**30))
         builder = stormpy.storage.ValuationDescriptionBuilder(manager)
         builder.add_integer_variable(var_big, lower, upper)
         desc = builder.build_class_description()
 
         vals = stormpy.storage.Valuations(desc, manager, 2)
-        value = stormpy.pycarl.gmp.Integer(str(10**25))
+        value = stormpy.numbers.Integer(str(10**25))
         vals.write_integer_bigint_value(0, var_big, value)
 
         result = vals.get_integer_bigint_value(0, var_big)
         assert result == value
-        assert isinstance(result, stormpy.pycarl.gmp.Integer)
+        assert isinstance(result, stormpy.numbers.Integer)
 
     def test_bigint_value_wrong_variable_type_raises(self):
         manager = stormpy.storage.ExpressionManager()
@@ -76,7 +76,7 @@ class TestValuationsExtendedTypes:
         with pytest.raises(ValueError):
             vals.get_integer_bigint_value(0, var_b)
         with pytest.raises(ValueError):
-            vals.write_integer_bigint_value(0, var_b, stormpy.pycarl.gmp.Integer(1))
+            vals.write_integer_bigint_value(0, var_b, stormpy.numbers.Integer(1))
 
     def test_double_encoding_of_rational_variable(self):
         manager = stormpy.storage.ExpressionManager()
@@ -133,7 +133,7 @@ class TestValuationsExtendedTypes:
         builder.add_integer_variable(var_i, 0, 10)
         builder.add_rational_variable(var_r, 64)
         builder.add_string_variable(var_s)
-        builder.add_integer_variable(var_big, stormpy.pycarl.gmp.Integer(str(-(10**30))), stormpy.pycarl.gmp.Integer(str(10**30)))
+        builder.add_integer_variable(var_big, stormpy.numbers.Integer(str(-(10**30))), stormpy.numbers.Integer(str(10**30)))
         desc = builder.build_class_description()
 
         vals = stormpy.storage.Valuations(desc, manager, 1)
@@ -141,11 +141,11 @@ class TestValuationsExtendedTypes:
         vals.write_value(0, var_i, 7)
         vals.write_value(0, var_r, stormpy.Rational("3/4"))
         vals.write_value(0, var_s, "hello")
-        vals.write_integer_bigint_value(0, var_big, stormpy.pycarl.gmp.Integer(str(10**25)))
+        vals.write_integer_bigint_value(0, var_big, stormpy.numbers.Integer(str(10**25)))
 
         assert vals.get_value(0, var_b) is True
         assert vals.get_value(0, var_i) == 7
         assert vals.get_value(0, var_r) == stormpy.Rational("3/4")
         assert vals.get_value(0, var_s) == "hello"
-        assert vals.get_integer_bigint_value(0, var_big) == stormpy.pycarl.gmp.Integer(str(10**25))
+        assert vals.get_integer_bigint_value(0, var_big) == stormpy.numbers.Integer(str(10**25))
         assert len(vals.get_all_variables()) == 5

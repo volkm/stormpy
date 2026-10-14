@@ -813,9 +813,9 @@ class TestSparseModelComponents:
         import stormpy.pars
 
         if stormpy.info.storm_ratfunc_use_cln():
-            from stormpy.pycarl import cln as pc
+            from stormpy.numbers.developer import cln as pc
         else:
-            from stormpy.pycarl import gmp as pc
+            from stormpy.numbers.developer import gmp as pc
 
         def create_polynomial(pol):
             num = pc.create_factorized_polynomial(stormpy.RawPolynomial(pol))
@@ -825,7 +825,7 @@ class TestSparseModelComponents:
             num = stormpy.Polynomial(stormpy.RationalFunctionCoefficient(num))
             return stormpy.RationalFunction(num)
 
-        from stormpy.pycarl import Variable
+        from stormpy.numbers.developer import Variable
 
         nr_states = 13
         nr_choices = 13

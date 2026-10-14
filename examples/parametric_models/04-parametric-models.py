@@ -1,6 +1,5 @@
 import stormpy
 import stormpy.pars
-from stormpy import pycarl
 
 import stormpy.examples
 import stormpy.examples.files
@@ -22,7 +21,7 @@ def example_parametric_models_04():
         for action in state.actions:
             for transition in action.transitions:
                 if len(transition.value().gather_variables()) > 0:
-                    new_var = pycarl.Variable("p{}".format(i))
+                    new_var = stormpy.numbers.Variable("p{}".format(i))
                     i += 1
                     new_pol = stormpy.RawPolynomial(new_var)
                     pol_in_right_format = stormpy.Polynomial(new_pol, transition.value().numerator.cache())
