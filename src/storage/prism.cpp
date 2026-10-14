@@ -38,7 +38,7 @@ void define_prism(py::module& m) {
         .def_property_readonly(
             "variables", [](Program const& prog) { return prog.getAllExpressionVariables(true); },
             "Retrieves all expression variables (including constants) of the program")
-        .def("get_variables", &Program::getAllExpressionVariables, py::arg("include_constants") = true,
+        .def("get_all_expression_variables", &Program::getAllExpressionVariables, py::arg("include_constants") = true,
              "Get all expression variables (and constants) used by the program")
         .def_property_readonly("nr_modules", &storm::prism::Program::getNumberOfModules, "Number of modules")
         .def_property_readonly("modules", &storm::prism::Program::getModules, "Modules in the program")
@@ -49,11 +49,11 @@ void define_prism(py::module& m) {
         .def("get_undefined_constants", &Program::getUndefinedConstants, "Collect the undefined constants")
         .def("substitute_constants", &Program::substituteConstants, "Substitute constants within program")
         .def("substitute_formulas", &Program::substituteFormulas, "Substitute formulas within program")
-        .def("define_constants", &Program::defineUndefinedConstants, "Define constants")
+        .def("define_undefined_constants", &Program::defineUndefinedConstants, py::arg("constant_definitions"), "Define constants")
         .def("restrict_commands", &Program::restrictCommands, "Restrict commands")
         .def("simplify", &Program::simplify, "Simplify")
         .def("has_label", &Program::hasLabel, py::arg("name"))
-        .def("substitute_nonstandard_predicates", &Program::substituteNonStandardPredicates, "Remove nonstandard predicates from the prism program")
+        .def("substitute_non_standard_predicates", &Program::substituteNonStandardPredicates, "Remove nonstandard predicates from the prism program")
         .def("used_constants", &Program::usedConstants, "Compute Used Constants")
         .def("label_unlabelled_commands", &Program::labelUnlabelledCommands, "Label unlabelled commands", py::arg("name_suggestions"))
         .def("replace_variable_initialization_by_init_expression", &Program::replaceVariableInitializationByInitExpression,
@@ -83,7 +83,7 @@ void define_prism(py::module& m) {
         .def("get_module_indices_by_action_index", &Program::getModuleIndicesByActionIndex, py::arg("action_index"),
              "get all modules that have a particular action index")
         .def_property_readonly("number_of_unlabeled_commands", &Program::getNumberOfUnlabeledCommands, "Gets the number of commands that are not labelled")
-        .def("flatten", &Program::flattenModules, "Put program into a single module",
+        .def("flatten_modules", &Program::flattenModules, "Put program into a single module",
              py::arg("smt_factory") = std::shared_ptr<storm::utility::solver::SmtSolverFactory>(new storm::utility::solver::SmtSolverFactory()))
         .def(
             "to_jani",
@@ -91,6 +91,8 @@ void define_prism(py::module& m) {
                 return program.toJani(properties, allVariablesGlobal, suffix);
             },
             "Transform to Jani program", py::arg("properties"), py::arg("all_variables_global") = true, py::arg("suffix") = "")
+        .def("to_jani", py::overload_cast<bool, std::string>(&Program::toJani, py::const_), py::arg("all_variables_global") = true, py::arg("suffix") = "",
+             "Convert the program to a JANI model")
         .def("__str__", &streamToString<storm::prism::Program>)
         .def(
             "get_label_expression", [](storm::prism::Program const& program, std::string const& label) { return program.getLabelExpression(label); },
@@ -180,7 +182,7 @@ void define_prism(py::module& m) {
 
     py::classh<OverlappingGuardAnalyser> oga(m, "OverlappingGuardAnalyser", "An SMT driven analysis for overlapping guards");
     oga.def(py::init<Program const&, std::shared_ptr<storm::utility::solver::SmtSolverFactory>&>(), py::arg("program"), py::arg("smt solver factory"));
-    oga.def("has_module_with_inner_action_overlapping_guard", &OverlappingGuardAnalyser::hasModuleWithInnerActionOverlap);
+    oga.def("has_module_with_inner_action_overlap", &OverlappingGuardAnalyser::hasModuleWithInnerActionOverlap);
 }
 
 class ValuationMapping {

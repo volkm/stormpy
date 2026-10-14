@@ -5,47 +5,47 @@ import pytest
 
 class TestSmtSolver:
     def test_smtsolver_init(self):
-        manager = stormpy.storage.ExpressionManager()
+        manager = stormpy.expressions.ExpressionManager()
         solver = stormpy.utility.Z3SmtSolver(manager)
 
     def test_smtsolver_trivial(self):
-        manager = stormpy.storage.ExpressionManager()
+        manager = stormpy.expressions.ExpressionManager()
         solver = stormpy.utility.Z3SmtSolver(manager)
-        solver.add(manager.create_boolean(True))
+        solver.add(manager.boolean(True))
         assert solver.check() != stormpy.utility.SmtCheckResult.UNSAT
         assert solver.check() == stormpy.utility.SmtCheckResult.SAT
-        solver.add(manager.create_boolean(False))
+        solver.add(manager.boolean(False))
         assert solver.check() == stormpy.utility.SmtCheckResult.UNSAT
         assert solver.check() != stormpy.utility.SmtCheckResult.SAT
 
     def test_smtsolver_arithmetic_unsat(self):
-        manager = stormpy.storage.ExpressionManager()
-        x = manager.create_integer_variable("x")
+        manager = stormpy.expressions.ExpressionManager()
+        x = manager.declare_integer_variable("x")
         xe = x.get_expression()
-        c1 = stormpy.storage.Expression.Geq(xe, manager.create_integer(1))
-        c2 = stormpy.storage.Expression.Less(xe, manager.create_integer(0))
+        c1 = stormpy.expressions.Expression.Geq(xe, manager.integer(1))
+        c2 = stormpy.expressions.Expression.Less(xe, manager.integer(0))
         solver = stormpy.utility.Z3SmtSolver(manager)
         solver.add(c1)
         solver.add(c2)
         assert solver.check() == stormpy.utility.SmtCheckResult.UNSAT
 
     def test_smtsolver_arithmetic_unsat(self):
-        manager = stormpy.storage.ExpressionManager()
-        x = manager.create_integer_variable("x")
+        manager = stormpy.expressions.ExpressionManager()
+        x = manager.declare_integer_variable("x")
         xe = x.get_expression()
-        c1 = stormpy.storage.Expression.Geq(xe, manager.create_integer(1))
-        c2 = stormpy.storage.Expression.Less(xe, manager.create_integer(0))
+        c1 = stormpy.expressions.Expression.Geq(xe, manager.integer(1))
+        c2 = stormpy.expressions.Expression.Less(xe, manager.integer(0))
         solver = stormpy.utility.Z3SmtSolver(manager)
         solver.add(c1)
         solver.add(c2)
         assert solver.check() == stormpy.utility.SmtCheckResult.UNSAT
 
     def test_smtsolver_arithmetic_unsat(self):
-        manager = stormpy.storage.ExpressionManager()
-        x = manager.create_integer_variable("x")
+        manager = stormpy.expressions.ExpressionManager()
+        x = manager.declare_integer_variable("x")
         xe = x.get_expression()
-        c1 = stormpy.storage.Expression.Geq(xe, manager.create_integer(1))
-        c2 = stormpy.storage.Expression.Less(xe, manager.create_integer(2))
+        c1 = stormpy.expressions.Expression.Geq(xe, manager.integer(1))
+        c2 = stormpy.expressions.Expression.Less(xe, manager.integer(2))
         solver = stormpy.utility.Z3SmtSolver(manager)
         solver.add(c1)
         solver.add(c2)

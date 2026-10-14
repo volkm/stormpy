@@ -14,7 +14,7 @@ class TestParametric:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         initial_state = model.initial_states[0]
         assert initial_state == 0
@@ -30,7 +30,7 @@ class TestParametric:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 13
         assert model.nr_transitions == 20
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         initial_state = model.initial_states[0]
         assert initial_state == 0
@@ -63,10 +63,10 @@ class TestParametric:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 11
         assert model.nr_transitions == 17
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         result = stormpy.model_checking(model, formulas[0], engine=stormpy.Engine.DD)
-        assert type(result) is stormpy.SymbolicQuantitativeCheckResult[stormpy.DdType.Sylvan, stormpy.RationalFunction]
+        assert type(result) is stormpy.SymbolicQuantitativeCheckResult[stormpy.models.DdType.Sylvan, stormpy.RationalFunction]
 
     def test_parametric_model_checking_hybrid(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "parametric_die.pm"))
@@ -75,10 +75,10 @@ class TestParametric:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 11
         assert model.nr_transitions == 17
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         result = stormpy.model_checking(model, formulas[0], engine=stormpy.Engine.HYBRID)
-        assert type(result) is stormpy.HybridQuantitativeCheckResult[stormpy.DdType.Sylvan, stormpy.RationalFunction]
+        assert type(result) is stormpy.HybridQuantitativeCheckResult[stormpy.models.DdType.Sylvan, stormpy.RationalFunction]
         values = result.get_explicit_value_vector()
         assert len(values) == 3
 
@@ -137,11 +137,11 @@ class TestParametric:
         constraints_well_formed = collector.get_wellformed_constraints()
         assert len(constraints_well_formed) == 4
         for constraint in constraints_well_formed:
-            assert constraint.operator == stormpy.storage.OperatorType.LESS_OR_EQUAL
+            assert constraint.operator == stormpy.expressions.OperatorType.LESS_OR_EQUAL
         constraints_graph_preserving = collector.get_graph_preserving_constraints()
         assert len(constraints_graph_preserving) == 4
         for constraint in constraints_graph_preserving:
-            assert constraint.operator == stormpy.storage.OperatorType.NOT_EQUAL
+            assert constraint.operator == stormpy.expressions.OperatorType.NOT_EQUAL
 
     def test_derivatives(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
@@ -150,7 +150,7 @@ class TestParametric:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2

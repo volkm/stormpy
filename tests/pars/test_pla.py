@@ -24,7 +24,7 @@ class TestPLA:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         env = stormpy.Environment()
         checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
@@ -47,7 +47,7 @@ class TestPLA:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         env = stormpy.Environment()
         checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())

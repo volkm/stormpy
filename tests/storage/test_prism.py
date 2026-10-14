@@ -30,14 +30,14 @@ class TestPrism:
     def test_prism_variables(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "leader3.nm"))
         assert program.nr_modules == 3
-        assert program.model_type == stormpy.storage.PrismModelType.MDP
+        assert program.model_type == stormpy.io.PrismModelType.MDP
         assert not program.has_undefined_constants
         assert len(program.constants) == 1
         assert len(program.global_boolean_variables) == 0
         assert len(program.global_integer_variables) == 0
-        assert len(program.get_variables()) == 16
+        assert len(program.get_all_expression_variables()) == 16
         assert len(program.variables) == 16
-        assert len(program.get_variables(False)) == 15
+        assert len(program.get_all_expression_variables(False)) == 15
         for module in program.modules:
             assert len(module.integer_variables) == 5
             assert len(module.boolean_variables) == 0

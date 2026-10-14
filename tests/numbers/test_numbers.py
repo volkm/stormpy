@@ -18,7 +18,7 @@ def ratfunc_package():
 
 def first_matrix_value(model):
     for entry in model.transition_matrix:
-        return entry.value()
+        return entry.value
     raise AssertionError("Model has no transition matrix entries")
 
 

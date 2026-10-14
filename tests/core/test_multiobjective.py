@@ -55,7 +55,7 @@ class TestWeightedObjectiveModelChecking:
         assert math.isclose(float(point[1]), 0.4)
         value = weighted_model_checker.get_optimal_weighted_sum()
         assert math.isclose(float(value), -3.4)
-        scheduler = inverter.reverse_scheduler(weighted_model_checker.compute_scheduler())
+        scheduler = inverter.create_memory_scheduler_from_product_scheduler(weighted_model_checker.compute_scheduler())
         assert scheduler.memory_size == 4
 
     def test_maze_double(self):

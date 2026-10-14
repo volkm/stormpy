@@ -7,6 +7,14 @@ The following contains some general guidelines for developers.
 - Tests are given in ``tests``.
 - The Sphinx documentation can be found in ``doc/source``.
 
+### Storage packages
+
+``stormpy.developer.storage`` contains the raw native module and template families.
+The public objects are selected explicitly in ``stormpy.models`` (models and components),
+``stormpy.datastructures`` (matrices, labels, schedulers and valuations),
+``stormpy.expressions`` (expressions and variables) and ``stormpy.io`` (model descriptions and UMB archives).
+Advanced DD and transformation helpers remain in ``stormpy.developer.storage``.
+
 
 ## Public API and developer bindings
 Each library ``xy`` of Storm (e.g. core or DFTs) is split into two layers:
@@ -16,6 +24,8 @@ Each library ``xy`` of Storm (e.g. core or DFTs) is split into two layers:
   It contains only the strictly necessary functions and classes, and each of them is documented.
   The public names are declared in ``__all__`` of the module.
   Only names listed in ``__all__`` are part of the public API and appear in the API documentation.
+  Python conveniences are implemented in this public layer.
+  Public template families use ``publish_as`` and share their native classes with the developer families.
 
 ### Extending the public API
 When adding a name to the public API, import it in ``__init__.py``, add it to ``__all__`` and document it with a docstring.

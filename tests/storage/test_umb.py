@@ -25,77 +25,77 @@ def tmp_umb(tmp_path):
 
 class TestUmbOptions:
     def test_import_options_defaults(self):
-        opts = stormpy.storage.UmbImportOptions()
+        opts = stormpy.io.UmbImportOptions()
         assert opts.build_choice_labeling is True
         assert opts.build_state_valuations is True
-        assert opts.value_type == stormpy.storage.UmbImportValueType.DEFAULT
+        assert opts.value_type == stormpy.io.UmbImportValueType.DEFAULT
 
     def test_export_options_defaults(self):
-        opts = stormpy.storage.UmbExportOptions()
+        opts = stormpy.io.UmbExportOptions()
         assert opts.allow_choice_labeling_as_actions is True
         assert opts.allow_choice_origins_as_actions is False
         assert opts.canonicize_pomdp is True
-        assert opts.compression == stormpy.storage.CompressionMode.DEFAULT
-        assert opts.value_type == stormpy.storage.UmbExportValueType.DEFAULT
+        assert opts.compression == stormpy.io.CompressionMode.DEFAULT
+        assert opts.value_type == stormpy.io.UmbExportValueType.DEFAULT
 
     def test_import_options_set(self):
-        opts = stormpy.storage.UmbImportOptions()
-        opts.value_type = stormpy.storage.UmbImportValueType.DOUBLE
+        opts = stormpy.io.UmbImportOptions()
+        opts.value_type = stormpy.io.UmbImportValueType.DOUBLE
         opts.build_choice_labeling = False
         opts.build_state_valuations = False
-        assert opts.value_type == stormpy.storage.UmbImportValueType.DOUBLE
+        assert opts.value_type == stormpy.io.UmbImportValueType.DOUBLE
         assert opts.build_choice_labeling is False
         assert opts.build_state_valuations is False
 
     def test_export_options_set(self):
-        opts = stormpy.storage.UmbExportOptions()
-        opts.compression = stormpy.storage.CompressionMode.GZIP
-        opts.value_type = stormpy.storage.UmbExportValueType.RATIONAL
-        assert opts.compression == stormpy.storage.CompressionMode.GZIP
-        assert opts.value_type == stormpy.storage.UmbExportValueType.RATIONAL
+        opts = stormpy.io.UmbExportOptions()
+        opts.compression = stormpy.io.CompressionMode.GZIP
+        opts.value_type = stormpy.io.UmbExportValueType.RATIONAL
+        assert opts.compression == stormpy.io.CompressionMode.GZIP
+        assert opts.value_type == stormpy.io.UmbExportValueType.RATIONAL
 
     def test_compression_mode_enum(self):
-        assert stormpy.storage.CompressionMode.DEFAULT
-        assert stormpy.storage.CompressionMode.GZIP
-        assert stormpy.storage.CompressionMode.XZ
-        assert stormpy.storage.CompressionMode.NO_COMPRESSION
+        assert stormpy.io.CompressionMode.DEFAULT
+        assert stormpy.io.CompressionMode.GZIP
+        assert stormpy.io.CompressionMode.XZ
+        assert stormpy.io.CompressionMode.NO_COMPRESSION
 
     def test_import_value_type_enum(self):
-        assert stormpy.storage.UmbImportValueType.DEFAULT
-        assert stormpy.storage.UmbImportValueType.RATIONAL
-        assert stormpy.storage.UmbImportValueType.DOUBLE
+        assert stormpy.io.UmbImportValueType.DEFAULT
+        assert stormpy.io.UmbImportValueType.RATIONAL
+        assert stormpy.io.UmbImportValueType.DOUBLE
 
     def test_export_value_type_enum(self):
-        assert stormpy.storage.UmbExportValueType.DEFAULT
-        assert stormpy.storage.UmbExportValueType.RATIONAL
-        assert stormpy.storage.UmbExportValueType.DOUBLE
-        assert stormpy.storage.UmbExportValueType.DOUBLE_INTERVAL
-        assert stormpy.storage.UmbExportValueType.RATIONAL_INTERVAL
+        assert stormpy.io.UmbExportValueType.DEFAULT
+        assert stormpy.io.UmbExportValueType.RATIONAL
+        assert stormpy.io.UmbExportValueType.DOUBLE
+        assert stormpy.io.UmbExportValueType.DOUBLE_INTERVAL
+        assert stormpy.io.UmbExportValueType.RATIONAL_INTERVAL
 
 
 class TestUmbModel:
     def test_str(self, dtmc):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
         assert isinstance(str(umb), str)
 
     def test_get_short_model_information(self, dtmc):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
         assert isinstance(umb.get_short_model_information(), str)
 
     def test_get_model_information(self, dtmc):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
         info = umb.get_model_information()
         assert isinstance(info, str)
         assert len(info) > 0
 
     def test_validate(self, dtmc):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
         valid, errors = umb.validate()
         assert valid is True
         assert errors == ""
 
     def test_validate_or_throw(self, dtmc):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
         umb.validate_or_throw()  # should not raise
 
     def test_export_and_build_from_path(self, dtmc, tmp_path):
@@ -122,8 +122,8 @@ class TestUmbConvenienceFunctions:
         assert mdp.nr_transitions == model2.nr_transitions
 
     def test_export_with_gzip(self, dtmc, tmp_umb):
-        opts = stormpy.storage.UmbExportOptions()
-        opts.compression = stormpy.storage.CompressionMode.GZIP
+        opts = stormpy.io.UmbExportOptions()
+        opts.compression = stormpy.io.CompressionMode.GZIP
         stormpy.export_to_umb(dtmc, tmp_umb, options=opts)
         model2 = stormpy.build_model_from_umb(tmp_umb)
         assert type(dtmc) == type(model2)
@@ -139,41 +139,41 @@ class TestUmbRoundTrip:
         assert model.nr_choices == model2.nr_choices
 
     def test_dtmc_short_round_trip(self, dtmc):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
-        model2 = stormpy.storage.sparse_model_from_umb(umb)
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
+        model2 = stormpy.developer.storage.sparse_model_from_umb(umb)
         self._assert_same_structure(dtmc, model2)
 
     def test_mdp_short_round_trip(self, mdp):
-        umb = stormpy.storage.sparse_model_to_umb(mdp)
-        model2 = stormpy.storage.sparse_model_from_umb(umb)
+        umb = stormpy.io.sparse_model_to_umb(mdp)
+        model2 = stormpy.developer.storage.sparse_model_from_umb(umb)
         self._assert_same_structure(mdp, model2)
 
     def test_dtmc_gzip_round_trip(self, dtmc, tmp_umb):
-        export_opts = stormpy.storage.UmbExportOptions()
-        export_opts.compression = stormpy.storage.CompressionMode.GZIP
-        umb = stormpy.storage.sparse_model_to_umb(dtmc, export_opts)
-        stormpy.storage.umb_to_archive(umb, tmp_umb, export_opts)
+        export_opts = stormpy.io.UmbExportOptions()
+        export_opts.compression = stormpy.io.CompressionMode.GZIP
+        umb = stormpy.io.sparse_model_to_umb(dtmc, options=export_opts)
+        stormpy.io.umb_to_archive(umb, tmp_umb, export_opts)
         assert os.path.getsize(tmp_umb) > 0
-        umb2 = stormpy.storage.import_umb(tmp_umb)
-        model2 = stormpy.storage.sparse_model_from_umb(umb2)
+        umb2 = stormpy.io.import_umb(tmp_umb)
+        model2 = stormpy.developer.storage.sparse_model_from_umb(umb2)
         self._assert_same_structure(dtmc, model2)
 
     def test_dtmc_xz_round_trip(self, dtmc, tmp_umb):
-        export_opts = stormpy.storage.UmbExportOptions()
-        export_opts.compression = stormpy.storage.CompressionMode.XZ
-        umb = stormpy.storage.sparse_model_to_umb(dtmc, export_opts)
-        stormpy.storage.umb_to_archive(umb, tmp_umb, export_opts)
+        export_opts = stormpy.io.UmbExportOptions()
+        export_opts.compression = stormpy.io.CompressionMode.XZ
+        umb = stormpy.io.sparse_model_to_umb(dtmc, options=export_opts)
+        stormpy.io.umb_to_archive(umb, tmp_umb, export_opts)
         assert os.path.getsize(tmp_umb) > 0
-        umb2 = stormpy.storage.import_umb(tmp_umb)
-        model2 = stormpy.storage.sparse_model_from_umb(umb2)
+        umb2 = stormpy.io.import_umb(tmp_umb)
+        model2 = stormpy.developer.storage.sparse_model_from_umb(umb2)
         self._assert_same_structure(dtmc, model2)
 
     def test_import_options_no_state_valuations(self, dtmc, tmp_umb):
-        umb = stormpy.storage.sparse_model_to_umb(dtmc)
-        stormpy.storage.umb_to_archive(umb, tmp_umb)
-        import_opts = stormpy.storage.UmbImportOptions()
+        umb = stormpy.io.sparse_model_to_umb(dtmc)
+        stormpy.io.umb_to_archive(umb, tmp_umb)
+        import_opts = stormpy.io.UmbImportOptions()
         import_opts.build_state_valuations = False
-        umb2 = stormpy.storage.import_umb(tmp_umb, import_opts)
-        model2 = stormpy.storage.sparse_model_from_umb(umb2, import_opts)
+        umb2 = stormpy.io.import_umb(tmp_umb, options=import_opts)
+        model2 = stormpy.developer.storage.sparse_model_from_umb(umb2, import_opts)
         self._assert_same_structure(dtmc, model2)
         assert not model2.has_state_valuations()

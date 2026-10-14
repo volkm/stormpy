@@ -24,7 +24,7 @@ class TestState:
         options = stormpy.BuilderOptions(build_full=True)
         model = stormpy.build_model(program, options=options)
         assert model.has_state_valuations()
-        for var in program.get_variables():
+        for var in program.get_all_expression_variables():
             if var.name == "s":
                 var_s = var
             elif var.name == "d":
@@ -125,7 +125,7 @@ class TestState:
                     i += 1
                     assert state.id == transition_orig[0]
                     assert transition.column == transition_orig[1]
-                    assert transition.value() == transition_orig[2]
+                    assert transition.value == transition_orig[2]
 
     def test_transitions_mdp(self):
         model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
@@ -135,7 +135,7 @@ class TestState:
             for action in state.actions:
                 i += 1
                 for transition in action.transitions:
-                    assert transition.value() == 0.5 or transition.value() == 1
+                    assert transition.value == 0.5 or transition.value == 1
             assert i == 1 or i == 2
 
     def test_row_iterator(self):
@@ -169,7 +169,7 @@ class TestState:
                 i += 1
                 assert state.id == transition_orig[0]
                 assert transition.column == transition_orig[1]
-                assert transition.value() == transition_orig[2]
+                assert transition.value == transition_orig[2]
 
     def test_parametric_transitions(self):
         program = stormpy.parse_prism_program(get_example_path("pmdp", "two_dice.nm"))
@@ -185,7 +185,7 @@ class TestState:
                 assert j == 0 or j == 1
                 j += 1
                 for transition in action.transitions:
-                    assert transition.value().denominator == one
+                    assert transition.value.denominator == one
 
     def test_states_mdp_maze(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "maze_2.nm"))
@@ -221,9 +221,9 @@ class TestState:
                 if state.id == 0:
                     assert len(action.transitions) == 13
                     for transition in action.transitions:
-                        assert math.isclose(transition.value(), 1 / 13)
+                        assert math.isclose(transition.value, 1 / 13)
                 else:
                     assert len(action.transitions) == 1
                     for transition in action.transitions:
-                        assert transition.value() == 1
+                        assert transition.value == 1
                         assert transition.column == expected[state.id][action.id]

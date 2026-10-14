@@ -10,8 +10,8 @@ void define_geometry(py::module& m) {
     typedef storm::storage::geometry::Polytope<ValueType> Polytope;
     auto polytope = stormpy::bindings::bindTemplateClass<Polytope>(m, "Polytope", stormpy::bindings::typeIndex<ValueType>(), "Polytope");
     polytope.def_property_readonly("vertices", &Polytope::getVertices);
-    polytope.def("create_downward_closure", &Polytope::downwardClosure);
-    polytope.def("get_vertices_clockwise", &Polytope::getVerticesInClockwiseOrder);
+    polytope.def("downward_closure", &Polytope::downwardClosure);
+    polytope.def("get_vertices_in_clockwise_order", &Polytope::getVerticesInClockwiseOrder);
 }
 
 template void define_geometry<double>(py::module&);

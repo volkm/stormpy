@@ -5,13 +5,13 @@ from configurations import numpy_avail
 
 class TestMatrixBuilder:
     def test_matrix_builder(self):
-        builder = stormpy.storage.SparseMatrixBuilder(force_dimensions=True)
+        builder = stormpy.datastructures.SparseMatrixBuilder(force_dimensions=True)
         matrix = builder.build()
         assert matrix.nr_columns == 0
         assert matrix.nr_rows == 0
         assert matrix.nr_entries == 0
 
-        builder_5x5 = stormpy.storage.SparseMatrixBuilder(5, 5, force_dimensions=False)
+        builder_5x5 = stormpy.datastructures.SparseMatrixBuilder(5, 5, force_dimensions=False)
 
         builder_5x5.add_next_value(0, 0, 0)
         builder_5x5.add_next_value(0, 1, 0.1)
@@ -32,16 +32,16 @@ class TestMatrixBuilder:
         assert matrix_5x5.nr_entries == 7
 
         for e in matrix_5x5:
-            assert (e.value() == 0.1 and e.column == 1) or e.value() == 0 or (e.value() > 20 and e.column > 1)
+            assert (e.value == 0.1 and e.column == 1) or e.value == 0 or (e.value > 20 and e.column > 1)
 
     def test_exact_matrix_builder(self):
-        builder = stormpy.storage.SparseMatrixBuilder[stormpy.Rational](force_dimensions=True)
+        builder = stormpy.datastructures.SparseMatrixBuilder[stormpy.Rational](force_dimensions=True)
         matrix = builder.build()
         assert matrix.nr_columns == 0
         assert matrix.nr_rows == 0
         assert matrix.nr_entries == 0
 
-        builder_5x5 = stormpy.storage.SparseMatrixBuilder[stormpy.Rational](5, 5, force_dimensions=False)
+        builder_5x5 = stormpy.datastructures.SparseMatrixBuilder[stormpy.Rational](5, 5, force_dimensions=False)
 
         builder_5x5.add_next_value(0, 0, stormpy.Rational(1))
         builder_5x5.add_next_value(0, 1, stormpy.Rational(1))
@@ -62,19 +62,19 @@ class TestMatrixBuilder:
 
         for e in matrix_5x5:
             assert (
-                (e.value() == stormpy.Rational(1) and e.column < 2)
-                or (e.value() == stormpy.Rational(2) and e.column == 2)
-                or (e.column > 2 and e.value() == stormpy.Rational("1/6"))
+                (e.value == stormpy.Rational(1) and e.column < 2)
+                or (e.value == stormpy.Rational(2) and e.column == 2)
+                or (e.column > 2 and e.value == stormpy.Rational("1/6"))
             )
 
     def test_parametric_matrix_builder(self):
-        builder = stormpy.storage.SparseMatrixBuilder[stormpy.RationalFunction](force_dimensions=True)
+        builder = stormpy.datastructures.SparseMatrixBuilder[stormpy.RationalFunction](force_dimensions=True)
         matrix = builder.build()
         assert matrix.nr_columns == 0
         assert matrix.nr_rows == 0
         assert matrix.nr_entries == 0
 
-        builder_5x5 = stormpy.storage.SparseMatrixBuilder[stormpy.RationalFunction](5, 5, force_dimensions=False)
+        builder_5x5 = stormpy.datastructures.SparseMatrixBuilder[stormpy.RationalFunction](5, 5, force_dimensions=False)
 
         one_pol = stormpy.RationalFunctionCoefficient(1)
         one_pol = stormpy.Polynomial(one_pol)
@@ -103,10 +103,10 @@ class TestMatrixBuilder:
         assert matrix_5x5.nr_entries == 7
 
         for e in matrix_5x5:
-            assert (e.value() == first_val and e.column < 2) or (e.value() == sec_val and e.column > 1)
+            assert (e.value == first_val and e.column < 2) or (e.value == sec_val and e.column > 1)
 
     def test_matrix_replace_columns(self):
-        builder = stormpy.storage.SparseMatrixBuilder(3, 4, force_dimensions=False)
+        builder = stormpy.datastructures.SparseMatrixBuilder(3, 4, force_dimensions=False)
 
         builder.add_next_value(0, 0, 0)
         builder.add_next_value(0, 1, 1)
@@ -129,15 +129,10 @@ class TestMatrixBuilder:
 
         # Check if columns where replaced
         for e in matrix:
-            assert (
-                (e.value() == 0 and e.column == 0)
-                or (e.value() == 3 and e.column == 1)
-                or (e.value() == 2 and e.column == 2)
-                or (e.value() == 1 and e.column == 3)
-            )
+            assert (e.value == 0 and e.column == 0) or (e.value == 3 and e.column == 1) or (e.value == 2 and e.column == 2) or (e.value == 1 and e.column == 3)
 
     def test_parametric_matrix_replace_columns(self):
-        builder = stormpy.storage.SparseMatrixBuilder[stormpy.RationalFunction](3, 4, force_dimensions=False)
+        builder = stormpy.datastructures.SparseMatrixBuilder[stormpy.RationalFunction](3, 4, force_dimensions=False)
 
         one_pol = stormpy.RationalFunctionCoefficient(1)
         one_pol = stormpy.Polynomial(one_pol)
@@ -167,11 +162,11 @@ class TestMatrixBuilder:
 
         # Check if columns where replaced
         for e in matrix:
-            assert (e.value() == first_val and e.column == 1) or (e.value() == third_val and e.column == 2) or (e.value() == sec_val and e.column == 3)
+            assert (e.value == first_val and e.column == 1) or (e.value == third_val and e.column == 2) or (e.value == sec_val and e.column == 3)
 
     def test_matrix_builder_row_grouping(self):
         num_rows = 5
-        builder = stormpy.storage.SparseMatrixBuilder(num_rows, 6, has_custom_row_grouping=True, row_groups=2)
+        builder = stormpy.datastructures.SparseMatrixBuilder(num_rows, 6, has_custom_row_grouping=True, row_groups=2)
 
         builder.new_row_group(1)
         assert builder.get_current_row_group_count() == 1
@@ -188,7 +183,7 @@ class TestMatrixBuilder:
 
     def test_parametric_matrix_builder_row_grouping(self):
         num_rows = 5
-        builder = stormpy.storage.SparseMatrixBuilder[stormpy.RationalFunction](num_rows, 6, has_custom_row_grouping=True, row_groups=2)
+        builder = stormpy.datastructures.SparseMatrixBuilder[stormpy.RationalFunction](num_rows, 6, has_custom_row_grouping=True, row_groups=2)
 
         builder.new_row_group(1)
         assert builder.get_current_row_group_count() == 1
@@ -209,7 +204,7 @@ class TestMatrixBuilder:
 
         array = np.array([[0, 2], [3, 4], [0.1, 24], [-0.3, -4]], dtype="float64")
 
-        matrix = stormpy.storage.build_sparse_matrix(array)
+        matrix = stormpy.datastructures.build_sparse_matrix(array)
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -220,7 +215,7 @@ class TestMatrixBuilder:
         for r in range(array.shape[1]):
             row = matrix.get_row(r)
             for e in row:
-                assert e.value() == array[r, e.column]
+                assert e.value == array[r, e.column]
 
     @numpy_avail
     def test_matrix_from_numpy_zeros(self):
@@ -228,7 +223,7 @@ class TestMatrixBuilder:
 
         array = np.array([[0, 0, 1, 0], [0.1, 0, 0, 0.9], [0, 0, 0, 0], [1, 0, 0, 0]], dtype="float64")
 
-        matrix = stormpy.storage.build_sparse_matrix(array)
+        matrix = stormpy.datastructures.build_sparse_matrix(array)
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -239,7 +234,7 @@ class TestMatrixBuilder:
         for r in range(array.shape[1]):
             row = matrix.get_row(r)
             for e in row:
-                assert e.value() == array[r, e.column]
+                assert e.value == array[r, e.column]
 
     @numpy_avail
     def test_parametric_matrix_from_numpy(self):
@@ -255,7 +250,7 @@ class TestMatrixBuilder:
 
         array = np.array([[sec_val, first_val], [first_val, 0], [0, sec_val], [third_val, third_val]])
 
-        matrix = stormpy.storage.build_parametric_sparse_matrix(array)
+        matrix = stormpy.datastructures.build_sparse_matrix[stormpy.RationalFunction](array)
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -266,7 +261,7 @@ class TestMatrixBuilder:
         for r in range(array.shape[1]):
             row = matrix.get_row(r)
             for e in row:
-                assert e.value() == array[r, e.column]
+                assert e.value == array[r, e.column]
 
     @numpy_avail
     def test_matrix_from_numpy_row_grouping(self):
@@ -274,7 +269,7 @@ class TestMatrixBuilder:
 
         array = np.array([[0, 2], [3, 4], [0.1, 24], [-0.3, -4]], dtype="float64")
 
-        matrix = stormpy.storage.build_sparse_matrix(array, row_group_indices=[1, 3])
+        matrix = stormpy.datastructures.build_sparse_matrix(array, row_group_indices=[1, 3])
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -285,7 +280,7 @@ class TestMatrixBuilder:
         for r in range(array.shape[1]):
             row = matrix.get_row(r)
             for e in row:
-                assert e.value() == array[r, e.column]
+                assert e.value == array[r, e.column]
 
         # Check row groups
         assert matrix.get_row_group_start(0) == 1
@@ -308,7 +303,7 @@ class TestMatrixBuilder:
 
         array = np.array([[sec_val, first_val], [first_val, sec_val], [sec_val, sec_val], [third_val, third_val]])
 
-        matrix = stormpy.storage.build_parametric_sparse_matrix(array, row_group_indices=[1, 3])
+        matrix = stormpy.datastructures.build_sparse_matrix[stormpy.RationalFunction](array, row_group_indices=[1, 3])
 
         # Check matrix dimension
         assert matrix.nr_rows == array.shape[0]
@@ -319,7 +314,7 @@ class TestMatrixBuilder:
         for r in range(array.shape[1]):
             row = matrix.get_row(r)
             for e in row:
-                assert e.value() == array[r, e.column]
+                assert e.value == array[r, e.column]
 
         # Check row groups
         assert matrix.get_row_group_start(0) == 1

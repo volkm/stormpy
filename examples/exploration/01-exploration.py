@@ -20,7 +20,7 @@ def example_exploration_01():
             print(state)
         for action in state.actions:
             for transition in action.transitions:
-                print("From state {} by action {}, with probability {}, go to state {}".format(state, action, transition.value(), transition.column))
+                print("From state {} by action {}, with probability {}, go to state {}".format(state, action, transition.value, transition.column))
 
 
 if __name__ == "__main__":

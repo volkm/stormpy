@@ -87,7 +87,7 @@ Note that all timing information is lost at this point:
 
 ```{code-cell} python3
 mdp, mdp_formulas = stormpy.transform_to_discrete_time_model(ma, formulas)
-assert mdp.model_type == stormpy.ModelType.MDP
+assert mdp.model_type == stormpy.models.ModelType.MDP
 ```
 
 After the transformation we have obtained an MDP where we can extract the scheduler as shown before:

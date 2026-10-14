@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from enum import Enum
 
-from stormpy import developer, storage
+from stormpy import developer
+from stormpy.developer import storage
 from stormpy.core._common import _formula, _result_value_type_of_model, _value_type_of_model
 from stormpy import Interval, Rational, RationalInterval
 from stormpy.developer import (

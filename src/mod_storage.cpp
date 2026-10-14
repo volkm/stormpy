@@ -91,4 +91,8 @@ PYBIND11_MODULE(_storage, m) {
     define_maximal_end_component_decomposition<storm::RationalInterval>(m);
     define_maximal_end_component_decomposition<storm::RationalFunction>(m);
     define_umb(m);
+    define_umb_typed<double>(m);
+    define_umb_typed<storm::RationalNumber>(m);
+    define_umb_typed<storm::Interval>(m);
+    define_umb_typed<storm::RationalInterval>(m);
 }

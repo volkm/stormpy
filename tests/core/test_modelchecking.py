@@ -13,9 +13,9 @@ def test_symbolic_filter_template_and_shared_dd_type():
     model = stormpy.build_symbolic_model(program)
     result = stormpy.create_filter_initial_states(model)
 
-    assert stormpy.DdType is stormpy.storage.DdType
-    assert type(result) is stormpy.SymbolicQualitativeCheckResult[stormpy.DdType.Sylvan]
-    assert stormpy.storage.Bdd.parameters_of(result.get_truth_values_vector()) == (stormpy.DdType.Sylvan,)
+    assert stormpy.models.DdType is stormpy.developer.storage.DdType
+    assert type(result) is stormpy.SymbolicQualitativeCheckResult[stormpy.models.DdType.Sylvan]
+    assert stormpy.developer.storage.Bdd.parameters_of(result.get_truth_values_vector()) == (stormpy.models.DdType.Sylvan,)
 
 
 @pytest.mark.parametrize("value_type", [float, stormpy.Rational, stormpy.RationalFunction])
@@ -56,7 +56,7 @@ def test_result_index_error():
     model = stormpy.build_model(program, properties)
     # Quantitative result for all states
     result = stormpy.model_checking(model, properties[0])
-    assert result.get_states() == stormpy.BitVector(model.nr_states, True)
+    assert result.get_states() == stormpy.datastructures.BitVector(model.nr_states, True)
     assert result.has_value_for_state(model.nr_states - 1)
     assert not result.has_value_for_state(model.nr_states)
     with pytest.raises(IndexError):
@@ -308,7 +308,7 @@ class TestModelChecking:
 
     def test_model_checking_jani_dtmc(self):
         jani_model, formulas = stormpy.parse_jani_model(get_example_path("dtmc", "die.jani"))
-        formulas = stormpy.storage.eliminate_reward_accumulations(jani_model, formulas)
+        formulas = stormpy.developer.storage.RewardAccumulationEliminationVisitor(jani_model).eliminate_reward_accumulations(formulas)
         assert len(formulas) == 2
         model = stormpy.build_model(jani_model, formulas)
         assert model.nr_states == 13
@@ -365,28 +365,28 @@ class TestModelChecking:
         model = stormpy.build_model(program, [formulaPsi])
         phiResult = stormpy.model_checking(model, formulaPhi)
         phiStates = phiResult.get_truth_values_vector()
-        assert phiStates.number_of_set_bits() == model.nr_states
+        assert phiStates.get_number_of_set_bits() == model.nr_states
         psiResult = stormpy.model_checking(model, formulaPsi)
         psiStates = psiResult.get_truth_values_vector()
-        assert psiStates.number_of_set_bits() == 1
+        assert psiStates.get_number_of_set_bits() == 1
         prob0, prob1 = stormpy.developer.perform_prob01(model, phiStates, psiStates)
-        assert prob0.number_of_set_bits() == 9
-        assert prob1.number_of_set_bits() == 1
+        assert prob0.get_number_of_set_bits() == 9
+        assert prob1.get_number_of_set_bits() == 1
         labelprop = stormpy.Property("cora", formulaPsi.get_raw_formula(), set())
         result = stormpy.model_checking(model, labelprop)
-        assert result.get_truth_values_vector().number_of_set_bits() == 1
+        assert result.get_truth_values_vector().get_number_of_set_bits() == 1
 
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
         formulas = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)
         model = stormpy.build_model(program, formulas)
         psi_states = stormpy.model_checking(model, formulas[0].get_raw_formula().subformula.subformula).get_truth_values_vector()
-        prob0, prob1 = stormpy.developer.perform_prob01_min(model, stormpy.BitVector(model.nr_states, True), psi_states)
-        assert prob0.number_of_set_bits() == 94
-        assert prob1.number_of_set_bits() == 15
+        prob0, prob1 = stormpy.developer.perform_prob01_min(model, stormpy.datastructures.BitVector(model.nr_states, True), psi_states)
+        assert prob0.get_number_of_set_bits() == 94
+        assert prob1.get_number_of_set_bits() == 15
         psi_states = stormpy.model_checking(model, formulas[0].get_raw_formula().subformula.subformula).get_truth_values_vector()
-        prob0, prob1 = stormpy.developer.perform_prob01_max(model, stormpy.BitVector(model.nr_states, True), psi_states)
-        assert prob0.number_of_set_bits() == 83
-        assert prob1.number_of_set_bits() == 18
+        prob0, prob1 = stormpy.developer.perform_prob01_max(model, stormpy.datastructures.BitVector(model.nr_states, True), psi_states)
+        assert prob0.get_number_of_set_bits() == 83
+        assert prob1.get_number_of_set_bits() == 18
 
     def test_model_checking_ctmc(self):
         model = stormpy.build_model_from_drn(get_example_path("ctmc", "dft.drn"))
@@ -447,11 +447,11 @@ class TestModelChecking:
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         formulas = stormpy.parse_properties('P=? [ F "one" ]', program)
         model = stormpy.build_symbolic_model(program, formulas)
-        assert isinstance(model, stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, float])
+        assert isinstance(model, stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, float])
         assert model.nr_states == 13
         assert model.nr_transitions == 20
         result = stormpy.model_checking(model, formulas[0], engine=stormpy.Engine.DD)
-        assert type(result) is stormpy.SymbolicQuantitativeCheckResult[stormpy.DdType.Sylvan, float]
+        assert type(result) is stormpy.SymbolicQuantitativeCheckResult[stormpy.models.DdType.Sylvan, float]
         assert result.get_min() == 0.0
         assert result.get_max() == 1.0
         filter = stormpy.create_filter_initial_states(model)
@@ -463,11 +463,11 @@ class TestModelChecking:
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         formulas = stormpy.parse_properties('P=? [ F "one" ]', program)
         model = stormpy.build_symbolic_model(program, formulas)
-        assert isinstance(model, stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, float])
+        assert isinstance(model, stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, float])
         assert model.nr_states == 13
         assert model.nr_transitions == 20
         result = stormpy.model_checking(model, formulas[0], engine=stormpy.Engine.HYBRID)
-        assert type(result) is stormpy.HybridQuantitativeCheckResult[stormpy.DdType.Sylvan, float]
+        assert type(result) is stormpy.HybridQuantitativeCheckResult[stormpy.models.DdType.Sylvan, float]
         values = result.get_explicit_value_vector()
         assert len(values) == 3
         assert math.isclose(values[0], 1 / 6)
@@ -570,10 +570,10 @@ class TestModelChecking:
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         properties = stormpy.parse_properties('P=? [F "one"]', program)
         symbolic_model = stormpy.build_symbolic_model(program, properties)
-        parser = stormpy.storage.ExpressionParser(program.expression_manager)
+        parser = stormpy.expressions.ExpressionParser(program.expression_manager)
         parser.set_identifier_mapping({variable.name: variable.get_expression() for variable in program.expression_manager.get_variables()})
-        state_filter = stormpy.create_filter(symbolic_model, parser.parse("s=0"))
-        assert type(state_filter) is stormpy.SymbolicQualitativeCheckResult[stormpy.DdType.Sylvan]
+        state_filter = stormpy.create_filter(symbolic_model, parser.parse_from_string("s=0"))
+        assert type(state_filter) is stormpy.SymbolicQualitativeCheckResult[stormpy.models.DdType.Sylvan]
         result = stormpy.model_checking(symbolic_model, properties[0])
         result.filter(state_filter)
         # Only the initial state satisfies s=0
@@ -581,7 +581,7 @@ class TestModelChecking:
         assert math.isclose(result.get_max(), 1 / 6, rel_tol=1e-6)
         sparse_model = stormpy.build_model(program, properties)
         with pytest.raises(StormError):
-            stormpy.create_filter(sparse_model, parser.parse("s=0"))
+            stormpy.create_filter(sparse_model, parser.parse_from_string("s=0"))
 
     def test_qualitative_result_type(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))

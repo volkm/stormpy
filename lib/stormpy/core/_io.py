@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from stormpy import developer, storage
+from stormpy import developer
+from stormpy.developer import storage
 from stormpy.core._common import PathLike, _path
 from stormpy.developer import DirectEncodingExporterOptions
 
@@ -28,4 +29,4 @@ def export_to_umb(model, path: PathLike, *, options: storage.UmbExportOptions | 
     """
     options = options if options is not None else storage.UmbExportOptions()
     umb = storage.sparse_model_to_umb(model, options)
-    storage.umb_to_archive(umb, _path(path), options)
+    storage.to_archive(umb, _path(path), options)

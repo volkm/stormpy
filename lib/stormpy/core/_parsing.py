@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 
-from stormpy import developer, storage
+from stormpy import developer
+from stormpy.developer import storage
 from stormpy import Rational
 from stormpy.core._common import PathLike, _path
 from stormpy.developer import Property, SymbolicModelDescription
@@ -97,14 +98,14 @@ def _constant_definitions(
         if isinstance(value, storage.Expression):
             expression = value
         elif isinstance(value, bool):
-            expression = manager.create_boolean(value)
+            expression = manager.boolean(value)
         elif isinstance(value, int):
-            expression = manager.create_integer(value)
+            expression = manager.integer(value)
         elif isinstance(value, float):
             # Use the decimal representation to obtain the exact rational (e.g. 0.1 -> 1/10)
-            expression = manager.create_rational(Rational(repr(value)))
+            expression = manager.rational(Rational(repr(value)))
         elif isinstance(value, Rational):
-            expression = manager.create_rational(value)
+            expression = manager.rational(value)
         else:
             raise StormError(f"Unsupported value {value!r} of type {type(value)} for constant '{variable.name}'.")
         definitions[variable] = expression

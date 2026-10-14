@@ -13,7 +13,11 @@ api/numbers
 api/exceptions
 api/logic
 api/simulator
-api/storage
+api/models
+api/datastructures
+api/expressions
+api/io
+api/storage_developer
 api/utility
 
 api/dft

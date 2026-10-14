@@ -19,7 +19,7 @@ def example_getting_started_04():
             print(state)
         for action in state.actions:
             for transition in action.transitions:
-                print("From state {}, with probability {}, go to state {}".format(state, transition.value(), transition.column))
+                print("From state {}, with probability {}, go to state {}".format(state, transition.value, transition.column))
 
 
 if __name__ == "__main__":

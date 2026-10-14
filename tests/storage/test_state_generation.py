@@ -44,13 +44,13 @@ def _load_program(filename):
     program = stormpy.parse_prism_program(filename)  # pylint: disable=no-member
     program = program.substitute_constants()
 
-    expression_parser = stormpy.storage.ExpressionParser(program.expression_manager)
-    expression_parser.set_identifier_mapping({var.name: var.get_expression() for var in program.get_variables()})
+    expression_parser = stormpy.expressions.ExpressionParser(program.expression_manager)
+    expression_parser.set_identifier_mapping({var.name: var.get_expression() for var in program.get_all_expression_variables()})
     return program, expression_parser
 
 
 def _find_variable(program, name):
-    for var in program.get_variables():
+    for var in program.get_all_expression_variables():
         if var.name is name:
             return var
     return None
@@ -60,7 +60,7 @@ def _find_variable(program, name):
 def test_knuth_yao_die():
     program, expression_parser = _load_program(prism_dtmc_die)
     s_variable = _find_variable(program, "s")
-    upper_bound_invariant = expression_parser.parse("d <= 6")
+    upper_bound_invariant = expression_parser.parse_from_string("d <= 6")
 
     number_states = 0
 

@@ -13,10 +13,10 @@ class TestSparseParametricModel:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SparseDtmc[stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SparseDtmc[stormpy.RationalFunction]
         assert {x.name for x in model.collect_all_parameters()} == {"pL", "pK"}
 
     def test_build_parametric_dtmc_preprocess(self):
@@ -26,10 +26,10 @@ class TestSparseParametricModel:
         model = stormpy.build_model[stormpy.RationalFunction](trans_prism, trans_formulas)
         assert model.nr_states == 33
         assert model.nr_transitions == 266
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SparseDtmc[stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SparseDtmc[stormpy.RationalFunction]
         assert {x.name for x in model.collect_all_parameters()} == {"p"}
 
     def test_build_dtmc_supporting_parameters(self):
@@ -38,10 +38,10 @@ class TestSparseParametricModel:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 13
         assert model.nr_transitions == 20
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.supports_parameters
         assert not model.has_parameters
-        assert type(model) is stormpy.SparseDtmc[stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SparseDtmc[stormpy.RationalFunction]
         assert len(model.collect_all_parameters()) == 0
 
     def test_build_parametric_mdp(self):
@@ -50,9 +50,9 @@ class TestSparseParametricModel:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 169
         assert model.nr_transitions == 435
-        assert model.model_type == stormpy.ModelType.MDP
+        assert model.model_type == stormpy.models.ModelType.MDP
         assert model.supports_parameters
-        assert type(model) is stormpy.SparseMdp[stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SparseMdp[stormpy.RationalFunction]
         assert {x.name for x in model.collect_all_parameters()} == {"p1", "p2"}
 
 
@@ -64,10 +64,10 @@ class TestSymbolicParametricModel:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, stormpy.RationalFunction]
 
     def test_build_parametric_dtmc_preprocess(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "herman5.pm"))
@@ -76,10 +76,10 @@ class TestSymbolicParametricModel:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](trans_prism, trans_formulas)
         assert model.nr_states == 33
         assert model.nr_transitions == 266
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.supports_parameters
         assert model.has_parameters
-        assert type(model) is stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, stormpy.RationalFunction]
 
     def test_build_dtmc_supporting_parameters(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -87,10 +87,10 @@ class TestSymbolicParametricModel:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 13
         assert model.nr_transitions == 20
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.supports_parameters
         assert not model.has_parameters
-        assert type(model) is stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, stormpy.RationalFunction]
 
     def test_build_parametric_mdp(self):
         program = stormpy.parse_prism_program(get_example_path("pmdp", "two_dice.nm"))
@@ -98,6 +98,6 @@ class TestSymbolicParametricModel:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](program, formulas)
         assert model.nr_states == 169
         assert model.nr_transitions == 435
-        assert model.model_type == stormpy.ModelType.MDP
+        assert model.model_type == stormpy.models.ModelType.MDP
         assert model.supports_parameters
-        assert type(model) is stormpy.SymbolicMdp[stormpy.DdType.Sylvan, stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SymbolicMdp[stormpy.models.DdType.Sylvan, stormpy.RationalFunction]

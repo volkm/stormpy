@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from stormpy import developer, storage
+from stormpy import developer
+from stormpy.developer import storage
 from stormpy.core._common import _formula, _value_type_of_model
 from stormpy.core._modelchecking import model_checking
 from stormpy.developer import CheckResult, CheckTask, Environment, OptimizationDirection, PcaaWeightVectorChecker, Property
@@ -23,7 +24,7 @@ def topological_sort(model, *, forward: bool = True, initial: Iterable[int] | No
     if not model.is_sparse_model:
         raise StormError("Topological sorting is only supported for sparse models.")
     matrix = model.transition_matrix if forward else model.backward_transition_matrix
-    return storage._storage._topological_sort(matrix, list(initial) if initial is not None else [])
+    return storage.get_topological_sort(matrix, list(initial) if initial is not None else [])
 
 
 def compute_prob01_states(model, property: Property) -> tuple[storage.BitVector, storage.BitVector]:

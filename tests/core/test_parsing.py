@@ -49,7 +49,7 @@ class TestParsePrismProgram:
     def test_parse_prism_program(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         assert program.nr_modules == 1
-        assert program.model_type == stormpy.storage.PrismModelType.DTMC
+        assert program.model_type == stormpy.io.PrismModelType.DTMC
         assert not program.has_undefined_constants
         description = stormpy.SymbolicModelDescription(program)
         assert description.is_prism_program()
@@ -58,7 +58,7 @@ class TestParsePrismProgram:
     def test_parse_parametric_prism_program(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         assert program.nr_modules == 5
-        assert program.model_type == stormpy.storage.PrismModelType.DTMC
+        assert program.model_type == stormpy.io.PrismModelType.DTMC
         assert program.has_undefined_constants
         assert program.undefined_constants_are_graph_preserving
 
@@ -99,7 +99,7 @@ class TestInstantiate:
         assert program.has_undefined_constants
         properties = stormpy.parse_properties("P=? [F s=5]", program)
         instantiated, instantiated_properties = stormpy.instantiate_constants(program, "N=16,MAX=2", properties)
-        assert isinstance(instantiated, stormpy.storage.PrismProgram)
+        assert isinstance(instantiated, stormpy.io.PrismProgram)
         assert not instantiated.has_undefined_constants
         assert len(instantiated_properties) == 1
         model = stormpy.build_model(instantiated, instantiated_properties)
@@ -118,7 +118,7 @@ class TestInstantiate:
         program = stormpy.parse_prism_program(get_example_path("mdp", "firewire.nm"))
         from_string, _ = stormpy.instantiate_constants(program, "delay=10,fast=0.8")
         manager = program.expression_manager
-        for fast in (0.8, stormpy.Rational("4/5"), manager.create_rational(stormpy.Rational("4/5"))):
+        for fast in (0.8, stormpy.Rational("4/5"), manager.rational(stormpy.Rational("4/5"))):
             from_mapping, _ = stormpy.instantiate_constants(program, {"delay": 10, "fast": fast})
             assert not from_mapping.has_undefined_constants
             assert str(from_mapping) == str(from_string)
@@ -126,7 +126,7 @@ class TestInstantiate:
     def test_instantiate_constants_mapping_jani(self):
         jani_model, properties = stormpy.parse_jani_model(get_example_path("dtmc", "brp.jani"))
         instantiated, instantiated_properties = stormpy.instantiate_constants(jani_model, {"N": 16, "MAX": 2}, properties)
-        assert isinstance(instantiated, stormpy.storage.JaniModel)
+        assert isinstance(instantiated, stormpy.io.JaniModel)
         assert not instantiated.has_undefined_constants
         assert len(instantiated_properties) == len(properties)
 
@@ -151,22 +151,22 @@ class TestParseExplicit:
         model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         assert model.nr_states == 13
         assert model.nr_transitions == 20
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert not model.supports_parameters
-        assert type(model) is stormpy.SparseDtmc[float]
+        assert type(model) is stormpy.models.SparseDtmc[float]
 
     def test_parse_explicit_mdp(self):
         model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         assert model.nr_states == 169
         assert model.nr_transitions == 436
-        assert model.model_type == stormpy.ModelType.MDP
+        assert model.model_type == stormpy.models.ModelType.MDP
         assert not model.supports_parameters
-        assert type(model) is stormpy.SparseMdp[float]
+        assert type(model) is stormpy.models.SparseMdp[float]
 
     def test_parse_drn_dtmc(self):
         model = stormpy.build_model_from_drn(get_example_path("ctmc", "dft.drn"))
         assert model.nr_states == 16
         assert model.nr_transitions == 33
-        assert model.model_type == stormpy.ModelType.CTMC
+        assert model.model_type == stormpy.models.ModelType.CTMC
         assert not model.supports_parameters
-        assert type(model) is stormpy.SparseCtmc[float]
+        assert type(model) is stormpy.models.SparseCtmc[float]

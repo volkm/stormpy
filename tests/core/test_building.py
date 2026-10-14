@@ -31,13 +31,13 @@ class TestBuilding:
         state_mapping = model_builder.export_explicit_state_lookup()
 
         # lookup 1
-        state = {s_var: prism_program.expression_manager.create_integer(3), d_var: prism_program.expression_manager.create_integer(0)}
+        state = {s_var: prism_program.expression_manager.integer(3), d_var: prism_program.expression_manager.integer(0)}
         id = state_mapping.lookup(state)
         assert model.state_valuations.get_value(id, s_var) == 3
         assert model.state_valuations.get_value(id, d_var) == 0
 
         # lookup 2
-        state = {s_var: prism_program.expression_manager.create_integer(7), d_var: prism_program.expression_manager.create_integer(3)}
+        state = {s_var: prism_program.expression_manager.integer(7), d_var: prism_program.expression_manager.integer(3)}
         id = state_mapping.lookup(state)
         assert model.state_valuations.get_value(id, s_var) == 7
         assert model.state_valuations.get_value(id, d_var) == 3
@@ -50,7 +50,7 @@ class TestBuilding:
             get_example_path("idtmc", "die-intervals.pm") if value_type in (stormpy.Interval, stormpy.RationalInterval) else get_example_path("dtmc", "die.pm")
         )
         model = stormpy.build_model[value_type](program)
-        assert type(model) is stormpy.SparseDtmc[value_type]
+        assert type(model) is stormpy.models.SparseDtmc[value_type]
         assert model.nr_states == 13
 
     def test_build_model_unsupported_value_type(self):
@@ -89,9 +89,9 @@ class TestBuilding:
         properties = stormpy.parse_properties('P=? [F "one"]', program)
         model = stormpy.build_model(program, properties, engine=engine)
         if engine == stormpy.Engine.SPARSE:
-            assert type(model) is stormpy.SparseDtmc[float]
+            assert type(model) is stormpy.models.SparseDtmc[float]
         else:
-            assert type(model) is stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, float]
+            assert type(model) is stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, float]
         assert model.nr_states == 13
         result = stormpy.model_checking(model, properties[0], engine=engine)
         stormpy.filter_initial_states(result, model)
@@ -100,7 +100,7 @@ class TestBuilding:
     def test_build_model_engine_value_types(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         model = stormpy.build_model[stormpy.Rational](program, engine=stormpy.Engine.DD)
-        assert type(model) is stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, stormpy.Rational]
+        assert type(model) is stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, stormpy.Rational]
         # Interval value types are not supported by symbolic models
         with pytest.raises(TypeError, match="Supported are"):
             stormpy.build_model[stormpy.Interval](program, engine=stormpy.Engine.DD)
@@ -156,19 +156,19 @@ class TestBuilding:
     @pars
     def test_build_parametric_model_from_drn(self):
         model = stormpy.build_model_from_drn[stormpy.RationalFunction](get_example_path("pdtmc", "die.drn"))
-        assert type(model) is stormpy.SparseDtmc[stormpy.RationalFunction]
+        assert type(model) is stormpy.models.SparseDtmc[stormpy.RationalFunction]
         assert model.has_parameters
 
     def test_build_model_from_explicit_with_rewards(self):
         model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
-        assert type(model) is stormpy.SparseDtmc[float]
+        assert type(model) is stormpy.models.SparseDtmc[float]
         assert model.nr_states == 13
 
     @pytest.mark.parametrize("value_type", [float, stormpy.Rational, pytest.param(stormpy.RationalFunction, marks=pars)])
     def test_build_symbolic_model_value_types(self, value_type):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         model = stormpy.build_symbolic_model[value_type](program)
-        assert type(model) is stormpy.SymbolicDtmc[stormpy.DdType.Sylvan, value_type]
+        assert type(model) is stormpy.models.SymbolicDtmc[stormpy.models.DdType.Sylvan, value_type]
         assert model.nr_states == 13
 
     def test_build_symbolic_model_interval(self):
@@ -196,8 +196,8 @@ class TestBuilding:
         program = stormpy.parse_prism_program(get_example_path("ma", "simple.ma"))
         jani_model, _ = program.to_jani([])
         model = stormpy.build_symbolic_model(jani_model)
-        assert type(model) is stormpy.SymbolicMA[stormpy.DdType.Sylvan, float]
-        assert model.model_type == stormpy.ModelType.MA
+        assert type(model) is stormpy.models.SymbolicMA[stormpy.models.DdType.Sylvan, float]
+        assert model.model_type == stormpy.models.ModelType.MA
 
     def test_build_from_path(self):
         model = stormpy.build_model_from_drn(pathlib.Path(get_example_path("ctmc", "dft.drn")))

@@ -47,7 +47,7 @@ for state in model.states:
         print("State {} is initial".format(state.id))
     for action in state.actions:
         for transition in action.transitions:
-            print("From state {} by action {}, with probability {}, go to state {}".format(state, action, transition.value(), transition.column))
+            print("From state {} by action {}, with probability {}, go to state {}".format(state, action, transition.value, transition.column))
 ```
 
 Internally, storm can hold hints to the origin of the actions, which may be helpful to give meaning and for debugging.

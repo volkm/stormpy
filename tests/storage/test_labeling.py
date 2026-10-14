@@ -12,12 +12,12 @@ class TestStateLabeling:
         labeling.add_label("tmp")
         assert labeling.contains_label("tmp")
         labeling.add_label_to_state("tmp", 0)
-        assert labeling.has_state_label("tmp", 0)
+        assert labeling.get_state_has_label("tmp", 0)
         states = labeling.get_states("tmp")
         assert states.get(0)
         states.set(3)
         labeling.set_states("tmp", states)
-        assert labeling.has_state_label("tmp", 3)
+        assert labeling.get_state_has_label("tmp", 3)
 
     def test_label(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -28,9 +28,9 @@ class TestStateLabeling:
         assert len(labels) == 3
         assert "init" in labels
         assert "one" in labels
-        assert "init" in model.labels_state(0)
+        assert "init" in model.get_labels_of_state(0)
         assert "init" in labeling.get_labels_of_state(0)
-        assert "one" in model.labels_state(7)
+        assert "one" in model.get_labels_of_state(7)
         assert "one" in labeling.get_labels_of_state(7)
 
     def test_label_parametric(self):
@@ -41,9 +41,9 @@ class TestStateLabeling:
         assert len(labels) == 3
         assert "init" in labels
         assert "(s = 5)" in labels
-        assert "init" in model.labels_state(0)
-        assert "(s = 5)" in model.labels_state(28)
-        assert "(s = 5)" in model.labels_state(611)
+        assert "init" in model.get_labels_of_state(0)
+        assert "(s = 5)" in model.get_labels_of_state(28)
+        assert "(s = 5)" in model.get_labels_of_state(611)
         initial_states = model.initial_states
         assert len(initial_states) == 1
         assert 0 in initial_states

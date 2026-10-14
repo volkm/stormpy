@@ -1,5 +1,5 @@
 import stormpy
-from stormpy.storage import Expression
+from stormpy.expressions import Expression
 
 import stormpy.examples
 import stormpy.examples.files
@@ -24,12 +24,8 @@ def example_analysis_02():
             variables[v.name] = v.expression_variable.get_expression()
     expr_manager = prism_program.expression_manager
 
-    expr_for_state_1 = Expression.Conjunction(
-        [Expression.Eq(variables["s"], expr_manager.create_integer(1)), Expression.Eq(variables["d"], expr_manager.create_integer(0))]
-    )
-    expr_for_state_2 = Expression.And(
-        Expression.Eq(variables["s"], expr_manager.create_integer(4)), Expression.Eq(variables["d"], expr_manager.create_integer(0))
-    )
+    expr_for_state_1 = Expression.Conjunction([Expression.Eq(variables["s"], expr_manager.integer(1)), Expression.Eq(variables["d"], expr_manager.integer(0))])
+    expr_for_state_2 = Expression.And(Expression.Eq(variables["s"], expr_manager.integer(4)), Expression.Eq(variables["d"], expr_manager.integer(0)))
 
     result = stormpy.model_checking(model, properties[0])
     cached_res = result.clone()

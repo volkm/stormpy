@@ -6,6 +6,7 @@ Use :mod:`stormpy` for the public API.
 The naming of functions and classes of the bindings mirrors the corresponding ``storm::`` C++ functions and classes.
 """
 
+from . import storage
 from . import _core
 
 # Mirror _core's entire namespace (including private underscored classes) directly onto this package.
@@ -14,7 +15,6 @@ for _name, _value in vars(_core).items():
         globals()[_name] = _value
 del _name, _value
 
-from stormpy import storage
 from stormpy._template import _TemplateClass, _TemplateFunction, _TemplateParameter, _deduce_default, _deduce_from_object
 
 _deduce_from_model = _deduce_from_object(storage.parameters_of_model, keyword=("model", "original_model"))

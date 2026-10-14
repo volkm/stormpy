@@ -13,8 +13,8 @@ from configurations import has_dft
 
 
 def _core_documented_elsewhere(name):
-    # Value types (from stormpy.numbers) and re-exports from stormpy.storage are documented in their respective modules
-    return name in stormpy.numbers.__all__ or hasattr(stormpy.storage, name)
+    # Value types are documented in stormpy.numbers.
+    return name in stormpy.numbers.__all__
 
 
 def _numbers_documented_elsewhere(name):
@@ -32,6 +32,10 @@ _PUBLIC_MODULES = {
     "stormpy": (True, _core_documented_elsewhere),
     "stormpy.dft": (has_dft, _not_documented_elsewhere),
     "stormpy.numbers": (True, _numbers_documented_elsewhere),
+    "stormpy.models": (True, _not_documented_elsewhere),
+    "stormpy.datastructures": (True, _not_documented_elsewhere),
+    "stormpy.expressions": (True, _not_documented_elsewhere),
+    "stormpy.io": (True, _not_documented_elsewhere),
 }
 
 _UNAVAILABLE = pytest.mark.skip(reason="Module not available in this build of Storm")

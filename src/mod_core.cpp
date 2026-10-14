@@ -29,8 +29,8 @@ PYBIND11_MODULE(_core, m) {
 
     using namespace stormpy;
 
-    // Import stormpy.storage, which registers types (such as DdType) required by the following bindings
-    m.attr("DdType") = py::module::import("stormpy.storage._storage").attr("DdType");
+    // We need the `DdType` type registration from this module, so we have to import the entire module here.
+    py::module::import("stormpy.developer.storage._storage");
     // Solver enums and storage classes are used as default arguments by other classes
     define_solver(m);
     define_storage(m);

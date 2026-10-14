@@ -8,14 +8,14 @@ class TestBisimulation:
     def test_bisimulation(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "crowds5_5.pm"))
         assert program.nr_modules == 1
-        assert program.model_type == stormpy.storage.PrismModelType.DTMC
+        assert program.model_type == stormpy.io.PrismModelType.DTMC
 
         prop = 'P=? [F "observe0Greater1"]'
         properties = stormpy.parse_properties(prop, program)
         model = stormpy.build_model(program, properties)
         assert model.nr_states == 7403
         assert model.nr_transitions == 13041
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert not model.supports_parameters
         initial_state = model.initial_states[0]
         assert initial_state == 0
@@ -23,7 +23,7 @@ class TestBisimulation:
         model_bisim = stormpy.perform_bisimulation(model, properties)
         assert model_bisim.nr_states == 65
         assert model_bisim.nr_transitions == 105
-        assert model_bisim.model_type == stormpy.ModelType.DTMC
+        assert model_bisim.model_type == stormpy.models.ModelType.DTMC
         assert not model_bisim.supports_parameters
         result_bisim = stormpy.model_checking(model_bisim, properties[0])
         initial_state_bisim = model_bisim.initial_states[0]
@@ -37,18 +37,18 @@ class TestBisimulation:
         model = stormpy.build_symbolic_model(program, properties)
         assert model.nr_states == 7403
         assert model.nr_transitions == 13041
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert not model.supports_parameters
         model_bisim = stormpy.perform_bisimulation(model, properties)
         assert model_bisim.nr_states == 65
         assert model_bisim.nr_transitions == 105
-        assert model_bisim.model_type == stormpy.ModelType.DTMC
+        assert model_bisim.model_type == stormpy.models.ModelType.DTMC
         assert not model_bisim.supports_parameters
 
     def test_parametric_bisimulation(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
         assert program.nr_modules == 5
-        assert program.model_type == stormpy.storage.PrismModelType.DTMC
+        assert program.model_type == stormpy.io.PrismModelType.DTMC
         assert program.has_undefined_constants
         assert program.undefined_constants_are_graph_preserving
         prop = "P=? [F s=5]"
@@ -56,7 +56,7 @@ class TestBisimulation:
         model = stormpy.build_model[stormpy.RationalFunction](program, properties)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         initial_state = model.initial_states[0]
         assert initial_state == 0
@@ -67,7 +67,7 @@ class TestBisimulation:
         model_bisim = stormpy.perform_bisimulation(model, properties)
         assert model_bisim.nr_states == 326
         assert model_bisim.nr_transitions == 454
-        assert model_bisim.model_type == stormpy.ModelType.DTMC
+        assert model_bisim.model_type == stormpy.models.ModelType.DTMC
         assert model_bisim.has_parameters
 
         result_bisim = stormpy.model_checking(model_bisim, properties[0])
@@ -82,7 +82,7 @@ class TestBisimulation:
         model_bisim = stormpy.perform_bisimulation(model, properties, options=options)
         assert model_bisim.nr_states == 328
         assert model_bisim.nr_transitions == 456
-        assert model_bisim.model_type == stormpy.ModelType.DTMC
+        assert model_bisim.model_type == stormpy.models.ModelType.DTMC
         assert model_bisim.has_parameters
 
         result_bisim = stormpy.model_checking(model_bisim, properties[0])
@@ -98,12 +98,12 @@ class TestBisimulation:
         model = stormpy.build_symbolic_model[stormpy.RationalFunction](program, properties)
         assert model.nr_states == 613
         assert model.nr_transitions == 803
-        assert model.model_type == stormpy.ModelType.DTMC
+        assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
         model_bisim = stormpy.perform_bisimulation(model, properties)
         assert model_bisim.nr_states == 326
         assert model_bisim.nr_transitions == 454
-        assert model_bisim.model_type == stormpy.ModelType.DTMC
+        assert model_bisim.model_type == stormpy.models.ModelType.DTMC
         assert model_bisim.has_parameters
 
     def test_perform_bisimulation_symbolic_sparse_quotient(self):
@@ -112,7 +112,7 @@ class TestBisimulation:
         model = stormpy.build_symbolic_model(program, properties)
         quotient = stormpy.perform_bisimulation(model, properties, quotient_format=stormpy.QuotientFormat.SPARSE)
         assert quotient.is_sparse_model
-        assert type(quotient) is stormpy.SparseDtmc[float]
+        assert type(quotient) is stormpy.models.SparseDtmc[float]
         dd_quotient = stormpy.perform_bisimulation(model, properties)
         assert dd_quotient.is_symbolic_model
         assert quotient.nr_states == dd_quotient.nr_states

@@ -9,9 +9,9 @@ class TestPomdpTransformations:
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         formulas = stormpy.parse_properties('P=? [F "goal"]', program)
         model = stormpy.build_model[stormpy.Rational](program, formulas)
-        assert type(model) is stormpy.SparsePomdp[stormpy.Rational]
+        assert type(model) is stormpy.models.SparsePomdp[stormpy.Rational]
         canonic = stormpy.pomdp.make_canonic(model)
-        assert type(canonic) is stormpy.SparsePomdp[stormpy.Rational]
+        assert type(canonic) is stormpy.models.SparsePomdp[stormpy.Rational]
         assert canonic.nr_states == model.nr_states
         assert canonic.nr_observations == model.nr_observations
 
@@ -27,9 +27,9 @@ class TestPomdpTransformations:
     def test_create_observation_trace_unfolder_with_options(self):
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         model = stormpy.build_model(program)
-        assert type(model) is stormpy.SparsePomdp[float]
+        assert type(model) is stormpy.models.SparsePomdp[float]
         risk = [0.0] * model.nr_observations
-        expr_manager = stormpy.storage.ExpressionManager()
+        expr_manager = stormpy.expressions.ExpressionManager()
         options = stormpy.pomdp.ObservationTraceUnfolderOptions()
         unfolder = stormpy.pomdp.create_observation_trace_unfolder(model, risk, expr_manager, options)
         unfolder.transform([6])
@@ -39,7 +39,7 @@ class TestPomdpTransformations:
         program = stormpy.parse_prism_program(get_example_path("pomdp", "maze_2.prism"))
         model = stormpy.build_model(program)
         risk = [0.0] * model.nr_observations
-        expr_manager = stormpy.storage.ExpressionManager()
+        expr_manager = stormpy.expressions.ExpressionManager()
         options = stormpy.pomdp.ObservationTraceUnfolderOptions()
         options.restart_semantics = False
         unfolder = stormpy.pomdp.create_observation_trace_unfolder(model, risk, expr_manager, options)

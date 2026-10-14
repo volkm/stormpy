@@ -7,7 +7,7 @@ class TestMaximalEndComponents:
         program = stormpy.parse_prism_program(get_example_path("mdp", "two_dice.nm"))
         model = stormpy.build_model(program)
 
-        decomposition = stormpy.storage.MaximalEndComponentDecomposition(model)
+        decomposition = stormpy.datastructures.MaximalEndComponentDecomposition(model)
         assert decomposition.size == 36
         for mec in decomposition:
             assert mec.size == 1
@@ -19,7 +19,7 @@ class TestMaximalEndComponents:
         program = stormpy.parse_prism_program(get_example_path("mdp", "maze_2.nm"))
         model = stormpy.build_model(program)
 
-        decomposition = stormpy.storage.get_maximal_end_components(model)
+        decomposition = stormpy.datastructures.get_maximal_end_components(model)
         assert decomposition.size == 2
         matrix = model.transition_matrix
         for mec in decomposition:
@@ -35,7 +35,7 @@ class TestMaximalEndComponents:
                         assert action.id == 0
                         assert len(action.transitions) == 1
                         for transition in action.transitions:
-                            assert transition.value() == 1
+                            assert transition.value == 1
                             assert transition.column == 14
 
             else:
@@ -49,15 +49,15 @@ class TestMaximalEndComponents:
                         action = state.actions[choice_id - offset]
                         assert action.id in [0, 1, 2, 3]
                         for transition in action.transitions:
-                            assert transition.value() == 1
+                            assert transition.value == 1
                             assert 1 <= transition.column <= 13
 
     def test_create_exact_interval_decomposition(self):
         model = stormpy.build_model_from_drn[stormpy.RationalInterval](get_example_path("imdp", "tiny-01.drn"))
-        assert type(model) is stormpy.SparseMdp[stormpy.RationalInterval]
+        assert type(model) is stormpy.models.SparseMdp[stormpy.RationalInterval]
         assert model.nr_states == 3
 
-        decomposition = stormpy.storage.get_maximal_end_components(model)
+        decomposition = stormpy.datastructures.get_maximal_end_components(model)
         assert decomposition.size == 2
         for mec in decomposition:
             assert mec.size == 1
@@ -72,16 +72,16 @@ class TestECElimination:
         model = stormpy.build_model(program, formulas)
         transformer = stormpy.developer.AddUncertainty[float](model)
         interval_model = transformer.transform(0.01)
-        assert type(interval_model) is stormpy.SparseMdp[stormpy.Interval]
-        subsystem = stormpy.BitVector(interval_model.nr_states, True)
-        possible_ec_rows = stormpy.BitVector(interval_model.nr_choices, True)
+        assert type(interval_model) is stormpy.models.SparseMdp[stormpy.Interval]
+        subsystem = stormpy.datastructures.BitVector(interval_model.nr_states, True)
+        possible_ec_rows = stormpy.datastructures.BitVector(interval_model.nr_choices, True)
         add_sink_rows = subsystem
         result = stormpy.developer.EndComponentEliminator[stormpy.Interval].transform(
             interval_model.transition_matrix, subsystem, possible_ec_rows, add_sink_rows, True
         )
         assert result.matrix.nr_rows == 218
         assert result.matrix.nr_columns == interval_model.nr_states
-        assert result.sink_rows.number_of_set_bits() == 36
+        assert result.sink_rows.get_number_of_set_bits() == 36
 
     def test_elimination_exact_interval(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "two_dice.nm"))
@@ -89,13 +89,13 @@ class TestECElimination:
         model = stormpy.build_model[stormpy.Rational](program, formulas)
         transformer = stormpy.developer.AddUncertainty[stormpy.Rational](model)
         exact_interval_model = transformer.transform(stormpy.Rational("1/100"))
-        assert type(exact_interval_model) is stormpy.SparseMdp[stormpy.RationalInterval]
-        subsystem = stormpy.BitVector(exact_interval_model.nr_states, True)
-        possible_ec_rows = stormpy.BitVector(exact_interval_model.nr_choices, True)
+        assert type(exact_interval_model) is stormpy.models.SparseMdp[stormpy.RationalInterval]
+        subsystem = stormpy.datastructures.BitVector(exact_interval_model.nr_states, True)
+        possible_ec_rows = stormpy.datastructures.BitVector(exact_interval_model.nr_choices, True)
         add_sink_rows = subsystem
         result = stormpy.developer.EndComponentEliminator[stormpy.RationalInterval].transform(
             exact_interval_model.transition_matrix, subsystem, possible_ec_rows, add_sink_rows, True
         )
         assert result.matrix.nr_rows == 218
         assert result.matrix.nr_columns == exact_interval_model.nr_states
-        assert result.sink_rows.number_of_set_bits() == 36
+        assert result.sink_rows.get_number_of_set_bits() == 36

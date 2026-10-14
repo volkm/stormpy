@@ -14,9 +14,8 @@ class DFTSimulator:
     """
     High-level simulator for Dynamic Fault Trees.
 
-    Wraps :class:`stormpy.dft.developer.DFTTraceSimulator`: builds the random
-    number generator and state-generation information automatically, and
-    resolves failable elements to their BE/dependency names.
+    Builds the random number generator and state-generation information
+    automatically, and resolves failable elements to their BE/dependency names.
     """
 
     def __init__(self, dft: DFT, *, seed: int = 42, relevant_events: Iterable[str] | None = None) -> None:

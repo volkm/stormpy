@@ -26,8 +26,8 @@ class TestAnalysis:
     def test_build_model(self):
         dft = stormpy.dft.load_dft_json_file(get_example_path("dft", "and.json"))
         model = stormpy.dft.build_model(dft)
-        assert model.model_type == stormpy.ModelType.CTMC
-        assert type(model) is stormpy.SparseCtmc[float]
+        assert model.model_type == stormpy.models.ModelType.CTMC
+        assert type(model) is stormpy.models.SparseCtmc[float]
         assert model.nr_states == 4
         assert model.nr_transitions == 5
         assert not model.supports_parameters
@@ -37,8 +37,8 @@ class TestAnalysis:
         builder = stormpy.dft.developer.ExplicitDFTModelBuilder[float](stormpy.dft.DftEnvironment(), dft, stormpy.dft.developer.DftSymmetries())
         builder.build(0)
         model = builder.get_model()
-        assert model.model_type == stormpy.ModelType.CTMC
-        assert type(model) is stormpy.SparseCtmc[float]
+        assert model.model_type == stormpy.models.ModelType.CTMC
+        assert type(model) is stormpy.models.SparseCtmc[float]
         assert model.nr_states == 4
         assert model.nr_transitions == 5
         assert not model.supports_parameters
@@ -49,7 +49,7 @@ class TestAnalysis:
         model = stormpy.dft.build_model(dft, symmetries=symmetries)
         assert model.nr_states == 3
         assert model.nr_transitions == 3
-        assert model.model_type == stormpy.ModelType.CTMC
+        assert model.model_type == stormpy.models.ModelType.CTMC
 
     def test_explicit_model_builder_unsupported_value_type(self):
         double_dft = stormpy.dft.load_dft_json_file(get_example_path("dft", "and.json"))
@@ -74,8 +74,8 @@ class TestAnalysis:
         # Iteration 0
         builder.build(0, 1.0)
         model_low = builder.get_partial_model(True, True)
-        assert model_low.model_type == stormpy.ModelType.CTMC
-        assert type(model_low) is stormpy.SparseCtmc[float]
+        assert model_low.model_type == stormpy.models.ModelType.CTMC
+        assert type(model_low) is stormpy.models.SparseCtmc[float]
         assert model_low.nr_states == 25
         assert model_low.nr_transitions == 46
         assert not model_low.supports_parameters
@@ -85,8 +85,8 @@ class TestAnalysis:
         assert math.isclose(result_low[initial_state], 0.5735024009)
 
         model_up = builder.get_partial_model(False, True)
-        assert model_up.model_type == stormpy.ModelType.CTMC
-        assert type(model_up) is stormpy.SparseCtmc[float]
+        assert model_up.model_type == stormpy.models.ModelType.CTMC
+        assert type(model_up) is stormpy.models.SparseCtmc[float]
         assert model_up.nr_states == 25
         assert model_up.nr_transitions == 46
         assert not model_up.supports_parameters
@@ -130,8 +130,8 @@ class TestAnalysis:
         # Iteration 0
         builder.build(0, 1.0)
         model_low = builder.get_partial_model(True, True)
-        assert model_low.model_type == stormpy.ModelType.CTMC
-        assert type(model_low) is stormpy.SparseCtmc[float]
+        assert model_low.model_type == stormpy.models.ModelType.CTMC
+        assert type(model_low) is stormpy.models.SparseCtmc[float]
         assert model_low.nr_states == 25
         assert model_low.nr_transitions == 46
         assert not model_low.supports_parameters
@@ -143,8 +143,8 @@ class TestAnalysis:
         # Final iteration
         builder.build(1)
         model = builder.get_model()
-        assert model.model_type == stormpy.ModelType.CTMC
-        assert type(model) is stormpy.SparseCtmc[float]
+        assert model.model_type == stormpy.models.ModelType.CTMC
+        assert type(model) is stormpy.models.SparseCtmc[float]
         assert model.nr_states == 145
         assert model.nr_transitions == 625
         assert not model.supports_parameters

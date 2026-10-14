@@ -151,7 +151,7 @@ void define_model(py::module& m) {
         .finalize();
 
     // ModelBase
-    py::classh<ModelBase> modelBase(m, "_ModelBase", "Base class for all models");
+    py::classh<ModelBase> modelBase(m, "ModelBase", "Base class for all models");
     modelBase.def_property_readonly("nr_states", &ModelBase::getNumberOfStates, "Number of states")
         .def_property_readonly("nr_transitions", &ModelBase::getNumberOfTransitions, "Number of transitions")
         .def_property_readonly("nr_choices", &ModelBase::getNumberOfChoices, "Number of choices")
@@ -190,7 +190,7 @@ void define_sparse_model(py::module& m) {
         .def(
             "has_choice_origins", [](SparseModel<ValueType> const& model) { return model.hasChoiceOrigins(); }, "has choice origins?")
         .def_property_readonly("choice_origins", [](SparseModel<ValueType> const& model) { return model.getChoiceOrigins(); })
-        .def("labels_state", &SparseModel<ValueType>::getLabelsOfState, py::arg("state"), "Get labels of state")
+        .def("get_labels_of_state", &SparseModel<ValueType>::getLabelsOfState, py::arg("state"), "Get labels of state")
         .def_property_readonly("initial_states", &getSparseInitialStates<ValueType>, "Initial states")
         .def_property_readonly("initial_states_as_bitvector", [](SparseModel<ValueType> const& model) { return model.getInitialStates(); })
         .def("set_initial_states", &SparseModel<ValueType>::setInitialStates, py::arg("states"), "Set initial states")
@@ -310,7 +310,7 @@ void define_sparse_model(py::module& m) {
         .def(py::init<SparseCtmc<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def_property_readonly("exit_rates", [](SparseCtmc<ValueType> const& ctmc) { return ctmc.getExitRateVector(); })
-        .def("probability_matrix", &SparseCtmc<ValueType>::computeProbabilityMatrix)
+        .def("compute_probability_matrix", &SparseCtmc<ValueType>::computeProbabilityMatrix)
         .def("__str__", &getModelInfoPrinter);
     stormpy::bindings::bindTemplateClass<SparseMarkovAutomaton<ValueType>>(m, "SparseMA", index, "MA in sparse representation", nondetModel)
         .def(py::init<SparseMarkovAutomaton<ValueType>>(), py::arg("other_model"))
@@ -352,7 +352,7 @@ void define_sparse_model(py::module& m) {
         .def("get_state_reward", [](SparseRewardModel<ValueType>& rewardModel, uint64_t state) { return rewardModel.getStateReward(state); })
         .def("set_state_reward",
              [](SparseRewardModel<ValueType>& rewardModel, uint64_t state, ValueType const& value) { return rewardModel.setStateReward(state, value); })
-        .def("get_zero_reward_states", &SparseRewardModel<ValueType>::template getStatesWithZeroReward<ValueType>, "get states where all rewards are zero",
+        .def("get_states_with_zero_reward", &SparseRewardModel<ValueType>::template getStatesWithZeroReward<ValueType>, "get states where all rewards are zero",
              py::arg("transition_matrix"))
         .def("get_state_action_reward",
              [](SparseRewardModel<ValueType>& rewardModel, uint64_t action_index) { return rewardModel.getStateActionReward(action_index); })

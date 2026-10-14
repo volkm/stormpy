@@ -40,8 +40,8 @@ void define_jani(py::module& m) {
         .def("__str__", &janiToString)
         .def_property("initial_states_restriction", &Model::getInitialStatesRestriction, &Model::setInitialStatesRestriction, "initial states restriction")
         .def("add_constant", &Model::addConstant, "adds constant to model", py::arg("constant"))
-        .def("define_constants", &Model::defineUndefinedConstants, "define constants with a mapping from the corresponding expression variables to expressions",
-             py::arg("map"))
+        .def("define_undefined_constants", &Model::defineUndefinedConstants,
+             "define constants with a mapping from the corresponding expression variables to expressions", py::arg("constant_definitions"))
         .def("substitute_constants", &Model::substituteConstants, "substitute constants")
         .def("remove_constant", &Model::removeConstant, "remove a constant. Make sure the constant does not appear in the model.", "constant_name"_a)
         .def(
@@ -55,7 +55,7 @@ void define_jani(py::module& m) {
             "substitute_functions", [](Model& model) { model.substituteFunctions(); }, "substitute functions")
         .def_static("encode_automaton_and_edge_index", &Model::encodeAutomatonAndEdgeIndices, "get edge/automaton-index")
         .def_static("decode_automaton_and_edge_index", &Model::decodeAutomatonAndEdgeIndices, "get edge and automaton from edge/automaton index")
-        .def("make_standard_compliant", &Model::makeStandardJaniCompliant, "make standard JANI compliant")
+        .def("make_standard_jani_compliant", &Model::makeStandardJaniCompliant, "make standard JANI compliant")
         .def("has_standard_composition", &Model::hasStandardComposition, "is the composition the standard composition")
         .def("flatten_composition", &Model::flattenComposition, py::arg("smt_solver_factory") = std::make_shared<storm::utility::solver::SmtSolverFactory>())
         .def("finalize", &Model::finalize, "finalizes the model. After this action, be careful changing the data structure.")
@@ -190,14 +190,18 @@ void define_jani(py::module& m) {
         .def_property_readonly("type", &Constant::getType, "type of constant")
         .def_property_readonly("expression_variable", &Constant::getExpressionVariable, "expression variable for this constant");
 
-    m.def(
-        "eliminate_reward_accumulations",
-        [](const Model& model, std::vector<Property>& properties) {
-            storm::logic::RewardAccumulationEliminationVisitor v(model);
-            v.eliminateRewardAccumulations(properties);
-            return properties;
-        },
-        "Eliminate reward accumulations", py::arg("model"), py::arg("properties"));
+    using RewardVisitor = storm::logic::RewardAccumulationEliminationVisitor;
+    py::classh<RewardVisitor>(m, "RewardAccumulationEliminationVisitor", "Eliminate reward accumulations from formulas and properties")
+        .def(py::init<Model const&>(), py::arg("model"), py::keep_alive<1, 2>())
+        .def("eliminate_reward_accumulations", py::overload_cast<storm::logic::Formula const&>(&RewardVisitor::eliminateRewardAccumulations, py::const_),
+             py::arg("formula"))
+        .def(
+            "eliminate_reward_accumulations",
+            [](RewardVisitor const& visitor, std::vector<Property> properties) {
+                visitor.eliminateRewardAccumulations(properties);
+                return properties;
+            },
+            py::arg("properties"), "Return the properties updated by Storm's in-place visitor");
 
     py::classh<InformationObject> informationObject(m, "JaniInformationObject", "An object holding information about a JANI model");
     informationObject.def_readwrite("model_type", &InformationObject::modelType)
@@ -207,15 +211,11 @@ void define_jani(py::module& m) {
         .def_readwrite("state_domain_size", &InformationObject::stateDomainSize)
         .def_readwrite("avg_var_domain_size", &InformationObject::avgVarDomainSize);
 
-    m.def("collect_information", [](const Model& model) { return storm::jani::collectModelInformation(model); });
+    m.def("collect_model_information", &storm::jani::collectModelInformation, py::arg("model"), "Collect structural model information");
 
-    m.def(
-        "export_jani_to_file",
-        [](std::string const& filepath, Model const& model, std::vector<storm::jani::Property> const& properties, bool checkValid, bool compact) {
-            return JsonExporter::toFile(model, properties, filepath, checkValid, compact);
-        },
-        "Writes a jani model to file, possibly including properties.", py::arg("filename"), py::arg("model"),
-        py::arg("properties") = std::vector<storm::jani::Property>(), py::arg("check_valid") = true, py::arg("compact") = false);
+    py::classh<JsonExporter>(m, "JsonExporter", "Export JANI models to JSON")
+        .def_static("to_file", &JsonExporter::toFile, py::arg("model"), py::arg("properties"), py::arg("filepath"), py::arg("check_valid") = true,
+                    py::arg("compact") = false, "Write a JANI model and properties to a file");
 }
 
 void define_jani_transformers(py::module& m) {
@@ -227,10 +227,12 @@ void define_jani_transformers(py::module& m) {
         .def(py::init<>())
         .def(
             "make_variables_local",
-            [](JaniScopeChanger const& sc, Model const& model, std::vector<Property> const& props = {}) {
-                Model newModel(model);
-                sc.makeVariablesLocal(newModel, props);
-                return newModel;
+            [](JaniScopeChanger const& sc, Model& model, std::optional<std::vector<Property>> const& props) {
+                if (props) {
+                    sc.makeVariablesLocal(model, *props);
+                } else {
+                    sc.makeVariablesLocal(model);
+                }
             },
-            py::arg("model"), py::arg("properties") = std::vector<Property>());
+            py::arg("model"), py::arg("properties") = std::nullopt);
 }

@@ -20,14 +20,14 @@ def example_parametric_models_04():
             print(state)
         for action in state.actions:
             for transition in action.transitions:
-                if len(transition.value().gather_variables()) > 0:
+                if len(transition.value.gather_variables()) > 0:
                     new_var = stormpy.numbers.Variable("p{}".format(i))
                     i += 1
                     new_pol = stormpy.RawPolynomial(new_var)
-                    pol_in_right_format = stormpy.Polynomial(new_pol, transition.value().numerator.cache())
+                    pol_in_right_format = stormpy.Polynomial(new_pol, transition.value.numerator.cache())
 
                     new_factorized_ratfunc = stormpy.RationalFunction(pol_in_right_format)
-                    transition.set_value(new_factorized_ratfunc)
+                    transition.value = new_factorized_ratfunc
 
     # Display
     for state in model.states:
@@ -35,7 +35,7 @@ def example_parametric_models_04():
             print(state)
         for action in state.actions:
             for transition in action.transitions:
-                print("From state {}, with probability {}, go to state {}".format(state, transition.value(), transition.column))
+                print("From state {}, with probability {}, go to state {}".format(state, transition.value, transition.column))
 
 
 if __name__ == "__main__":

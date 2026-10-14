@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from stormpy import developer, storage
+from stormpy import developer
+from stormpy.developer import storage
 from stormpy.core._common import _formulas, _value_type_of_model
 from stormpy import Rational
 from stormpy.developer import (

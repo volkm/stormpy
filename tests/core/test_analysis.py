@@ -28,11 +28,11 @@ class TestProb01:
         properties = stormpy.parse_properties('P=? [F "six"]', program)
         model = stormpy.build_model(program, properties)
         prob0, prob1 = stormpy.compute_prob01_states(model, properties[0])
-        assert prob0.number_of_set_bits() == 9
-        assert prob1.number_of_set_bits() == 1
+        assert prob0.get_number_of_set_bits() == 9
+        assert prob1.get_number_of_set_bits() == 1
         # Same as the developer function with all states as phi states
         psi_states = stormpy.model_checking(model, properties[0].get_raw_formula().subformula.subformula).get_truth_values_vector()
-        assert (prob0, prob1) == tuple(stormpy.developer.perform_prob01(model, stormpy.BitVector(model.nr_states, True), psi_states))
+        assert (prob0, prob1) == tuple(stormpy.developer.perform_prob01(model, stormpy.datastructures.BitVector(model.nr_states, True), psi_states))
         # Path formula without probability operator
         formula = properties[0].get_raw_formula().subformula
         assert stormpy.compute_prob01_states(model, formula) == (prob0, prob1)
@@ -51,11 +51,11 @@ class TestProb01:
         properties = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"];Pmax=? [ F "finished" & "all_coins_equal_1"]', program)
         model = stormpy.build_model(program, properties)
         prob0_min, prob1_min = stormpy.compute_prob01_states(model, properties[0])
-        assert prob0_min.number_of_set_bits() == 94
-        assert prob1_min.number_of_set_bits() == 15
+        assert prob0_min.get_number_of_set_bits() == 94
+        assert prob1_min.get_number_of_set_bits() == 15
         prob0_max, prob1_max = stormpy.compute_prob01_states(model, properties[1])
-        assert prob0_max.number_of_set_bits() == 83
-        assert prob1_max.number_of_set_bits() == 18
+        assert prob0_max.get_number_of_set_bits() == 83
+        assert prob1_max.get_number_of_set_bits() == 18
 
     def test_prob01_errors(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))

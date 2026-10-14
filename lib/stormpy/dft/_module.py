@@ -7,8 +7,7 @@ from . import DFT, DFTElement
 class DftIndependentModule:
     """An independent module of a DFT: a subtree that can be analyzed in isolation.
 
-    Wraps :class:`stormpy.dft.developer.DftIndependentModule`, resolving element
-    indices to their :class:`~stormpy.dft.DFTElement` objects.
+    Resolves element indices to their :class:`~stormpy.dft.DFTElement` objects.
     """
 
     def __init__(self, native: developer.DftIndependentModule, dft: DFT) -> None:

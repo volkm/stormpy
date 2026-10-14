@@ -8,7 +8,7 @@ if not _config.STORM_WITH_PARS:
 from . import _pars
 from ._pars import *
 
-from stormpy import ModelType
+from stormpy.models import ModelType
 from stormpy.core._common import _formula
 from stormpy.exceptions import StormError
 from stormpy._template import _TemplateClass, _TemplateParameter

@@ -6,7 +6,7 @@ import os
 from collections.abc import Iterable
 from typing import TypeAlias
 
-from stormpy import storage
+from stormpy.developer import storage
 from stormpy import Interval, Rational, RationalFunction, RationalInterval
 from stormpy.developer import Property
 from stormpy.exceptions import StormError

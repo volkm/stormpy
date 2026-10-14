@@ -29,7 +29,7 @@ def example_building_models_02():
 
     matrix = model.transition_matrix
     for e in matrix:
-        val = e.value()
+        val = e.value
         if val.is_constant():
             continue
         val_pol = val.numerator.polynomial()
@@ -37,7 +37,7 @@ def example_building_models_02():
         for sub, repl in substitutions.items():
             if val_pol - sub == 0:
                 print("Found substitution")
-                e.set_value(make_factorized_rf(repl, cache))
+                e.value = make_factorized_rf(repl, cache)
                 break  # Assume only one substitution per entry
     print(matrix)
 

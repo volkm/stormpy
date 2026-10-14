@@ -20,7 +20,7 @@ def example_pomdp_highlevel_observations():
     pomdp = stormpy.pomdp.make_canonic(pomdp)
 
     assert pomdp.has_observation_valuations
-    assert pomdp.observation_valuations.get_json(0)["o"] == 5
+    assert pomdp.observation_valuations.to_json(0)["o"] == 5
 
 
 if __name__ == "__main__":

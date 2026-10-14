@@ -7,7 +7,7 @@
 void define_bitvector(py::module& m) {
     using BitVector = storm::storage::BitVector;
 
-    py::classh<BitVector>(m, "BitVector")
+    py::classh<BitVector>(m, "BitVector", "Compact bit vector with indexed access and iteration over the indices of set bits")
         .def(py::init<>())
         .def(py::init<BitVector>(), "other"_a)
         .def(py::init<uint_fast64_t>(), "length"_a)
@@ -15,12 +15,12 @@ void define_bitvector(py::module& m) {
         .def(py::init<uint_fast64_t, std::vector<uint_fast64_t>>(), "length"_a, "set_entries"_a)
 
         .def("size", &BitVector::size)
-        .def("number_of_set_bits", &BitVector::getNumberOfSetBits, "Get the number of bits that are set to true in this bit vector")
+        .def("get_number_of_set_bits", &BitVector::getNumberOfSetBits, "Get the number of bits that are set to true in this bit vector")
         .def(
             "get", [](BitVector const& b, uint_fast64_t i) { return b.get(i); }, "index"_a)
         .def(
             "set", [](BitVector& b, uint_fast64_t i, bool v) { b.set(i, v); }, py::arg("index"), py::arg("value") = true, "Set")
-        .def("as_int", &BitVector::getAsInt, py::arg("index"), py::arg("no_bits"), "Get as unsigned int")
+        .def("get_as_int", &BitVector::getAsInt, py::arg("index"), py::arg("no_bits"), "Get as unsigned int")
         .def("resize", &BitVector::resize, py::arg("new_size"), py::arg("init") = false, "Resize the bitvector to the given new_size")
         .def("complement", &BitVector::complement, "Complement the bitvector")
         .def("increment", &BitVector::increment, "Increment the bitvector as if it was a binary number")
@@ -30,7 +30,7 @@ void define_bitvector(py::module& m) {
         .def("full", &BitVector::full, "Check if the bitvector is full (all bits set)")
         .def("clear", &BitVector::clear, "Clear all bits in the bitvector")
         .def("fill", &BitVector::fill, "Fill all bits in the bitvector")
-        .def("number_of_set_bits_before_index", &BitVector::getNumberOfSetBitsBeforeIndex, py::arg("index"),
+        .def("get_number_of_set_bits_before_index", &BitVector::getNumberOfSetBitsBeforeIndex, py::arg("index"),
              "Get the number of bits that are set to true before the given index")
         .def("has_unique_set_bit", &BitVector::hasUniqueSetBit, "Check if the bitvector has a unique set bit")
         .def("get_next_set_index", &BitVector::getNextSetIndex, py::arg("starting_index"),

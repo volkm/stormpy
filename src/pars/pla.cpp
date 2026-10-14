@@ -18,6 +18,10 @@ typedef storm::modelchecker::RegionRefinementChecker<storm::RationalFunction> Re
 typedef storm::storage::ParameterRegion<storm::RationalFunction> Region;
 typedef storm::modelchecker::AnnotatedRegion<storm::RationalFunction> AnnotatedRegion;
 
+storm::pars::analysis::GraphPreservationStatus toGraphPreservationStatus(bool graphPreserving) {
+    return graphPreserving ? storm::pars::analysis::GraphPreservationStatus::GraphPreserving : storm::pars::analysis::GraphPreservationStatus::None;
+}
+
 // Thin wrappers
 std::shared_ptr<RegionModelChecker> createRegionChecker(storm::Environment const& env,
                                                         std::shared_ptr<storm::models::sparse::Model<storm::RationalFunction>> const& model,
@@ -25,7 +29,8 @@ std::shared_ptr<RegionModelChecker> createRegionChecker(storm::Environment const
                                                         bool graphPreserving, bool preconditionsValidatedManually) {
     auto task = storm::api::createTask<storm::RationalFunction>(formula, true);
     auto regionChecker = storm::api::initializeRegionModelChecker<storm::RationalFunction, double>(
-        env, model, task, storm::modelchecker::RegionCheckEngine::ParameterLifting, allowModelSimplifications, graphPreserving, preconditionsValidatedManually);
+        env, model, task, storm::modelchecker::RegionCheckEngine::ParameterLifting, allowModelSimplifications, toGraphPreservationStatus(graphPreserving),
+        preconditionsValidatedManually);
     return regionChecker;
 }
 
@@ -37,9 +42,9 @@ std::shared_ptr<RegionRefinementChecker> createRegionRefinementChecker(storm::En
     storm::modelchecker::RegionSplittingStrategy strategy;
     storm::pars::modelchecker::MonotonicityOptions monotonicityOptions;
     std::set<storm::storage::ParameterRegion<storm::RationalFunction>::VariableType> discreteVars;
-    storm::pars::modelchecker::RegionRefinementOptions<storm::RationalFunction> settings(model, task, storm::modelchecker::RegionCheckEngine::ParameterLifting,
-                                                                                         strategy, monotonicityOptions, discreteVars, allowModelSimplifications,
-                                                                                         graphPreserving, preconditionsValidatedManually);
+    storm::pars::modelchecker::RegionRefinementOptions<storm::RationalFunction> settings(
+        model, task, storm::modelchecker::RegionCheckEngine::ParameterLifting, strategy, monotonicityOptions, discreteVars, allowModelSimplifications,
+        toGraphPreservationStatus(graphPreserving), preconditionsValidatedManually);
     return storm::api::initializeRegionRefinementChecker<storm::RationalFunction, double>(env, settings);
 }
 
@@ -48,7 +53,7 @@ void specifyRegionChecker(std::shared_ptr<RegionModelChecker>& checker, storm::E
                           std::shared_ptr<storm::logic::Formula> const& formula, std::optional<storm::modelchecker::RegionSplitEstimateKind> splittingEstimate,
                           bool allowModelSimplifications, bool graphPreserving) {
     return checker->specify(env, model, storm::api::createTask<storm::RationalFunction>(formula, true), splittingEstimate, nullptr, allowModelSimplifications,
-                            graphPreserving);
+                            toGraphPreservationStatus(graphPreserving));
 }
 
 void specifyRefinementChecker(std::shared_ptr<RegionRefinementChecker>& checker, storm::Environment const& env,
@@ -57,7 +62,7 @@ void specifyRefinementChecker(std::shared_ptr<RegionRefinementChecker>& checker,
     storm::modelchecker::RegionSplittingStrategy strategy;
     std::set<storm::storage::ParameterRegion<storm::RationalFunction>::VariableType> discreteVars;
     return checker->specify(env, model, storm::api::createTask<storm::RationalFunction>(formula, true), strategy, discreteVars, nullptr,
-                            allowModelSimplifications, graphPreserving);
+                            allowModelSimplifications, toGraphPreservationStatus(graphPreserving));
 }
 
 storm::modelchecker::RegionResult checkRegion(std::shared_ptr<RegionModelChecker>& checker, storm::Environment const& env, Region const& region,

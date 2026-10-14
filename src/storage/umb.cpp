@@ -72,7 +72,7 @@ void define_umb(py::module& m) {
         py::arg("path"), py::arg("options") = storm::umb::ImportOptions{}, "Import a UMB model from the given archive path");
 
     m.def(
-        "umb_to_archive",
+        "to_archive",
         [](storm::umb::UmbModel const& model, std::string const& path, storm::umb::ExportOptions const& options) {
             storm::umb::toArchive(model, std::filesystem::path(path), options);
         },
@@ -82,23 +82,14 @@ void define_umb(py::module& m) {
         "sparse_model_from_umb",
         [](storm::umb::UmbModel const& umbModel, storm::umb::ImportOptions const& options) { return storm::umb::sparseModelFromUmb(umbModel, options); },
         py::arg("umb_model"), py::arg("options") = storm::umb::ImportOptions{}, "Build a sparse model from the given UMB model");
-
-    m.def(
-        "sparse_model_to_umb",
-        [](std::shared_ptr<storm::models::ModelBase> const& model, storm::umb::ExportOptions const& options) -> storm::umb::UmbModel {
-            using M = storm::models::sparse::Model<double>;
-            using MExact = storm::models::sparse::Model<storm::RationalNumber>;
-            using MInterval = storm::models::sparse::Model<storm::Interval>;
-            using MRatInterval = storm::models::sparse::Model<storm::RationalInterval>;
-            if (auto m = std::dynamic_pointer_cast<MExact>(model))
-                return storm::umb::sparseModelToUmb(*m, options);
-            if (auto m = std::dynamic_pointer_cast<MInterval>(model))
-                return storm::umb::sparseModelToUmb(*m, options);
-            if (auto m = std::dynamic_pointer_cast<MRatInterval>(model))
-                return storm::umb::sparseModelToUmb(*m, options);
-            if (auto m = std::dynamic_pointer_cast<M>(model))
-                return storm::umb::sparseModelToUmb(*m, options);
-            throw std::invalid_argument("Unsupported model type for UMB export");
-        },
-        py::arg("model"), py::arg("options") = storm::umb::ExportOptions{}, "Convert a sparse model to UMB format");
 }
+
+template<typename ValueType>
+void define_umb_typed(py::module& m) {
+    m.def("sparse_model_to_umb", &storm::umb::sparseModelToUmb<ValueType>, py::arg("model"), py::arg("options"), "Convert a sparse model to UMB");
+}
+
+template void define_umb_typed<double>(py::module&);
+template void define_umb_typed<storm::RationalNumber>(py::module&);
+template void define_umb_typed<storm::Interval>(py::module&);
+template void define_umb_typed<storm::RationalInterval>(py::module&);

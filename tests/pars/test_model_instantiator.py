@@ -14,7 +14,7 @@ class TestModelInstantiator:
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         instantiator = stormpy.pars.ModelInstantiator(model)
-        assert type(instantiator) is stormpy.pars.ModelInstantiator[stormpy.ModelType.DTMC, float]
+        assert type(instantiator) is stormpy.pars.ModelInstantiator[stormpy.models.ModelType.DTMC, float]
         assert tuple(parameter.kind for parameter in stormpy.pars.ModelInstantiator.metadata.parameters) == ("value", "type")
 
         point = {p: stormpy.RationalFunctionCoefficient("0.4") for p in parameters}
@@ -33,7 +33,7 @@ class TestModelInstantiator:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
-        instantiator = stormpy.pars.ModelInstantiator[stormpy.ModelType.DTMC, float](model)
+        instantiator = stormpy.pars.ModelInstantiator[stormpy.models.ModelType.DTMC, float](model)
         point = dict()
         for x in parameters:
             assert x.name in {"p", "q"}
@@ -53,7 +53,7 @@ class TestModelInstantiator:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
 
         parameters = model.collect_all_parameters()
-        instantiator = stormpy.pars.ModelInstantiator[stormpy.ModelType.DTMC, float](model)
+        instantiator = stormpy.pars.ModelInstantiator[stormpy.models.ModelType.DTMC, float](model)
 
         point = {p: stormpy.RationalFunctionCoefficient("0.4") for p in parameters}
         instantiated_model = instantiator.instantiate(point)
@@ -73,7 +73,7 @@ class TestModelInstantiator:
         parameters = model.collect_all_parameters()
         env = stormpy.Environment()
         inst_checker = stormpy.pars.ModelInstantiationChecker(env, model)
-        assert type(inst_checker) is stormpy.pars.ModelInstantiationChecker[stormpy.ModelType.DTMC, float]
+        assert type(inst_checker) is stormpy.pars.ModelInstantiationChecker[stormpy.models.ModelType.DTMC, float]
         inst_checker.specify_formula(stormpy.developer.CheckTask[stormpy.RationalFunction](formulas[0].get_raw_formula(), True))
         inst_checker.set_graph_preserving(True)
 
@@ -91,7 +91,7 @@ class TestModelInstantiator:
 
         parameters = model.collect_all_parameters()
         env = stormpy.Environment()
-        inst_checker = stormpy.pars.ModelInstantiationChecker[stormpy.ModelType.DTMC, stormpy.Rational](env, model)
+        inst_checker = stormpy.pars.ModelInstantiationChecker[stormpy.models.ModelType.DTMC, stormpy.Rational](env, model)
         inst_checker.specify_formula(stormpy.developer.CheckTask[stormpy.RationalFunction](formulas[0].get_raw_formula(), True))
         inst_checker.set_graph_preserving(True)
 
@@ -109,7 +109,7 @@ class TestModelInstantiator:
 
         parameters = model.collect_all_parameters()
         env = stormpy.Environment()
-        inst_checker = stormpy.pars.ModelInstantiationChecker[stormpy.ModelType.DTMC, stormpy.Rational](env, model)
+        inst_checker = stormpy.pars.ModelInstantiationChecker[stormpy.models.ModelType.DTMC, stormpy.Rational](env, model)
         inst_checker.specify_formula(stormpy.developer.CheckTask[stormpy.RationalFunction](formulas[0].get_raw_formula(), True))
         inst_checker.set_graph_preserving(True)
 

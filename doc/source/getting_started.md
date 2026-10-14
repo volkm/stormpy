@@ -190,7 +190,7 @@ Notice that this code can be applied to both deterministic and non-deterministic
 for state in model.states:
     for action in state.actions:
         for transition in action.transitions:
-            print("From state {}, with probability {}, go to state {}".format(state, transition.value(), transition.column))
+            print("From state {}, with probability {}, go to state {}".format(state, transition.value, transition.column))
 ```
 
 Let us go into some more details. For DTMCs, each state has (at most) one outgoing probability distribution.

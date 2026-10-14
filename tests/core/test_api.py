@@ -127,11 +127,11 @@ class TestDeveloperBindings:
         formulas = [prop.get_raw_formula() for prop in stormpy.parse_properties('P=? [F "one"]', program)]
         assert "template function" in repr(stormpy.developer.build_sparse_model)
         model = stormpy.developer.build_sparse_model(program, formulas)
-        assert type(model) is stormpy.SparseDtmc[float]
+        assert type(model) is stormpy.models.SparseDtmc[float]
         exact_model = stormpy.developer.build_sparse_model[stormpy.Rational](program, formulas)
-        assert type(exact_model) is stormpy.SparseDtmc[stormpy.Rational]
+        assert type(exact_model) is stormpy.models.SparseDtmc[stormpy.Rational]
         assert (stormpy.Interval,) in stormpy.developer.build_sparse_model.instantiations
         with pytest.raises(TypeError):
             stormpy.developer.build_symbolic_model[stormpy.Interval](program, formulas)
         drn_model = stormpy.developer.build_explicit_drn_model[stormpy.Rational](get_example_path("ctmc", "dft.drn"))
-        assert type(drn_model) is stormpy.SparseCtmc[stormpy.Rational]
+        assert type(drn_model) is stormpy.models.SparseCtmc[stormpy.Rational]

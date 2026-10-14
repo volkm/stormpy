@@ -14,11 +14,11 @@ def example_schedulers_02():
     options.set_build_choice_labels()
     options.set_build_choice_origins()
     ma = stormpy.build_model(program, options=options)
-    assert ma.model_type == stormpy.ModelType.MA
+    assert ma.model_type == stormpy.models.ModelType.MA
 
     # Convert MA to MDP
     mdp, mdp_formulas = stormpy.transform_to_discrete_time_model(ma, formulas)
-    assert mdp.model_type == stormpy.ModelType.MDP
+    assert mdp.model_type == stormpy.models.ModelType.MDP
     initial_state = mdp.initial_states[0]
     assert initial_state == 0
 

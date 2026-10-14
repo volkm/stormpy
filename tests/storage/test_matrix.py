@@ -2,35 +2,61 @@ import stormpy
 from helpers.helper import get_example_path
 
 import math
+import gc
+
+import pytest
 
 
 class TestMatrix:
+    @pytest.mark.parametrize("value_type", [float, stormpy.Rational, stormpy.RationalFunction, stormpy.Interval, stormpy.RationalInterval])
+    def test_entry_value_property(self, value_type):
+        if value_type is stormpy.RationalFunction:
+            first, second = [stormpy.RationalFunction(stormpy.Polynomial(stormpy.RationalFunctionCoefficient(value))) for value in (1, 2)]
+        elif value_type is stormpy.RationalInterval:
+            first, second = [stormpy.RationalInterval(stormpy.Rational(value)) for value in (1, 2)]
+        else:
+            first, second = [value_type(value) for value in (1, 2)]
+        builder = stormpy.datastructures.SparseMatrixBuilder[value_type](rows=1, columns=1)
+        builder.add_next_value(0, 0, first)
+        matrix = builder.build()
+        entry = next(iter(matrix))
+        saved_value = entry.value
+        assert saved_value == entry.get_value() == first
+        entry.value = second
+        assert next(iter(matrix)).value == second
+        assert saved_value == first
+        entry.set_value(first)
+        assert entry.value == first
+        del entry, matrix
+        gc.collect()
+        assert saved_value == first
+
     def test_matrix(self):
         model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.transition_matrix
-        assert type(matrix) is stormpy.storage.SparseMatrix[float]
+        assert type(matrix) is stormpy.datastructures.SparseMatrix[float]
         assert matrix.nr_rows == model.nr_states
         assert matrix.nr_columns == model.nr_states
         assert matrix.nr_entries == 20
         assert matrix.nr_entries == model.nr_transitions
         for e in matrix:
-            assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
+            assert e.value == 0.5 or e.value == 0 or (e.value == 1 and e.column > 6)
 
     def test_backward_matrix(self):
         model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.backward_transition_matrix
-        assert type(matrix) is stormpy.storage.SparseMatrix[float]
+        assert type(matrix) is stormpy.datastructures.SparseMatrix[float]
         assert matrix.nr_rows == model.nr_states
         assert matrix.nr_columns == model.nr_states
         assert matrix.nr_entries == 20
         assert matrix.nr_entries == model.nr_transitions
         for e in matrix:
-            assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
+            assert e.value == 0.5 or e.value == 0 or (e.value == 1 and e.column > 6)
 
     def test_matrix_row_groups(self):
         model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         matrix = model.transition_matrix
-        assert type(matrix) is stormpy.storage.SparseMatrix[float]
+        assert type(matrix) is stormpy.datastructures.SparseMatrix[float]
         assert matrix.nr_rows == 254
         assert matrix.nr_columns == model.nr_states
         assert matrix.nr_entries == 436
@@ -46,20 +72,20 @@ class TestMatrix:
                     assert row == i
                     i += 1
         for e in matrix:
-            assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
+            assert e.value == 0.5 or e.value == 0 or (e.value == 1 and e.column > 6)
 
     def test_change_matrix(self):
         model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         matrix = model.transition_matrix
         for e in matrix:
-            assert e.value() == 0.5 or e.value() == 0 or e.value() == 1
+            assert e.value == 0.5 or e.value == 0 or e.value == 1
         i = 0
         for e in matrix:
-            e.set_value(i)
+            e.value = i
             i += 0.1
         i = 0
         for e in matrix:
-            assert e.value() == i
+            assert e.value == i
             i += 0.1
 
     def test_change_matrix_modelchecking(self):
@@ -67,7 +93,7 @@ class TestMatrix:
         matrix = model.transition_matrix
         # Check matrix
         for e in matrix:
-            assert e.value() == 0.5 or e.value() == 0 or e.value() == 1
+            assert e.value == 0.5 or e.value == 0 or e.value == 1
         # First model checking
         formulas = stormpy.parse_properties('P=? [ F "one" ]')
         result = stormpy.model_checking(model, formulas[0])
@@ -77,14 +103,14 @@ class TestMatrix:
         # Change probabilities
         i = 0
         for e in matrix:
-            if e.value() == 0.5:
+            if e.value == 0.5:
                 if i % 2 == 0:
-                    e.set_value(0.3)
+                    e.value = 0.3
                 else:
-                    e.set_value(0.7)
+                    e.value = 0.7
                 i += 1
         for e in matrix:
-            assert e.value() == 0.3 or e.value() == 0.7 or e.value() == 1 or e.value() == 0
+            assert e.value == 0.3 or e.value == 0.7 or e.value == 1 or e.value == 0
         # Second model checking
         result = stormpy.model_checking(model, formulas[0])
         resValue = result[model.initial_states[0]]
@@ -94,10 +120,10 @@ class TestMatrix:
         for state in model.states:
             for action in state.actions:
                 for transition in action.transitions:
-                    if transition.value() == 0.3:
-                        transition.set_value(0.8)
-                    elif transition.value() == 0.7:
-                        transition.set_value(0.2)
+                    if transition.value == 0.3:
+                        transition.value = 0.8
+                    elif transition.value == 0.7:
+                        transition.value = 0.2
         # Third model checking
         result = stormpy.model_checking(model, formulas[0])
         resValue = result[model.initial_states[0]]
@@ -115,7 +141,7 @@ class TestMatrix:
         one_pol = stormpy.Polynomial(one_pol)
         one = stormpy.RationalFunction(one_pol, one_pol)
         for e in matrix:
-            assert e.value() == one or len(e.value().gather_variables()) > 0
+            assert e.value == one or len(e.value.gather_variables()) > 0
         # First model checking
         result = stormpy.model_checking(model, formulas[0])
         ratFunc = result[initial_state]
@@ -126,10 +152,10 @@ class TestMatrix:
         two_pol = stormpy.Polynomial(two_pol)
         new_val = stormpy.RationalFunction(one_pol, two_pol)
         for e in matrix:
-            if len(e.value().gather_variables()) > 0:
-                e.set_value(new_val)
+            if len(e.value.gather_variables()) > 0:
+                e.value = new_val
         for e in matrix:
-            assert e.value() == new_val or e.value() == one
+            assert e.value == new_val or e.value == one
         # Second model checking
         result = stormpy.model_checking(model, formulas[0])
         ratFunc = result[initial_state]
@@ -143,20 +169,20 @@ class TestMatrix:
         assert matrix.nr_entries == 20
         assert matrix.nr_entries == model.nr_transitions
         for e in matrix:
-            assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 6)
+            assert e.value == 0.5 or e.value == 0 or (e.value == 1 and e.column > 6)
 
-        row_constraint = stormpy.BitVector(13, [0, 1, 3, 4, 7, 8, 9])
-        submatrix = matrix.submatrix(row_constraint, row_constraint)
+        row_constraint = stormpy.datastructures.BitVector(13, [0, 1, 3, 4, 7, 8, 9])
+        submatrix = matrix.get_submatrix(True, row_constraint, row_constraint)
         assert submatrix.nr_rows == 7
         assert submatrix.nr_columns == 7
         assert submatrix.nr_entries == 10
         for e in submatrix:
-            assert e.value() == 0.5 or e.value() == 0 or (e.value() == 1 and e.column > 3)
+            assert e.value == 0.5 or e.value == 0 or (e.value == 1 and e.column > 3)
 
     def test_submatrix_no_groups(self):
         model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         matrix = model.transition_matrix
-        assert type(matrix) is stormpy.storage.SparseMatrix[float]
+        assert type(matrix) is stormpy.datastructures.SparseMatrix[float]
         assert matrix.nr_rows == 254
         assert matrix.nr_columns == model.nr_states
         assert matrix.nr_entries == 436
@@ -164,7 +190,7 @@ class TestMatrix:
 
         assert matrix.nr_rows != matrix.nr_columns
 
-        row_constraint = stormpy.BitVector(254, [0, 1, 3, 4, 7, 8, 9])
-        submatrix = matrix.submatrix(row_constraint, row_constraint, use_groups=False)
+        row_constraint = stormpy.datastructures.BitVector(254, [0, 1, 3, 4, 7, 8, 9])
+        submatrix = matrix.get_submatrix(False, row_constraint, row_constraint)
         assert submatrix.nr_rows == 7
         assert submatrix.nr_columns == 7

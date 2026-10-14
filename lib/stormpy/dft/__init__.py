@@ -11,7 +11,7 @@ from stormpy import Property, RationalFunction
 from stormpy.core._common import PathLike, _formulas, _path
 from stormpy._template import _deduce_default, _template_function
 from stormpy.exceptions import StormError, StormWarning
-from stormpy.storage import SparseCtmc, SparseMA
+from stormpy.models import SparseCtmc, SparseMA
 
 # Import classes from developer (and republish them under stormpy.dft.X.)
 DFT = developer.DFT.publish_as("stormpy.dft.DFT")

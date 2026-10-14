@@ -14,7 +14,7 @@ from .numbers import Interval, Polynomial, Rational, RationalFunction, RationalF
 from . import developer
 from . import exceptions
 from . import logic
-from . import storage
+from . import expressions, datastructures, models, io
 
 try:
     from ._version import __version__
@@ -23,23 +23,6 @@ except ImportError:
     __version__ = "unknown"
 
 developer._set_up("")
-
-# Re-export frequently used classes of stormpy.storage
-from .storage import (
-    BitVector,
-    DdType,
-    ModelType,
-    SparseCtmc,
-    SparseDtmc,
-    SparseMA,
-    SparseMdp,
-    SparsePomdp,
-    SparseSmg,
-    SymbolicCtmc,
-    SymbolicDtmc,
-    SymbolicMA,
-    SymbolicMdp,
-)
 
 # Import classes from developer (and republish templated classes under stormpy.X)
 Property = developer.Property
@@ -116,20 +99,6 @@ __all__ = [
     "RationalFunctionCoefficient",
     "RationalInterval",
     "RawPolynomial",
-    # Re-exports from stormpy.storage
-    "BitVector",
-    "DdType",
-    "ModelType",
-    "SparseCtmc",
-    "SparseDtmc",
-    "SparseMA",
-    "SparseMdp",
-    "SparsePomdp",
-    "SparseSmg",
-    "SymbolicCtmc",
-    "SymbolicDtmc",
-    "SymbolicMA",
-    "SymbolicMdp",
     # Parsing
     "Property",
     "SymbolicModelDescription",

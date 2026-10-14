@@ -13,7 +13,7 @@ template<storm::dd::DdType DdType>
 py::classh<storm::dd::Dd<DdType>> define_dd(py::module& m) {
     auto const index = stormpy::bindings::typeIndex<DdType>();
     auto ddMetaVariable = stormpy::bindings::bindTemplateClass<storm::dd::DdMetaVariable<DdType>>(m, "DdMetaVariable", index, "DD meta variable");
-    ddMetaVariable.def("compute_indices", &storm::dd::DdMetaVariable<DdType>::getIndices, py::arg("sorted") = true);
+    ddMetaVariable.def("get_indices", &storm::dd::DdMetaVariable<DdType>::getIndices, py::arg("sorted") = true);
     ddMetaVariable.def_property_readonly("name", &storm::dd::DdMetaVariable<DdType>::getName);
     ddMetaVariable.def_property_readonly("lowest_value", &storm::dd::DdMetaVariable<DdType>::getLow);
     ddMetaVariable.def_property_readonly("type", &storm::dd::DdMetaVariable<DdType>::getType);

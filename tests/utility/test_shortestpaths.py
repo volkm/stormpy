@@ -1,5 +1,5 @@
 import stormpy
-from stormpy.storage import BitVector
+from stormpy.datastructures import BitVector
 from stormpy.utility import ShortestPathsGenerator
 from stormpy.utility import MatrixFormat
 from helpers.helper import get_example_path
