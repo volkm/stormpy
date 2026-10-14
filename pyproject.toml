@@ -15,7 +15,7 @@ authors = [
     { name = "S. Junges", email = "sebastian.junges@ru.nl" },
     { name = "M. Volk", email = "m.volk@tue.nl" }
 ]
-requires-python = ">=3.10"  # Python version should be synced with find_package(Python ...) in CMakeLists.txt
+requires-python = ">=3.11"  # Python version should be synced with find_package(Python ...) in CMakeLists.txt
 dependencies = [
     "Deprecated",
 ]

@@ -42,7 +42,7 @@ endif()
 # Find python first, as recommended here:
 # https://pybind11.readthedocs.io/en/latest/compiling.html#findpython-mode
 # Python version should be synced with pyproject.toml
-find_package(Python 3.10 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python 3.11 COMPONENTS Interpreter Development.Module REQUIRED)
 # Pybind11 version should be synced with pyproject.toml
 find_package(pybind11 3.1.0 EXACT CONFIG REQUIRED)
 message(STATUS "Stormpy - Using pybind11 version ${pybind11_VERSION}")
