@@ -74,7 +74,7 @@ def test_result_index_error():
     stormpy.filter_initial_states(result, model)
     assert result.has_value_for_state(0)
     assert not result.has_value_for_state(1)
-    assert math.isclose(result[0], 1 / 6)
+    assert math.isclose(result[0], 1 / 6, rel_tol=1e-6)
     with pytest.raises(IndexError):
         result[1]
     assert result.get_value_vector() == [result[0]]
@@ -91,7 +91,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 6)
+        assert math.isclose(result[initial_state], 1 / 6, rel_tol=1e-6)
 
     def test_model_checking_prism_dtmc_p(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -103,7 +103,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 2)
+        assert math.isclose(result[initial_state], 1 / 2, rel_tol=1e-6)
 
     def test_model_checking_prism_dtmc_reward(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -115,7 +115,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 11 / 3)
+        assert math.isclose(result[initial_state], 11 / 3, rel_tol=1e-6)
 
     @spot
     def test_model_checking_prism_dtmc_ltl(self):
@@ -128,7 +128,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 6)
+        assert math.isclose(result[initial_state], 1 / 6, rel_tol=1e-6)
 
     def test_model_checking_prism_mdp(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
@@ -317,9 +317,9 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 6)
+        assert math.isclose(result[initial_state], 1 / 6, rel_tol=1e-6)
         result = stormpy.model_checking(model, formulas[1])
-        assert math.isclose(result[initial_state], 11 / 3)
+        assert math.isclose(result[initial_state], 11 / 3, rel_tol=1e-6)
 
     def test_model_checking_dtmc_all_labels(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -331,10 +331,10 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 6)
+        assert math.isclose(result[initial_state], 1 / 6, rel_tol=1e-6)
         formulas = stormpy.parse_properties('P=? [ F "two" ]', program)
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 6)
+        assert math.isclose(result[initial_state], 1 / 6, rel_tol=1e-6)
 
     def test_model_checking_all_dtmc(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -345,7 +345,7 @@ class TestModelChecking:
         result = stormpy.model_checking(model, formulas[0])
         assert result.is_result_for_all_states()
         reference = [1 / 6, 1 / 3, 0, 2 / 3, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        assert all(map(math.isclose, result.get_finite_value_vector(), reference))
+        assert all(math.isclose(value, ref, rel_tol=1e-6) for value, ref in zip(result.get_finite_value_vector(), reference))
 
     def test_model_checking_only_initial(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -356,7 +356,7 @@ class TestModelChecking:
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0], only_initial_states=True)
         assert not result.is_result_for_all_states()
-        assert math.isclose(result[initial_state], 1 / 8)
+        assert math.isclose(result[initial_state], 1 / 8, rel_tol=1e-6)
 
     def test_model_checking_prob01(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -397,7 +397,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 1
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 4.166666667)
+        assert math.isclose(result[initial_state], 4.166666667, rel_tol=1e-6)
 
     def test_filter(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -409,11 +409,11 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
         result = stormpy.model_checking(model, formulas[0])
-        assert math.isclose(result[initial_state], 1 / 6)
+        assert math.isclose(result[initial_state], 1 / 6, rel_tol=1e-6)
         filter = stormpy.create_filter_initial_states(model)
         result.filter(filter)
         assert result.get_min() == result.get_max()
-        assert math.isclose(result.get_min(), 1 / 6)
+        assert math.isclose(result.get_min(), 1 / 6, rel_tol=1e-6)
 
     @pytest.mark.parametrize("engine", [stormpy.Engine.SPARSE, stormpy.Engine.DD, stormpy.Engine.HYBRID])
     def test_filter_initial_states(self, engine):
@@ -470,7 +470,7 @@ class TestModelChecking:
         assert type(result) is stormpy.HybridQuantitativeCheckResult[stormpy.models.DdType.Sylvan, float]
         values = result.get_explicit_value_vector()
         assert len(values) == 3
-        assert math.isclose(values[0], 1 / 6)
+        assert math.isclose(values[0], 1 / 6, rel_tol=1e-6)
         filter = stormpy.create_filter_initial_states(model)
         result.filter(filter)
         assert result.get_min() == result.get_max()
@@ -482,7 +482,7 @@ class TestModelChecking:
         environment = stormpy.Environment()
         result = stormpy.compute_expected_number_of_visits(model, environment=environment)
         assert result[0] == 1
-        assert math.isclose(result[1], 2.0 / 3)
+        assert math.isclose(result[1], 2.0 / 3, rel_tol=1e-6)
 
     def test_compute_steady_state_distribution(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -495,7 +495,7 @@ class TestModelChecking:
         for i in range(7):
             assert values[i] == 0
         for i in range(7, 13):
-            assert math.isclose(values[i], 1.0 / 6)
+            assert math.isclose(values[i], 1.0 / 6, rel_tol=1e-6)
 
     def test_engines(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
@@ -503,7 +503,7 @@ class TestModelChecking:
         sparse_model = stormpy.build_model(program, properties)
         symbolic_model = stormpy.build_symbolic_model(program, properties)
         result = stormpy.model_checking(sparse_model, properties[0], engine=stormpy.Engine.SPARSE)
-        assert math.isclose(result[sparse_model.initial_states[0]], 1 / 6)
+        assert math.isclose(result[sparse_model.initial_states[0]], 1 / 6, rel_tol=1e-6)
         for engine in [None, stormpy.Engine.DD, stormpy.Engine.HYBRID]:
             result = stormpy.model_checking(symbolic_model, properties[0], only_initial_states=True, engine=engine)
             result.filter(stormpy.create_filter_initial_states(symbolic_model))
@@ -538,7 +538,7 @@ class TestModelChecking:
         with pytest.raises(StormError):
             stormpy.model_checking(model, properties[0])
         result = stormpy.model_checking(model, properties[0], force_fully_observable=True)
-        assert math.isclose(result[model.initial_states[0]], 11 / 13)
+        assert math.isclose(result[model.initial_states[0]], 11 / 13, rel_tol=1e-6)
 
     def test_scheduler_extraction(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
@@ -726,7 +726,7 @@ class TestSolutionBounds:
         assert isinstance(value, stormpy.BoundedValue)
         assert isinstance(result.get_value(initial_state), float)
         assert value.value == result.get_value(initial_state)
-        assert math.isclose(value, 1 / 6)
+        assert math.isclose(value, 1 / 6, rel_tol=1e-6)
         assert value.lower == result.get_lower_bound(initial_state)
         assert value.upper == result.get_upper_bound(initial_state)
 

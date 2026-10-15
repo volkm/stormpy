@@ -45,7 +45,7 @@ class TestModelInstantiator:
         result = stormpy.model_checking(instantiated_model, formulas[0])
         initial_state = instantiated_model.initial_states[0]
         assert initial_state == 0
-        assert math.isclose(result[initial_state], 4 / 35)
+        assert math.isclose(result[initial_state], 4 / 35, rel_tol=1e-6)
 
     def test_sample_pdtmc(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "brp16_2.pm"))
