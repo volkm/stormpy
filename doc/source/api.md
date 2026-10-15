@@ -26,6 +26,7 @@ api/utility_developer
 api/dft
 api/dft_developer
 api/gspn
+api/gspn_developer
 api/pars
 api/pomdp
 
