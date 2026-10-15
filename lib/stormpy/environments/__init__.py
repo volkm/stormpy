@@ -68,7 +68,12 @@ def default(model) -> Environment:
     :param model: The model (sparse or symbolic).
     :return: The environment.
     """
-    if _value_type_of_model(model) in (Rational, RationalInterval, RationalFunction):
+    return _default_for_value_type(_value_type_of_model(model))
+
+
+def _default_for_value_type(value_type: type) -> Environment:
+    """Create a new environment suitable for models with the given value type."""
+    if value_type in (Rational, RationalInterval, RationalFunction):
         return exact()
     return sound()
 

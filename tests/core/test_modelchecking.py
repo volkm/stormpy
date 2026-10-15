@@ -149,7 +149,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
 
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal
@@ -179,7 +179,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
 
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal robust
@@ -231,7 +231,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
 
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal
@@ -261,7 +261,7 @@ class TestModelChecking:
         initial_state = model.initial_states[0]
         assert initial_state == 0
 
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal robust
@@ -433,7 +433,7 @@ class TestModelChecking:
         program = stormpy.parse_prism_program(get_example_path("idtmc", "die-intervals.pm"))
         formulas = stormpy.parse_properties('P=? [ F "one"]')
         model = stormpy.build_model[value_type](program, formulas)
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
         result = stormpy.model_checking(model, formulas[0], uncertainty_resolution_mode=stormpy.UncertaintyResolutionMode.MAXIMIZE, environment=env)
         # Results of interval models contain values of the underlying number type
@@ -479,16 +479,14 @@ class TestModelChecking:
     def test_compute_expected_number_of_visits(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         model = stormpy.build_model(program)
-        environment = stormpy.Environment()
-        result = stormpy.compute_expected_number_of_visits(model, environment=environment)
+        result = stormpy.compute_expected_number_of_visits(model)
         assert result[0] == 1
         assert math.isclose(result[1], 2.0 / 3, rel_tol=1e-6)
 
     def test_compute_steady_state_distribution(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         model = stormpy.build_model(program)
-        environment = stormpy.Environment()
-        result = stormpy.compute_steady_state_distribution(model, environment=environment)
+        result = stormpy.compute_steady_state_distribution(model)
         values = result.get_finite_value_vector()
         assert len(values) == 13
         sorted(values)
@@ -775,7 +773,7 @@ class TestSolutionBounds:
 
     def test_bounds_after_filter(self):
         model, formula = self._die_dtmc()
-        result = stormpy.model_checking(model, formula, environment=stormpy.environments.sound())
+        result = stormpy.model_checking(model, formula)
         initial_state = model.initial_states[0]
         before = result[initial_state]
         stormpy.filter_initial_states(result, model)
@@ -803,7 +801,7 @@ class TestSolutionBounds:
         program = stormpy.parse_prism_program(get_example_path("dtmc", "infinite.pm"))
         properties = stormpy.parse_properties('R=? [ F "goal" ]', program)
         model = stormpy.build_model(program, properties)
-        result = stormpy.model_checking(model, properties[0], environment=stormpy.environments.sound())
+        result = stormpy.model_checking(model, properties[0])
         assert stormpy.numbers.is_infinity(result[0])
         assert result[0].upper is None or stormpy.numbers.is_infinity(result[0].upper)
         assert result[1] == 0

@@ -26,7 +26,7 @@ class TestPLA:
         assert model.nr_transitions == 803
         assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
@@ -49,7 +49,7 @@ class TestPLA:
         assert model.nr_transitions == 803
         assert model.model_type == stormpy.models.ModelType.DTMC
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
@@ -82,7 +82,7 @@ class TestPLA:
         formulas = stormpy.parse_properties(prop, program)
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         checker = stormpy.pars.create_region_checker(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
@@ -99,7 +99,7 @@ class TestPLA:
         formulas = stormpy.parse_properties(prop, program)
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         checker = stormpy.pars.DtmcParameterLiftingModelChecker()
         checker.specify(env, model, formulas[0].get_raw_formula())
         parameters = model.collect_all_parameters()
@@ -114,7 +114,7 @@ class TestPLA:
         formulas = stormpy.parse_properties(prop, program)
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         checker = stormpy.pars.DtmcParameterLiftingModelChecker()
         checker.specify(env, model, formulas[0].get_raw_formula(), allow_model_simplification=False)
         parameters = model.collect_all_parameters()
@@ -129,7 +129,7 @@ class TestPLA:
         formulas = stormpy.parse_properties(prop, program)
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         checker = stormpy.pars.DtmcParameterLiftingModelChecker()
         checker.specify(env, model, formulas[0].get_raw_formula(), allow_model_simplification=False)
         parameters = model.collect_all_parameters()
@@ -145,7 +145,7 @@ class TestPLA:
         formulas = stormpy.parse_properties(prop, program)
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
         assert model.has_parameters
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         parameters = model.collect_all_parameters()
         assert len(parameters) == 2
         region = stormpy.pars.ParameterRegion.create_from_string("0.7<=pL<=0.9,0.75<=pK<=0.95", parameters)

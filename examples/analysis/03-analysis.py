@@ -11,7 +11,7 @@ def example_analysis_03():
     formula_str = "P=? [F s=7 & d=2]"
     properties = stormpy.parse_properties(formula_str, prism_program)
     model = stormpy.build_model(prism_program, properties)
-    env = stormpy.Environment()
+    env = stormpy.environments.default(model)
     env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
     env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
     env.solver().native().precision = stormpy.Rational("0.9")

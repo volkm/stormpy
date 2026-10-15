@@ -71,7 +71,7 @@ class TestModelInstantiator:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
 
         parameters = model.collect_all_parameters()
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         inst_checker = stormpy.pars.ModelInstantiationChecker(env, model)
         assert type(inst_checker) is stormpy.pars.ModelInstantiationChecker[stormpy.models.ModelType.DTMC, float]
         inst_checker.specify_formula(stormpy.developer.CheckTask[stormpy.RationalFunction](formulas[0].get_raw_formula(), True))
@@ -91,7 +91,7 @@ class TestModelInstantiator:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
 
         parameters = model.collect_all_parameters()
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         inst_checker = stormpy.pars.ModelInstantiationChecker[stormpy.models.ModelType.DTMC, stormpy.Rational](env, model)
         inst_checker.specify_formula(stormpy.developer.CheckTask[stormpy.RationalFunction](formulas[0].get_raw_formula(), True))
         inst_checker.set_graph_preserving(True)
@@ -110,7 +110,7 @@ class TestModelInstantiator:
         model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
 
         parameters = model.collect_all_parameters()
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         inst_checker = stormpy.pars.ModelInstantiationChecker[stormpy.models.ModelType.DTMC, stormpy.Rational](env, model)
         inst_checker.specify_formula(stormpy.developer.CheckTask[stormpy.RationalFunction](formulas[0].get_raw_formula(), True))
         inst_checker.set_graph_preserving(True)

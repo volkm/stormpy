@@ -19,7 +19,7 @@ class TestEnvironment:
         assert stormpy.Environment().solver().min_max().method == default_method
 
     def test_exploration_environment(self):
-        env = stormpy.Environment()
+        env = stormpy.environments.sound()
         exploration = env.exploration()
         exploration.precomputation_type = stormpy.environments.PrecomputationType.LOCAL
         assert env.exploration().precomputation_type == stormpy.environments.PrecomputationType.LOCAL
@@ -35,27 +35,28 @@ class TestEnvironment:
         assert env.exploration().sampled_paths_until_precomputation is None
 
     def test_linear_equation_solver(self):
-        env = stormpy.Environment()
-        env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
-        env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.POWER
-        assert env.solver().get_linear_equation_solver_type() == stormpy.environments.EquationSolverType.NATIVE
-        assert env.solver().native().method == stormpy.environments.NativeLinearEquationSolverMethod.POWER
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
         properties = stormpy.parse_properties('P=? [F "one"]', program)
         model = stormpy.build_model(program, properties)
+        env = stormpy.environments.default(model)
+        env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
+        env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
+        assert env.solver().get_linear_equation_solver_type() == stormpy.environments.EquationSolverType.NATIVE
+        assert env.solver().native().method == stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
         result = stormpy.model_checking(model, properties[0], environment=env)
         assert math.isclose(result[model.initial_states[0]], 1 / 6, rel_tol=1e-4)
 
     def test_multi_objective_method(self):
-        env = stormpy.Environment()
+        env = stormpy.environments.sound()
         assert env.modelchecker().multi().method == stormpy.environments.MultiObjectiveMethod.PCAA
         env.modelchecker().multi().method = stormpy.environments.MultiObjectiveMethod.CONSTRAINT_BASED
         assert env.modelchecker().multi().method == stormpy.environments.MultiObjectiveMethod.CONSTRAINT_BASED
 
     def test_steady_state_distribution_algorithm(self):
         model = stormpy.build_model_from_drn(get_example_path("ctmc", "dft.drn"))
-        env = stormpy.Environment()
-        assert env.modelchecker().steady_state_distribution_algorithm == stormpy.environments.SteadyStateDistributionAlgorithm.AUTOMATIC
+        env = stormpy.environments.default(model)
+        # The sound environment selects the algorithm based on expected visiting times
+        assert env.modelchecker().steady_state_distribution_algorithm == stormpy.environments.SteadyStateDistributionAlgorithm.EXPECTED_VISITING_TIMES
         env.modelchecker().steady_state_distribution_algorithm = stormpy.environments.SteadyStateDistributionAlgorithm.CLASSIC
         assert env.modelchecker().steady_state_distribution_algorithm == stormpy.environments.SteadyStateDistributionAlgorithm.CLASSIC
         default_result = stormpy.compute_steady_state_distribution(model).get_finite_value_vector()

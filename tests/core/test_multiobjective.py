@@ -59,17 +59,17 @@ class TestMultiObjectiveModelChecking:
 
 class TestWeightedObjectiveModelChecking:
     def _check_maze_weighted_objective(self, model, properties):
-        env = stormpy.Environment()
+        env = stormpy.environments.default(model)
         weighted_model_checker, inverter = stormpy.create_weight_vector_checker(model, properties[0], produce_scheduler=True, environment=env)
         precision = 0 if model.is_exact else 1e-4
         weighted_model_checker.set_weighted_precision(precision)
         weighted_model_checker.check(env, [1, 1])
         point = weighted_model_checker.get_achievable_point()
         assert len(point) == 2
-        assert math.isclose(float(point[0]), 3.8)
-        assert math.isclose(float(point[1]), 0.4)
+        assert math.isclose(float(point[0]), 3.8, abs_tol=precision)
+        assert math.isclose(float(point[1]), 0.4, abs_tol=precision)
         value = weighted_model_checker.get_optimal_weighted_sum()
-        assert math.isclose(float(value), -3.4)
+        assert math.isclose(float(value), -3.4, abs_tol=precision)
         scheduler = inverter.create_memory_scheduler_from_product_scheduler(weighted_model_checker.compute_scheduler())
         assert scheduler.memory_size == 4
 

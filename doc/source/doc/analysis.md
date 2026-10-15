@@ -71,12 +71,12 @@ It enforces sound computations, yielding guaranteed bounds on the results.
 In case of exact and parametric models, it enforces exact computations.
 The environments ``stormpy.environments.sound()`` and ``stormpy.environments.exact()`` can also be created explicitly and adapted further.
 
-We can also vary the model checking algorithm. Here, we start from a plain environment without soundness guarantees:
+We can also vary the model checking algorithm. Here, we start from the default environment and select a sound method:
 
 ```{code-cell} python3
-env = stormpy.Environment()
+env = stormpy.environments.default(model)
 env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
-env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.POWER
+env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
 result = stormpy.model_checking(model, properties[0], environment=env)
 ```
 
@@ -89,5 +89,6 @@ result = stormpy.model_checking(model, properties[0], environment=env)
 ```
 
 Notice that by setting such parameters, the result may be off from the actual model checking algorithm.
+Sound methods still report guaranteed bounds on the actual result, but these can be one-sided or loose.
 
 Environments can be used likewise for symbolic model checking. See the example for more information.
