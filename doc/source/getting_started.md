@@ -169,6 +169,7 @@ print(x.value, x.lower, x.upper)
 
 Alternatively, ``result.get_value_vector()`` returns the values of all states at once and ``result.get_solution_bounds()`` returns the bounds for all states.
 Values can be infinite (e.g. for expected rewards), in which case they are given as ``float("inf")``.
+Use ``stormpy.numbers.is_infinity(x)`` to check for infinity.
 ``result.get_finite_value_vector()`` returns the values as plain values of the value type instead; it raises an error if a value is infinite and the value type cannot represent infinity (e.g. ``stormpy.Rational``).
 
 #### Results for all states

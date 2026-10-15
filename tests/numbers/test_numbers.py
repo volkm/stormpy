@@ -1,3 +1,4 @@
+import math
 import stormpy
 import stormpy.info
 from stormpy.numbers import developer as pycarl
@@ -115,3 +116,24 @@ class TestValueTypeMatrix:
         program = stormpy.parse_prism_program(get_example_path("idtmc", "die-intervals.pm"))
         model = stormpy.build_model[stormpy.numbers.RationalInterval](program)
         assert type(first_matrix_value(model)) is exact_package().Interval
+
+
+def test_infinity_checks():
+    is_inf = stormpy.numbers.is_infinity
+    is_neg_inf = stormpy.numbers.is_negative_infinity
+    assert is_inf(math.inf) and not is_neg_inf(math.inf)
+    assert is_neg_inf(-math.inf) and not is_inf(-math.inf)
+    assert not is_inf(1.0) and not is_neg_inf(1.0)
+    assert not is_inf(1) and not is_inf(None)
+    assert not is_inf(stormpy.Rational("1/3"))
+    # math.isinf converts to float, which overflows for huge rationals
+    huge = stormpy.Rational(10) ** 400
+    assert math.isinf(huge)
+    assert not is_inf(huge)
+    assert not is_inf(huge)
+    assert not is_neg_inf(huge)
+    assert is_inf(stormpy.BoundedValue(math.inf, 1.0, None))
+    assert not is_inf(stormpy.BoundedValue(1.0, 0.0, math.inf))
+    assert is_neg_inf(stormpy.BoundedValue(-math.inf))
+    assert is_inf(pycarl.inf) and not is_neg_inf(pycarl.inf)
+    assert is_neg_inf(-pycarl.inf) and not is_inf(-pycarl.inf)

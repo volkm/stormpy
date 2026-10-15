@@ -34,11 +34,11 @@ def test_infinite_quantitative_values(value_type, tmp_path):
     model = stormpy.build_model[value_type](program, properties)
     result = stormpy.model_checking(model, properties[0])
     assert result[0] == math.inf
-    assert result[2] == math.inf
+    assert stormpy.numbers.is_infinity(result[2])
     assert result[1] == 0
     assert isinstance(result[1], stormpy.BoundedValue)
     assert isinstance(result.get_value(1), value_type)
-    assert result.get_max() == math.inf
+    assert stormpy.numbers.is_infinity(result.get_max())
     assert result.get_min() == 0
     assert result.get_value_vector() == [result[state] for state in range(model.nr_states)]
     assert math.inf in result.get_value_vector()
@@ -702,7 +702,7 @@ class TestSolutionBounds:
         assert result[0] == stormpy.BoundedValue(0.5, 0.25, None)
         result.set_upper_bounds([0.75, math.inf])
         assert result[1] == stormpy.BoundedValue(1.0, 1.0, math.inf)
-        assert result.aggregate(stormpy.FilterType.SUM).upper == math.inf
+        assert stormpy.numbers.is_infinity(result.aggregate(stormpy.FilterType.SUM).upper)
         result.set_values_exact()
         assert result[0].is_exact
         result.clear_bounds()
@@ -713,8 +713,8 @@ class TestSolutionBounds:
         properties = stormpy.parse_properties('R=? [ F "goal" ]', program)
         model = stormpy.build_model(program, properties)
         result = stormpy.model_checking(model, properties[0], environment=self._sound_environment())
-        assert result[0] == math.inf
-        assert result[0].upper in (None, math.inf)
+        assert stormpy.numbers.is_infinity(result[0])
+        assert result[0].upper is None or stormpy.numbers.is_infinity(result[0].upper)
         assert result[1] == 0
 
     def test_symbolic_aggregate_without_bounds(self):
