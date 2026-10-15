@@ -66,12 +66,17 @@ model = stormpy.build_model(prism_program, properties)
 result = stormpy.model_checking(model, properties[0])
 ```
 
-We can also vary the model checking algorithm:
+By default, model checking uses the environment given by ``stormpy.environments.default(model)``.
+It enforces sound computations, yielding guaranteed bounds on the results.
+In case of exact and parametric models, it enforces exact computations.
+The environments ``stormpy.environments.sound()`` and ``stormpy.environments.exact()`` can also be created explicitly and adapted further.
+
+We can also vary the model checking algorithm. Here, we start from a plain environment without soundness guarantees:
 
 ```{code-cell} python3
 env = stormpy.Environment()
-env.solver().set_linear_equation_solver_type(stormpy.EquationSolverType.NATIVE)
-env.solver().native().method = stormpy.NativeLinearEquationSolverMethod.POWER
+env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
+env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.POWER
 result = stormpy.model_checking(model, properties[0], environment=env)
 ```
 
@@ -80,7 +85,7 @@ we allow to change the number of iterations:
 
 ```{code-cell} python3
 env.solver().native().maximal_number_of_iterations = 3
-result = stormpy.model_checking(model, properties[0])
+result = stormpy.model_checking(model, properties[0], environment=env)
 ```
 
 Notice that by setting such parameters, the result may be off from the actual model checking algorithm.

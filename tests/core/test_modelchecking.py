@@ -150,7 +150,7 @@ class TestModelChecking:
         assert initial_state == 0
 
         env = stormpy.Environment()
-        env.solver().min_max().method = stormpy.MinMaxMethod.VALUE_ITERATION
+        env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal
         result = stormpy.model_checking(
@@ -180,7 +180,7 @@ class TestModelChecking:
         assert initial_state == 0
 
         env = stormpy.Environment()
-        env.solver().min_max().method = stormpy.MinMaxMethod.VALUE_ITERATION
+        env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal robust
         result = stormpy.model_checking(
@@ -232,7 +232,7 @@ class TestModelChecking:
         assert initial_state == 0
 
         env = stormpy.Environment()
-        env.solver().min_max().method = stormpy.MinMaxMethod.VALUE_ITERATION
+        env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal
         result = stormpy.model_checking(
@@ -262,7 +262,7 @@ class TestModelChecking:
         assert initial_state == 0
 
         env = stormpy.Environment()
-        env.solver().min_max().method = stormpy.MinMaxMethod.VALUE_ITERATION
+        env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
 
         # Compute maximal robust
         result = stormpy.model_checking(
@@ -434,7 +434,7 @@ class TestModelChecking:
         formulas = stormpy.parse_properties('P=? [ F "one"]')
         model = stormpy.build_model[value_type](program, formulas)
         env = stormpy.Environment()
-        env.solver().min_max().method = stormpy.MinMaxMethod.VALUE_ITERATION
+        env.solver().min_max().method = stormpy.environments.MinMaxMethod.VALUE_ITERATION
         result = stormpy.model_checking(model, formulas[0], uncertainty_resolution_mode=stormpy.UncertaintyResolutionMode.MAXIMIZE, environment=env)
         # Results of interval models contain values of the underlying number type
         result_type = float if value_type is stormpy.Interval else stormpy.Rational
@@ -604,12 +604,6 @@ class TestSolutionBounds:
         properties = stormpy.parse_properties('P=? [ F "one" ]', program)
         return stormpy.build_model[value_type](program, properties), properties[0]
 
-    @staticmethod
-    def _sound_environment():
-        env = stormpy.Environment()
-        env.solver().force_soundness = True
-        return env
-
     def test_bounded_value(self):
         value = stormpy.BoundedValue(0.5, 0.25, 0.75)
         assert value.has_lower and value.has_upper
@@ -746,7 +740,7 @@ class TestSolutionBounds:
             formula = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)[0]
             model = stormpy.build_model(program, [formula])
             exact = 49 / 128
-        result = stormpy.model_checking(model, formula, environment=self._sound_environment())
+        result = stormpy.model_checking(model, formula, environment=stormpy.environments.sound())
         assert result.has_lower_bounds() and result.has_upper_bounds()
         value = result[model.initial_states[0]]
         assert value.has_lower and value.has_upper
@@ -781,7 +775,7 @@ class TestSolutionBounds:
 
     def test_bounds_after_filter(self):
         model, formula = self._die_dtmc()
-        result = stormpy.model_checking(model, formula, environment=self._sound_environment())
+        result = stormpy.model_checking(model, formula, environment=stormpy.environments.sound())
         initial_state = model.initial_states[0]
         before = result[initial_state]
         stormpy.filter_initial_states(result, model)
@@ -809,7 +803,7 @@ class TestSolutionBounds:
         program = stormpy.parse_prism_program(get_example_path("dtmc", "infinite.pm"))
         properties = stormpy.parse_properties('R=? [ F "goal" ]', program)
         model = stormpy.build_model(program, properties)
-        result = stormpy.model_checking(model, properties[0], environment=self._sound_environment())
+        result = stormpy.model_checking(model, properties[0], environment=stormpy.environments.sound())
         assert stormpy.numbers.is_infinity(result[0])
         assert result[0].upper is None or stormpy.numbers.is_infinity(result[0].upper)
         assert result[1] == 0

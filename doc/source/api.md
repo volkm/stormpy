@@ -8,6 +8,7 @@ Work in progress!
 
 api/core
 api/core_developer
+api/environments
 api/info
 api/info_developer
 api/numbers
