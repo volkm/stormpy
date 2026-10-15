@@ -6,6 +6,25 @@ from helpers.helper import get_example_path
 from configurations import plotting, numpy_avail
 
 
+def assert_pareto_approximation(result, expected_vertices, precision):
+    """
+    Check that the under- and over-approximation of the Pareto curve enclose the expected Pareto curve up to the given precision.
+
+    Storm guarantees the precision along the directions of the weight vectors and not per coordinate of a vertex.
+    The directions are the normal vectors of the halfspaces of the over-approximation.
+    Along each of them, the under-approximation is at most the precision away from the over-approximation.
+    """
+    under = result.get_under_approximation()
+    over = result.get_over_approximation()
+    expected = stormpy.developer.storage.Polytope[float].create_downward_closure(expected_vertices)
+    assert over.contains(expected)
+    assert expected.contains(under)
+    for halfspace in over.halfspaces:
+        point, exists = under.optimize(halfspace.normal_vector)
+        assert exists
+        assert halfspace.offset - sum(n * x for n, x in zip(halfspace.normal_vector, point)) <= precision
+
+
 class TestMultiObjectiveModelChecking:
     def test_naive_api_double_no_plotting(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "multiobjective1.nm"))
@@ -15,11 +34,7 @@ class TestMultiObjectiveModelChecking:
         expected_vertices = [[124 / 125, 248 / 2125], [97 / 100, 5456 / 425], [91 / 100, 248 / 17]]
         assert len(result.get_under_approximation().vertices) >= 3
         assert len(result.get_over_approximation().vertices) >= 3
-        # check if each under/over-approximation point is close to one of the expected vertices
-        for p in result.get_under_approximation().vertices:
-            assert min([max([abs(pi - vi) for pi, vi in zip(p, v)]) for v in expected_vertices]) <= 1e-4
-        for p in result.get_over_approximation().vertices:
-            assert min([max([abs(pi - vi) for pi, vi in zip(p, v)]) for v in expected_vertices]) <= 1e-4
+        assert_pareto_approximation(result, expected_vertices, 1e-4)
 
     @plotting
     @numpy_avail
