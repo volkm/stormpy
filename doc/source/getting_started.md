@@ -149,7 +149,25 @@ for state in model.states:
     x = result[state]  # do something with x
 ```
 
-Alternatively, ``result.get_value_vector()`` returns the values of all states at once.
+Each ``result[state]`` is a {class}`stormpy.BoundedValue`.
+It contains the computed value (``x.value``).
+It also contains sound lower (``x.lower``) and upper bounds (``x.upper``) on the actual value.
+If the solution method could not establish bounds, the corresponding bound is ``None``.
+A {class}`stormpy.BoundedValue` can be compared to numbers and converted via ``float(x)``.
+``result.get_value(state)`` returns only the value.
+
+Which bounds are available depends on the solution method.
+Sound methods yield tight bounds, exact methods yield bounds coinciding with the value:
+
+```{code-cell} python3
+env = stormpy.Environment()
+env.solver().force_soundness = True
+sound_result = stormpy.model_checking(model, properties[0], environment=env)
+x = sound_result[model.initial_states[0]]
+print(x.value, x.lower, x.upper)
+```
+
+Alternatively, ``result.get_value_vector()`` returns the values of all states at once and ``result.get_solution_bounds()`` returns the bounds for all states.
 Values can be infinite (e.g. for expected rewards), in which case they are given as ``float("inf")``.
 ``result.get_finite_value_vector()`` returns the values as plain values of the value type instead; it raises an error if a value is infinite and the value type cannot represent infinity (e.g. ``stormpy.Rational``).
 

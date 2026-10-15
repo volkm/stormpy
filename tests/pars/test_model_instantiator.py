@@ -81,7 +81,8 @@ class TestModelInstantiator:
         result = inst_checker.check(env, point)
         assert isinstance(result, stormpy.ExplicitQuantitativeCheckResult[float])
         res = result[model.initial_states[0]]
-        assert isinstance(res, float)
+        assert isinstance(res, stormpy.BoundedValue)
+        assert isinstance(res.value, float)
         assert math.isclose(res, 29 / 15)
 
     def test_pdtmc_exact_instantiation_checker(self):
@@ -99,8 +100,9 @@ class TestModelInstantiator:
         result = inst_checker.check(env, point)
         assert isinstance(result, stormpy.ExplicitQuantitativeCheckResult[stormpy.Rational])
         res = result[model.initial_states[0]]
-        assert isinstance(res, stormpy.Rational)
+        assert isinstance(res.value, stormpy.Rational)
         assert res == stormpy.Rational("29/15")
+        assert res.is_exact
 
     def test_pdtmc_exact_instantiation_checker_die(self):
         program = stormpy.parse_prism_program(get_example_path("pdtmc", "parametric_die.pm"))
@@ -117,5 +119,6 @@ class TestModelInstantiator:
         result = inst_checker.check(env, point)
         assert isinstance(result, stormpy.ExplicitQuantitativeCheckResult[stormpy.Rational])
         res = result[model.initial_states[0]]
-        assert isinstance(res, stormpy.Rational)
+        assert isinstance(res.value, stormpy.Rational)
         assert res == stormpy.Rational("4/35")
+        assert res.is_exact

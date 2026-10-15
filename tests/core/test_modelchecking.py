@@ -1,11 +1,10 @@
 import pytest
-import stormpy
-from helpers.helper import build_sparse_model, get_example_path
-
-from configurations import spot
-
 import math
+
+import stormpy
 from stormpy.exceptions import StormError
+from helpers.helper import build_sparse_model, get_example_path
+from configurations import spot
 
 
 def test_symbolic_filter_template_and_shared_dd_type():
@@ -37,7 +36,8 @@ def test_infinite_quantitative_values(value_type, tmp_path):
     assert result[0] == math.inf
     assert result[2] == math.inf
     assert result[1] == 0
-    assert isinstance(result[1], value_type)
+    assert isinstance(result[1], stormpy.BoundedValue)
+    assert isinstance(result.get_value(1), value_type)
     assert result.get_max() == math.inf
     assert result.get_min() == 0
     assert result.get_value_vector() == [result[state] for state in range(model.nr_states)]
@@ -595,3 +595,140 @@ class TestModelChecking:
     def test_model_checker_hint_hierarchy(self):
         hint = stormpy.ExplicitModelCheckerHint[float]()
         assert isinstance(hint, stormpy.ModelCheckerHint)
+
+
+class TestSolutionBounds:
+    @staticmethod
+    def _die_dtmc(value_type=float):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        properties = stormpy.parse_properties('P=? [ F "one" ]', program)
+        return stormpy.build_model[value_type](program, properties), properties[0]
+
+    @staticmethod
+    def _sound_environment():
+        env = stormpy.Environment()
+        env.solver().force_soundness = True
+        return env
+
+    def test_bounded_value(self):
+        value = stormpy.BoundedValue(0.5, 0.25, 0.75)
+        assert value.has_lower and value.has_upper
+        assert not value.is_exact
+        assert value == 0.5
+        assert value == stormpy.BoundedValue(0.5, 0.25, 0.75)
+        assert value != stormpy.BoundedValue(0.5, 0.25, None)
+        assert 0.4 < value <= 0.5
+        assert float(value) == 0.5
+        assert round(value, 1) == 0.5
+        assert f"{value:.2f}" == "0.50"
+        assert f"{value}" == "0.5 [0.25, 0.75]"
+        assert str(value) == "0.5 [0.25, 0.75]"
+        assert str(stormpy.BoundedValue(0.5, None, 0.75)) == "0.5 [-, 0.75]"
+        assert str(stormpy.BoundedValue(0.5)) == "0.5"
+        assert stormpy.BoundedValue(1, 1, 1).is_exact
+
+    def test_result_values_with_bounds(self):
+        model, formula = self._die_dtmc()
+        result = stormpy.model_checking(model, formula)
+        initial_state = model.initial_states[0]
+        value = result[initial_state]
+        assert isinstance(value, stormpy.BoundedValue)
+        assert isinstance(result.get_value(initial_state), float)
+        assert value.value == result.get_value(initial_state)
+        assert math.isclose(value, 1 / 6)
+        assert value.lower == result.get_lower_bound(initial_state)
+        assert value.upper == result.get_upper_bound(initial_state)
+
+    @pytest.mark.parametrize("model_type", ["dtmc", "mdp"])
+    def test_sound_bounds(self, model_type):
+        if model_type == "dtmc":
+            model, formula = self._die_dtmc()
+            exact = 1 / 6
+        else:
+            program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
+            formula = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"]', program)[0]
+            model = stormpy.build_model(program, [formula])
+            exact = 49 / 128
+        result = stormpy.model_checking(model, formula, environment=self._sound_environment())
+        assert result.has_lower_bounds() and result.has_upper_bounds()
+        value = result[model.initial_states[0]]
+        assert value.has_lower and value.has_upper
+        assert value.lower <= value.value <= value.upper
+        assert value.lower <= exact <= value.upper
+        assert value.upper - value.lower < 1e-4
+
+        bounds = result.get_solution_bounds()
+        assert isinstance(bounds, stormpy.SolutionBounds[float])
+        assert bounds.lower == result.get_lower_bound_vector()
+        assert bounds.upper == result.get_upper_bound_vector()
+        assert bounds.encloses(result.get_value_vector())
+        assert bounds.is_within_precision(result.get_value_vector(), 1e-4, False)
+
+        aggregated = result.aggregate(stormpy.FilterType.MAX)
+        assert isinstance(aggregated, stormpy.AggregatedValue[float])
+        assert aggregated.value == result.get_max()
+        assert aggregated.has_lower and aggregated.has_upper
+        assert aggregated.lower <= aggregated.value <= aggregated.upper
+
+    def test_exact_bounds(self):
+        model, formula = self._die_dtmc(stormpy.Rational)
+        result = stormpy.model_checking(model, formula)
+        value = result[model.initial_states[0]]
+        assert isinstance(value.value, stormpy.Rational)
+        assert value == stormpy.Rational("1/6")
+        assert value.is_exact
+        bounds = result.get_solution_bounds()
+        assert bounds.is_exact
+        assert bounds.is_within_precision(result.get_value_vector(), stormpy.Rational(0), False)
+        assert bounds.is_within_precision(result.get_value_vector(), stormpy.Rational(0), True)
+
+    def test_bounds_after_filter(self):
+        model, formula = self._die_dtmc()
+        result = stormpy.model_checking(model, formula, environment=self._sound_environment())
+        initial_state = model.initial_states[0]
+        before = result[initial_state]
+        stormpy.filter_initial_states(result, model)
+        assert result[initial_state] == before
+        assert result.get_lower_bound_vector() == [before.lower]
+        assert result.get_upper_bound_vector() == [before.upper]
+
+    def test_set_bounds(self):
+        result = stormpy.ExplicitQuantitativeCheckResult[float]([0.5, 1.0])
+        assert not result.has_lower_bounds() and not result.has_upper_bounds()
+        with pytest.raises(RuntimeError, match="unknown lower bounds"):
+            result.get_lower_bound_vector()
+        assert result[0] == stormpy.BoundedValue(0.5)
+        result.set_lower_bounds([0.25, 1.0])
+        assert result[0] == stormpy.BoundedValue(0.5, 0.25, None)
+        result.set_upper_bounds([0.75, math.inf])
+        assert result[1] == stormpy.BoundedValue(1.0, 1.0, math.inf)
+        assert result.aggregate(stormpy.FilterType.SUM).upper == math.inf
+        result.set_values_exact()
+        assert result[0].is_exact
+        result.clear_bounds()
+        assert not result.get_solution_bounds().has_any
+
+    def test_infinite_bounds(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "infinite.pm"))
+        properties = stormpy.parse_properties('R=? [ F "goal" ]', program)
+        model = stormpy.build_model(program, properties)
+        result = stormpy.model_checking(model, properties[0], environment=self._sound_environment())
+        assert result[0] == math.inf
+        assert result[0].upper in (None, math.inf)
+        assert result[1] == 0
+
+    def test_symbolic_aggregate_without_bounds(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        formulas = stormpy.parse_properties('P=? [ F "one" ]', program)
+        model = stormpy.build_symbolic_model(program, formulas)
+        result = stormpy.model_checking(model, formulas[0], engine=stormpy.Engine.DD)
+        aggregated = result.aggregate(stormpy.FilterType.MAX)
+        assert aggregated.value == 1.0
+        assert aggregated.lower is None and aggregated.upper is None
+
+    def test_parametric_result_without_bounded_value(self):
+        program = stormpy.parse_prism_program(get_example_path("pdtmc", "parametric_die.pm"))
+        formulas = stormpy.parse_properties("P=? [F s=7 & d=2]", program)
+        model = stormpy.build_model[stormpy.RationalFunction](program, formulas)
+        result = stormpy.model_checking(model, formulas[0])
+        assert isinstance(result[model.initial_states[0]], stormpy.RationalFunction)
