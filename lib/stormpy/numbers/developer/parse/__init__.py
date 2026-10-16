@@ -1,3 +1,6 @@
+__all__ = ["ParserError", "deserialize"]
+
+
 try:
     from lark import Lark, UnexpectedInput
 

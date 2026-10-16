@@ -53,6 +53,7 @@ doc = [
     "jupytext",
     "myst-nb",
     "ipykernel",
+    "numpy",
 ]
 test = [
     "pytest",

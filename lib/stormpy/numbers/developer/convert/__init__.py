@@ -2,6 +2,8 @@ from . import gmp_converter
 
 from stormpy.numbers.developer._config import CARL_WITH_CLN as has_cln
 
+__all__ = ["convert_to_gmp"]
+
 
 def convert_to_gmp(data):
     """
@@ -13,6 +15,7 @@ def convert_to_gmp(data):
 
 
 if has_cln:
+    __all__.append("convert_to_cln")
     from . import cln_converter
 
     def convert_to_cln(data):

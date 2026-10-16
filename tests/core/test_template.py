@@ -178,3 +178,19 @@ def test_python_template_function():
     assert inspect.getdoc(scale_by[3]) == "Scale the value."
     with pytest.raises(TypeError, match="Supported are: 2, 3"):
         scale_by[4]
+
+
+def test_builtin_deduction_sources_are_exposed_as_metadata():
+    from stormpy._template import DeductionSource
+
+    module = SimpleNamespace(_template_instantiations={"Example": {("base",): BaseImplementation}})
+    from_object = _TemplateClass(
+        "test.Example",
+        module,
+        parameters=["kind"],
+        deduce=_deduce_from_object(lambda value: value, keyword=("model", "source"), position=1),
+    )
+    assert from_object.metadata.deduction_source == DeductionSource(1, ("model", "source"))
+    from_first = _TemplateClass("test.Example", module, parameters=["kind"], deduce=_deduce_from_first_argument(keyword="source"))
+    assert from_first.metadata.deduction_source == DeductionSource(0, ("source",))
+    assert make_family(deduce=_deduce_default("base")).metadata.deduction_source is None
