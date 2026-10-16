@@ -20,6 +20,7 @@ Parameters of parametric models are represented by :class:`Variable` objects.
 from ._config import Integer, Interval, Polynomial, Rational, RationalFunction, RationalFunctionCoefficient, RationalInterval, RawPolynomial
 
 from .developer import Variable, clear_pools, variable_with_name
+from ._infinity import is_infinity, is_negative_infinity
 
 __all__ = [
     "Integer",
@@ -33,4 +34,6 @@ __all__ = [
     "Variable",
     "variable_with_name",
     "clear_pools",
+    "is_infinity",
+    "is_negative_infinity",
 ]

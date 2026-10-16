@@ -78,7 +78,7 @@ Moreover, initial states and deadlocks are indicated with a labelling function. 
 print("Labels: {}".format(model.labeling.get_labels()))
 ```
 
-We will investigate ways to examine the model in more detail later in [Investigating the model](#Investigating-the-model).
+We will investigate ways to examine the model in more detail later in [Investigating the model](#investigating-the-model).
 
 ### Building properties
 
@@ -95,17 +95,18 @@ Stormpy can be used to parse this. As the variables in the property refer to a p
 
 ```{code-cell} python3
 formula_str = "P=? [F s=2]"
-properties = stormpy.parse_properties(formula_str, prism_program)
+prop = stormpy.parse_property(formula_str, prism_program)
 ```
 
-Notice that properties is now a list of properties containing a single element.
+``stormpy.parse_property`` parses exactly one property.
+Several properties (separated by ``;``) can be parsed at once with ``stormpy.parse_properties``, which returns a list of properties.
 
 However, if we build the model as before, then the appropriate information that the variable `s=2` in some states is not present.
 In order to label the states accordingly, we should notify Storm upon building the model that we would like to preserve given properties.
 Storm will then add the labels accordingly:
 
 ```{code-cell} python3
-model = stormpy.build_model(prism_program, properties)
+model = stormpy.build_model(prism_program, prop)
 print("Labels in the model: {}".format(sorted(model.labeling.get_labels())))
 ```
 
@@ -135,9 +136,9 @@ The last lesson taught us to construct properties and models with matching state
 Now default checking routines are just a simple command away:
 
 ```{code-cell} python3
-properties = stormpy.parse_properties(formula_str, prism_program)
-model = stormpy.build_model(prism_program, properties)
-result = stormpy.model_checking(model, properties[0])
+prop = stormpy.parse_property(formula_str, prism_program)
+model = stormpy.build_model(prism_program, prop)
+result = stormpy.model_checking(model, prop)
 ```
 
 The result may contain information about all states.
@@ -149,8 +150,39 @@ for state in model.states:
     x = result[state]  # do something with x
 ```
 
-Alternatively, ``result.get_value_vector()`` returns the values of all states at once.
+Each ``result[state]`` is typically a {class}`stormpy.BoundedValue`.
+It contains the computed value (``x.value``).
+It also contains sound lower (``x.lower``) and upper bounds (``x.upper``) on the actual value.
+If the solution method could not establish bounds, the corresponding bound is ``None``.
+A {class}`stormpy.BoundedValue` can be compared to numbers and converted via ``float(x)``.
+``result.get_value(state)`` returns only the value.
+
+Which bounds are available depends on the solution method.
+Sound methods yield tight bounds, exact methods are tailored to exact number representations:
+
+```{code-cell} python3
+env = stormpy.Environment()
+env.solver().force_soundness = True
+sound_result = stormpy.model_checking(model, prop, environment=env)
+x = sound_result[model.initial_states[0]]
+print(x.value, x.lower, x.upper)
+```
+
+A different environment can be passed via ``model_checking(..., environment=env)``.
+For example, ``stormpy.Environment()`` uses Storm's default methods without soundness guarantees, which are typically faster.
+
+Printing a {class}`stormpy.BoundedValue` shows the value followed by its bounds, where an unknown bound is shown as ``-``.
+A format specification applies to the value and the bounds:
+
+```{code-cell} python3
+print(x)
+print(f"{x:.4f}")
+```
+
+Use ``x.value`` or ``float(x)`` to obtain only the value.
+Alternatively, ``result.get_value_vector()`` returns the values of all states at once and ``result.get_solution_bounds()`` returns the bounds for all states.
 Values can be infinite (e.g. for expected rewards), in which case they are given as ``float("inf")``.
+Use ``stormpy.numbers.is_infinity(x)`` to check for infinity.
 ``result.get_finite_value_vector()`` returns the values as plain values of the value type instead; it raises an error if a value is infinite and the value type cannot represent infinity (e.g. ``stormpy.Rational``).
 
 #### Results for all states

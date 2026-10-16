@@ -4,10 +4,15 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # Needed for version information
-import importlib
 import pathlib
+import sys
+from functools import partial
 
 import stormpy
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent / "_ext"))
+from stormpy_autosummary import _filter_api_members
+from stormpy_templates import template_families, template_functions, template_info, template_function_info
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -23,7 +28,10 @@ language = "en"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "stormpy_templates",
+    "stormpy_developer",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.autosectionlabel",
     #'sphinx.ext.intersphinx',
     "sphinx.ext.githubpages",
@@ -34,6 +42,29 @@ autosectionlabel_prefix_document = True
 
 # Autodoc options
 autoclass_content = "both"  # Add documentation for both the class and __init__
+
+# Autosummary options
+# Also list members that are re-exported (e.g. classes defined in the
+# compiled _logic module and imported into stormpy.logic)
+autosummary_imported_members = True
+
+# Variables (and callables) available in autosummary templates
+# Sphinx excludes bare functions from cached config. Partials preserve their
+# callable behavior and can be pickled through the imported functions.
+autosummary_context = {
+    name: partial(function)
+    for name, function in {
+        "filter_api_members": _filter_api_members,
+        "template_families": template_families,
+        "template_functions": template_functions,
+        "template_info": template_info,
+        "template_function_info": template_function_info,
+    }.items()
+}
+autosummary_context["api_submodules"] = {"stormpy.utility": ("multiobjective_plotting",)}
+
+# Wrap long signatures instead of scrolling them
+python_maximum_signature_line_length = 100
 
 templates_path = ["_templates"]
 exclude_patterns = []
@@ -91,6 +122,16 @@ html_theme_options = {
             "match": "api/*",
         },
         {
+            "text": "Extensions API",
+            "link": "extensions_api",
+            "match": "extensions_api/*",
+        },
+        {
+            "text": "Developer API",
+            "link": "developer_api",
+            "match": "developer_api/*",
+        },
+        {
             "text": "Storm",
             "link": "https://www.stormchecker.org/",
         },
@@ -133,22 +174,7 @@ notebook_docs = sorted(str(p.relative_to(_source_dir).with_suffix("")) for p in 
 html_context = {"notebook_docs": notebook_docs}
 
 
-def _skip_members_republished_in_public_api(app, what, name, obj, skip, options):
-    """Skip documenting a member of an `X.developer` module if the same
-    object is already re-exported under the parent public module `X`.
-    """
-    modname = app.env.temp_data.get("autodoc:module")
-    if not modname or not modname.endswith(".developer"):
-        return skip
-    public_modname = modname[: -len(".developer")]
-    try:
-        public_module = importlib.import_module(public_modname)
-    except ImportError:
-        return skip
-    if getattr(public_module, name, None) is obj:
-        return True
-    return skip
-
-
-def setup(app):
-    app.connect("autodoc-skip-member", _skip_members_republished_in_public_api)
+# -- Myst options --
+myst_enable_extensions = [
+    "colon_fence",
+]
