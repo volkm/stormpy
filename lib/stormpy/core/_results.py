@@ -20,8 +20,15 @@ def _sign(x: Any) -> int:
     return _infinity_sign(x) or (x > 0) - (x < 0)
 
 
+def _is_nan(*xs: Any) -> bool:
+    """Whether one of the values is not a number, e.g., the result of an undefined operation such as infinity minus infinity."""
+    return any(isinstance(x, float) and math.isnan(x) for x in xs)
+
+
 def _add(a: Any, b: Any) -> Any:
-    """Sum, or None if undefined (infinity minus infinity)."""
+    """Sum, or None if undefined (infinity minus infinity, or an operand is not a number)."""
+    if _is_nan(a, b):
+        return None
     sign_a, sign_b = _infinity_sign(a), _infinity_sign(b)
     if sign_a and sign_b and sign_a != sign_b:
         return None
@@ -33,7 +40,9 @@ def _add(a: Any, b: Any) -> Any:
 
 
 def _mul(a: Any, b: Any) -> Any:
-    """Product, with the convention 0 * infinity = 0."""
+    """Product with the convention 0 * infinity = 0, or None if an operand is not a number."""
+    if _is_nan(a, b):
+        return None
     if not _infinity_sign(a) and not _infinity_sign(b):
         return a * b
     sign = _sign(a) * _sign(b)
@@ -41,7 +50,9 @@ def _mul(a: Any, b: Any) -> Any:
 
 
 def _div(a: Any, b: Any) -> Any:
-    """Quotient, or None if undefined (infinity divided by infinity). Raises ZeroDivisionError for b = 0."""
+    """Quotient, or None if undefined (infinity divided by infinity, or an operand is not a number). Raises ZeroDivisionError for b = 0."""
+    if _is_nan(a, b):
+        return None
     if _sign(b) == 0:
         raise ZeroDivisionError("division by zero")
     sign_a, sign_b = _infinity_sign(a), _infinity_sign(b)
@@ -69,7 +80,7 @@ class BoundedValue:
     """
     Value of a single state in a model checking result, together with sound lower and upper bounds on the actual value.
 
-    The bounds are given if the solution method could establish them, e.g., for sound or exact methods.
+    The bounds are given if the solution method could establish them, e.g., for sound methods.
     An unknown bound is ``None``. An infinite bound means the method tried but could not establish a finite bound.
 
     The object behaves like its value in comparisons with numbers and when converting to ``float``.
@@ -89,8 +100,9 @@ class BoundedValue:
         :param upper: Sound upper bound on the actual value (None if not known).
         """
         self._value = value
-        self._lower = lower
-        self._upper = upper
+        # A bound which is not a number does not bound anything
+        self._lower = None if _is_nan(lower) else lower
+        self._upper = None if _is_nan(upper) else upper
 
     @property
     def value(self) -> Any:
@@ -116,11 +128,6 @@ class BoundedValue:
     def has_upper(self) -> bool:
         """Whether an upper bound is known."""
         return self._upper is not None
-
-    @property
-    def is_exact(self) -> bool:
-        """Whether both bounds are known and coincide, i.e., the actual value is known exactly."""
-        return self.has_lower and self.has_upper and self._lower == self._upper
 
     def __float__(self) -> float:
         return float(self._value)
@@ -194,10 +201,10 @@ class BoundedValue:
             # Both factors are non-negative: the product is monotone in both factors, so lower and upper bounds can be multiplied separately
             upper = None if self._upper is None or other._upper is None else _mul(self._upper, other._upper)
             return BoundedValue(value, _mul(self._lower, other._lower), upper)
-        for exact, factor in ((other, self), (self, other)):
-            if exact.is_exact:
-                # Scaling with a known constant: a negative constant swaps the bounds
-                constant = exact._lower
+        for point, factor in ((other, self), (self, other)):
+            if point._lower is not None and point._lower == point._upper:
+                # Scaling with a known constant (both bounds coincide): a negative constant swaps the bounds
+                constant = point._lower
                 if _sign(constant) == 0:
                     return BoundedValue(value, 0, 0)
                 lower = None if factor._lower is None else _mul(constant, factor._lower)
@@ -222,8 +229,8 @@ class BoundedValue:
     def __truediv__(self, other: object) -> BoundedValue:
         other = self._bounded(other)
         value = _value(_div(self._value, other._value))
-        if other.is_exact and _sign(other._lower) != 0:
-            # Division by a known constant: divide the bounds directly (one rounding step for floats), a negative constant swaps them
+        if other._lower is not None and other._lower == other._upper and _sign(other._lower) != 0:
+            # Division by a known constant (both bounds coincide): divide the bounds directly (one rounding step for floats), a negative constant swaps them
             constant = other._lower
             lower = None if self._lower is None else _div(self._lower, constant)
             upper = None if self._upper is None else _div(self._upper, constant)
