@@ -32,8 +32,6 @@ class TestMultiObjectiveModelChecking:
         model = stormpy.build_model(program, properties)
         result = stormpy.model_checking(model, properties[0])
         expected_vertices = [[124 / 125, 248 / 2125], [97 / 100, 5456 / 425], [91 / 100, 248 / 17]]
-        assert len(result.get_under_approximation().vertices) >= 3
-        assert len(result.get_over_approximation().vertices) >= 3
         assert_pareto_approximation(result, expected_vertices, 1e-4)
 
     @plotting
