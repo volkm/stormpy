@@ -129,8 +129,8 @@ class BoundedValue:
         return round(self._value, ndigits)
 
     def __format__(self, format_spec: str) -> str:
-        # Without format specification (e.g. "{}".format(x)) behave like str(), otherwise format the value
-        return str(self) if not format_spec else format(self._value, format_spec)
+        # The format specification (e.g. ".6f") applies to the value and to the bounds
+        return self._to_string(format_spec)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, BoundedValue):
@@ -240,11 +240,21 @@ class BoundedValue:
         return f"BoundedValue({self._value!r}, lower={self._lower!r}, upper={self._upper!r})"
 
     def __str__(self) -> str:
-        if not self.has_lower and not self.has_upper:
-            return str(self._value)
-        lower = "-" if self._lower is None else str(self._lower)
-        upper = "-" if self._upper is None else str(self._upper)
-        return f"{self._value} [{lower}, {upper}]"
+        return self._to_string("")
+
+    def _to_string(self, format_spec: str) -> str:
+        """Value followed by its bounds, where an unknown bound is shown as '-'."""
+
+        def format_number(x: Any) -> str:
+            if x is None:
+                return "-"
+            try:
+                return format(x, format_spec)
+            except TypeError:
+                # Exact numbers (e.g. Rational) do not support format specifications such as ".6f", use their float approximation instead
+                return format(float(x), format_spec)
+
+        return f"{format_number(self._value)} [{format_number(self._lower)}, {format_number(self._upper)}]"
 
 
 def _get_item_with_bounds(self, state: int) -> BoundedValue:

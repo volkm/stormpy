@@ -620,11 +620,18 @@ class TestSolutionBounds:
         assert 0.4 < value <= 0.5
         assert float(value) == 0.5
         assert round(value, 1) == 0.5
-        assert f"{value:.2f}" == "0.50"
+        # Bounds are always shown, unknown bounds as "-"
+        assert f"{value:.2f}" == "0.50 [0.25, 0.75]"
         assert f"{value}" == "0.5 [0.25, 0.75]"
         assert str(value) == "0.5 [0.25, 0.75]"
         assert str(stormpy.BoundedValue(0.5, None, 0.75)) == "0.5 [-, 0.75]"
-        assert str(stormpy.BoundedValue(0.5)) == "0.5"
+        assert str(stormpy.BoundedValue(0.5)) == "0.5 [-, -]"
+        assert f"{stormpy.BoundedValue(0.5):.2f}" == "0.50 [-, -]"
+        assert f"{stormpy.BoundedValue(0.5, 0.25, math.inf):.2f}" == "0.50 [0.25, inf]"
+        # Exact numbers are formatted via their float approximation if a format specification is given
+        third = stormpy.Rational("1/3")
+        assert str(stormpy.BoundedValue(third, third, third)) == "1/3 [1/3, 1/3]"
+        assert f"{stormpy.BoundedValue(third, third, third):.3f}" == "0.333 [0.333, 0.333]"
         assert stormpy.BoundedValue(1, 1, 1).is_exact
 
     def test_bounded_value_addition(self):

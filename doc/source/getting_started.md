@@ -167,6 +167,18 @@ x = sound_result[model.initial_states[0]]
 print(x.value, x.lower, x.upper)
 ```
 
+A different environment can be passed via ``model_checking(..., environment=env)``.
+For example, ``stormpy.Environment()`` uses Storm's default methods without soundness guarantees, which are typically faster.
+
+Printing a {class}`stormpy.BoundedValue` shows the value followed by its bounds, where an unknown bound is shown as ``-``.
+A format specification applies to the value and the bounds:
+
+```{code-cell} python3
+print(x)
+print(f"{x:.4f}")
+```
+
+Use ``x.value`` or ``float(x)`` to obtain only the value.
 Alternatively, ``result.get_value_vector()`` returns the values of all states at once and ``result.get_solution_bounds()`` returns the bounds for all states.
 Values can be infinite (e.g. for expected rewards), in which case they are given as ``float("inf")``.
 Use ``stormpy.numbers.is_infinity(x)`` to check for infinity.
