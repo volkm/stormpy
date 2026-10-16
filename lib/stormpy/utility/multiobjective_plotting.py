@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import stormpy
 
+__all__ = ["plot_convex_pareto_curve_demo", "prepare_multiobjective_result_for_plotting"]
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 

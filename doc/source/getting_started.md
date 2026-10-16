@@ -78,7 +78,7 @@ Moreover, initial states and deadlocks are indicated with a labelling function. 
 print("Labels: {}".format(model.labeling.get_labels()))
 ```
 
-We will investigate ways to examine the model in more detail later in [Investigating the model](#Investigating-the-model).
+We will investigate ways to examine the model in more detail later in [Investigating the model](#investigating-the-model).
 
 ### Building properties
 
