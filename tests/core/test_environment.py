@@ -36,14 +36,14 @@ class TestEnvironment:
 
     def test_linear_equation_solver(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        properties = stormpy.parse_properties('P=? [F "one"]', program)
-        model = stormpy.build_model(program, properties)
+        prop = stormpy.parse_property('P=? [F "one"]', program)
+        model = stormpy.build_model(program, prop)
         env = stormpy.environments.default(model)
         env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
         env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
         assert env.solver().get_linear_equation_solver_type() == stormpy.environments.EquationSolverType.NATIVE
         assert env.solver().native().method == stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
-        result = stormpy.model_checking(model, properties[0], environment=env)
+        result = stormpy.model_checking(model, prop, environment=env)
         assert math.isclose(result[model.initial_states[0]], 1 / 6, rel_tol=1e-4)
 
     def test_multi_objective_method(self):
