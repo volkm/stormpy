@@ -149,8 +149,39 @@ for state in model.states:
     x = result[state]  # do something with x
 ```
 
-Alternatively, ``result.get_value_vector()`` returns the values of all states at once.
+Each ``result[state]`` is typically a {class}`stormpy.BoundedValue`.
+It contains the computed value (``x.value``).
+It also contains sound lower (``x.lower``) and upper bounds (``x.upper``) on the actual value.
+If the solution method could not establish bounds, the corresponding bound is ``None``.
+A {class}`stormpy.BoundedValue` can be compared to numbers and converted via ``float(x)``.
+``result.get_value(state)`` returns only the value.
+
+Which bounds are available depends on the solution method.
+Sound methods yield tight bounds, exact methods are tailored to exact number representations:
+
+```{code-cell} python3
+env = stormpy.Environment()
+env.solver().force_soundness = True
+sound_result = stormpy.model_checking(model, properties[0], environment=env)
+x = sound_result[model.initial_states[0]]
+print(x.value, x.lower, x.upper)
+```
+
+A different environment can be passed via ``model_checking(..., environment=env)``.
+For example, ``stormpy.Environment()`` uses Storm's default methods without soundness guarantees, which are typically faster.
+
+Printing a {class}`stormpy.BoundedValue` shows the value followed by its bounds, where an unknown bound is shown as ``-``.
+A format specification applies to the value and the bounds:
+
+```{code-cell} python3
+print(x)
+print(f"{x:.4f}")
+```
+
+Use ``x.value`` or ``float(x)`` to obtain only the value.
+Alternatively, ``result.get_value_vector()`` returns the values of all states at once and ``result.get_solution_bounds()`` returns the bounds for all states.
 Values can be infinite (e.g. for expected rewards), in which case they are given as ``float("inf")``.
+Use ``stormpy.numbers.is_infinity(x)`` to check for infinity.
 ``result.get_finite_value_vector()`` returns the values as plain values of the value type instead; it raises an error if a value is infinite and the value type cannot represent infinity (e.g. ``stormpy.Rational``).
 
 #### Results for all states

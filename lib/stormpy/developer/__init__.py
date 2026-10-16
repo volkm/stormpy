@@ -54,6 +54,8 @@ SymbolicQualitativeCheckResult = _TemplateClass(
     deduce=_deduce_default(storage.DdType.Sylvan),
 )
 QuantitativeCheckResult = _TemplateClass("stormpy.developer.QuantitativeCheckResult", _core, parameters=("ValueType",))
+SolutionBounds = _TemplateClass("stormpy.developer.SolutionBounds", _core, parameters=("ValueType",))
+AggregatedValue = _TemplateClass("stormpy.developer.AggregatedValue", _core, parameters=("ValueType",))
 ExplicitQuantitativeCheckResult = _TemplateClass(
     "stormpy.developer.ExplicitQuantitativeCheckResult", _core, parameters=("ValueType",), deduce=_deduce_default(float)
 )
