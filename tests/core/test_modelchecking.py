@@ -627,6 +627,96 @@ class TestSolutionBounds:
         assert str(stormpy.BoundedValue(0.5)) == "0.5"
         assert stormpy.BoundedValue(1, 1, 1).is_exact
 
+    def test_bounded_value_addition(self):
+        value = stormpy.BoundedValue(0.5, 0.25, 0.75)
+        assert value + stormpy.BoundedValue(1.0, 0.5, 1.5) == stormpy.BoundedValue(1.5, 0.75, 2.25)
+        # Plain numbers are exact
+        assert value + 1 == stormpy.BoundedValue(1.5, 1.25, 1.75)
+        assert 1 + value == stormpy.BoundedValue(1.5, 1.25, 1.75)
+        # A bound is only known if it is known for both summands
+        assert value + stormpy.BoundedValue(1.0, None, 1.0) == stormpy.BoundedValue(1.5, None, 1.75)
+        assert sum([value, value, value]) == stormpy.BoundedValue(1.5, 0.75, 2.25)
+        exact = stormpy.BoundedValue(stormpy.Rational("1/3"), stormpy.Rational("1/3"), stormpy.Rational("1/3"))
+        assert (exact + exact).is_exact
+        assert (exact + exact).value == stormpy.Rational("2/3")
+
+    def test_bounded_value_subtraction(self):
+        value = stormpy.BoundedValue(0.5, 0.25, 0.75)
+        assert -value == stormpy.BoundedValue(-0.5, -0.75, -0.25)
+        # The lower bound of a - b uses the upper bound of b and vice versa
+        assert value - stormpy.BoundedValue(1.0, 0.5, 1.5) == stormpy.BoundedValue(-0.5, -1.25, 0.25)
+        assert value - 1 == stormpy.BoundedValue(-0.5, -0.75, -0.25)
+        assert 1 - value == stormpy.BoundedValue(0.5, 0.25, 0.75)
+        assert value - stormpy.BoundedValue(1.0, 0.5, None) == stormpy.BoundedValue(-0.5, None, 0.25)
+        exact = stormpy.BoundedValue(stormpy.Rational("1/3"), stormpy.Rational("1/3"), stormpy.Rational("1/3"))
+        assert (1 - exact).is_exact
+        assert (1 - exact).value == stormpy.Rational("2/3")
+
+    def test_bounded_value_multiplication(self):
+        value = stormpy.BoundedValue(0.5, 0.25, 0.75)
+        assert value * stormpy.BoundedValue(2.0, 1.0, 3.0) == stormpy.BoundedValue(1.0, 0.25, 2.25)
+        # Mixed signs: the bounds are the smallest and largest products of the bounds
+        assert value * stormpy.BoundedValue(-1.0, -2.0, 1.0) == stormpy.BoundedValue(-0.5, -1.5, 0.75)
+        # Constants, a negative one swaps the bounds
+        assert value * 2 == stormpy.BoundedValue(1.0, 0.5, 1.5)
+        assert -2 * value == stormpy.BoundedValue(-1.0, -1.5, -0.5)
+        assert 0 * stormpy.BoundedValue(0.5) == stormpy.BoundedValue(0.0, 0, 0)
+        # One-sided bounds are only multiplied for non-negative factors or constants
+        assert value * stormpy.BoundedValue(2.0, 1.0, None) == stormpy.BoundedValue(1.0, 0.25, None)
+        assert stormpy.BoundedValue(-0.5, -1.0, None) * stormpy.BoundedValue(2.0, 1.0, None) == stormpy.BoundedValue(-1.0)
+        assert 2 * stormpy.BoundedValue(1.0, None, 1.5) == stormpy.BoundedValue(2.0, None, 3.0)
+        exact = stormpy.BoundedValue(stormpy.Rational("1/3"), stormpy.Rational("1/3"), stormpy.Rational("1/3"))
+        assert (exact * exact).is_exact
+        assert (exact * 3).value == 1
+
+    def test_bounded_value_division(self):
+        value = stormpy.BoundedValue(0.5, 0.25, 0.75)
+        # Positive divisor: the bounds of a / b are the extreme quotients of the bounds
+        assert value / stormpy.BoundedValue(2.0, 1.0, 4.0) == stormpy.BoundedValue(0.25, 0.0625, 0.75)
+        # Negative divisor
+        assert value / stormpy.BoundedValue(-2.0, -4.0, -1.0) == stormpy.BoundedValue(-0.25, -0.75, -0.0625)
+        # Constants, a negative one swaps the bounds
+        assert value / 2 == stormpy.BoundedValue(0.25, 0.125, 0.375)
+        assert value / -2 == stormpy.BoundedValue(-0.25, -0.375, -0.125)
+        assert 1 / stormpy.BoundedValue(2.0, 1.0, 4.0) == stormpy.BoundedValue(0.5, 0.25, 1.0)
+        # Divisor bounds including 0: the quotient is unbounded
+        assert value / stormpy.BoundedValue(1.0, -1.0, 2.0) == stormpy.BoundedValue(0.5)
+        assert value / stormpy.BoundedValue(1.0, None, 2.0) == stormpy.BoundedValue(0.5)
+        # Divisor with only a positive lower bound: 1 / b is in (0, 1 / lower]
+        assert value / stormpy.BoundedValue(2.0, 1.0, None) == stormpy.BoundedValue(0.25, 0, 0.75)
+        with pytest.raises(ZeroDivisionError):
+            value / 0
+        third = stormpy.Rational("1/3")
+        exact = stormpy.BoundedValue(third, third, third)
+        assert (exact / 2).is_exact
+        assert (exact / exact).value == 1
+        with pytest.raises(ZeroDivisionError):
+            exact / stormpy.Rational(0)
+
+    def test_bounded_value_arithmetic_with_infinity(self):
+        third = stormpy.Rational("1/3")
+        infinite = stormpy.BoundedValue(math.inf, stormpy.Rational(2), math.inf)
+        exact = stormpy.BoundedValue(third, third, third)
+        # Rational and float('inf') cannot be combined directly
+        assert infinite + exact == stormpy.BoundedValue(math.inf, stormpy.Rational("7/3"), math.inf)
+        assert infinite - exact == stormpy.BoundedValue(math.inf, stormpy.Rational("5/3"), math.inf)
+        assert infinite * exact == stormpy.BoundedValue(math.inf, stormpy.Rational("2/3"), math.inf)
+        assert exact - infinite == stormpy.BoundedValue(-math.inf, -math.inf, stormpy.Rational("-5/3"))
+        # Infinity minus infinity is not a number, the bounds are those of [2, inf] - [2, inf]
+        difference = infinite - infinite
+        assert math.isnan(difference.value)
+        assert difference.lower == -math.inf and difference.upper == math.inf
+        # A bound which is infinity minus infinity is unknown
+        unbounded = stormpy.BoundedValue(math.inf, math.inf, math.inf)
+        assert (unbounded - unbounded).lower is None and (unbounded - unbounded).upper is None
+        # Division by infinity is 0, infinity divided by infinity is not a number
+        assert exact / infinite == stormpy.BoundedValue(0, 0, stormpy.Rational("1/6"))
+        assert infinite / stormpy.Rational(2) == stormpy.BoundedValue(math.inf, 1, math.inf)
+        assert math.isnan((infinite / infinite).value)
+        # 0 * infinity = 0
+        assert infinite * 0 == stormpy.BoundedValue(0, 0, 0)
+        assert stormpy.BoundedValue(1.0, 0.0, math.inf) * stormpy.BoundedValue(1.0, 0.0, 2.0) == stormpy.BoundedValue(1.0, 0, math.inf)
+
     def test_result_values_with_bounds(self):
         model, formula = self._die_dtmc()
         result = stormpy.model_checking(model, formula)

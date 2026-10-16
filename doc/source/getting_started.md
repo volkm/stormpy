@@ -149,7 +149,7 @@ for state in model.states:
     x = result[state]  # do something with x
 ```
 
-Each ``result[state]`` is a {class}`stormpy.BoundedValue`.
+Each ``result[state]`` is typically a {class}`stormpy.BoundedValue`.
 It contains the computed value (``x.value``).
 It also contains sound lower (``x.lower``) and upper bounds (``x.upper``) on the actual value.
 If the solution method could not establish bounds, the corresponding bound is ``None``.
