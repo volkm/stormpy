@@ -1,8 +1,10 @@
 #include "decomposition.h"
 
 #include <storm/adapters/IntervalAdapter.h>
-#include <storm/storage/MaximalEndComponent.h>
-#include <storm/storage/MaximalEndComponentDecomposition.h>
+#include <storm/storage/decomposition/MaximalEndComponent.h>
+#include <storm/storage/decomposition/MaximalEndComponentDecomposition.h>
+
+#include "src/binding_type_index.h"
 
 using MEC = storm::storage::MaximalEndComponent;
 template<typename ValueType>
@@ -18,8 +20,9 @@ void define_maximal_end_components(py::module& m) {
 }
 
 template<typename ValueType>
-void define_maximal_end_component_decomposition(py::module& m, std::string const& vt_suffix) {
-    py::classh<MECDecomposition<ValueType>>(m, ("MaximalEndComponentDecomposition" + vt_suffix).c_str(), "Decomposition of maximal end components")
+void define_maximal_end_component_decomposition(py::module& m) {
+    stormpy::bindings::bindTemplateClass<MECDecomposition<ValueType>>(m, "MaximalEndComponentDecomposition", stormpy::bindings::typeIndex<ValueType>(),
+                                                                      "Decomposition of maximal end components")
         .def(py::init<storm::models::sparse::NondeterministicModel<ValueType> const&>(), py::arg("model"), "Create MECs from model")
         .def_property_readonly("size", &MECDecomposition<ValueType>::size, "Number of MECs in the decomposition")
         .def(
@@ -27,8 +30,8 @@ void define_maximal_end_component_decomposition(py::module& m, std::string const
             py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 }
 
-template void define_maximal_end_component_decomposition<double>(py::module& m, std::string const& vt_suffix);
-template void define_maximal_end_component_decomposition<storm::RationalNumber>(py::module& m, std::string const& vt_suffix);
-template void define_maximal_end_component_decomposition<storm::Interval>(py::module& m, std::string const& vt_suffix);
-template void define_maximal_end_component_decomposition<storm::RationalInterval>(py::module& m, std::string const& vt_suffix);
-template void define_maximal_end_component_decomposition<storm::RationalFunction>(py::module& m, std::string const& vt_suffix);
+template void define_maximal_end_component_decomposition<double>(py::module& m);
+template void define_maximal_end_component_decomposition<storm::RationalNumber>(py::module& m);
+template void define_maximal_end_component_decomposition<storm::Interval>(py::module& m);
+template void define_maximal_end_component_decomposition<storm::RationalInterval>(py::module& m);
+template void define_maximal_end_component_decomposition<storm::RationalFunction>(py::module& m);

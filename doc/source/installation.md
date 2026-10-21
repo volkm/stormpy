@@ -78,6 +78,7 @@ pip install -v .
 ```
 
 
+(optional-build-arguments)=
 #### Optional build arguments
 The build step also takes optional CMake arguments via `--config-settings=cmake.define.<cmake_option>=<value>` (or short `-Ccmake.define.<cmake_option>=<value>`) for a more advanced configuration of stormpy.
 We refer to the section `[tool.scikit-build.cmake.define]` in `pyproject.toml` for a full list of configuration options.

@@ -15,7 +15,7 @@ authors = [
     { name = "S. Junges", email = "sebastian.junges@ru.nl" },
     { name = "M. Volk", email = "m.volk@tue.nl" }
 ]
-requires-python = ">=3.10"  # Python version should be synced with find_package(Python ...) in CMakeLists.txt
+requires-python = ">=3.11"  # Python version should be synced with find_package(Python ...) in CMakeLists.txt
 dependencies = [
     "Deprecated",
 ]
@@ -53,6 +53,7 @@ doc = [
     "jupytext",
     "myst-nb",
     "ipykernel",
+    "numpy",
 ]
 test = [
     "pytest",
@@ -67,15 +68,15 @@ cmake.args = [
 ]
 wheel.packages = ["lib/stormpy"]
 sdist.include = [
-    "lib/stormpy/_config.py",
     "lib/stormpy/info/_config.py",
     "lib/stormpy/dft/_config.py",
     "lib/stormpy/gspn/_config.py",
     "lib/stormpy/pars/_config.py",
     "lib/stormpy/pomdp/_config.py",
-    "lib/stormpy/pycarl/_config.py",
-    "lib/stormpy/pycarl/cln/_config.py",
-    "lib/stormpy/pycarl/cln/formula/_config.py",
+    "lib/stormpy/numbers/_config.py",
+    "lib/stormpy/numbers/developer/_config.py",
+    "lib/stormpy/numbers/developer/cln/_config.py",
+    "lib/stormpy/numbers/developer/cln/formula/_config.py",
 ]
 
 [tool.scikit-build.cmake.define]

@@ -9,6 +9,8 @@
 #include <storm/storage/SparseMatrix.h>
 #include <storm/storage/sparse/ModelComponents.h>
 
+#include "src/binding_type_index.h"
+
 using StateLabeling = storm::models::sparse::StateLabeling;
 using BitVector = storm::storage::BitVector;
 template<typename ValueType>
@@ -20,8 +22,9 @@ template<typename ValueType>
 using SparseModelComponents = storm::storage::sparse::ModelComponents<ValueType>;
 
 template<typename ValueType>
-void define_sparse_model_components(py::module& m, std::string const& vtSuffix) {
-    py::classh<SparseModelComponents<ValueType>>(m, ("Sparse" + vtSuffix + "ModelComponents").c_str(), "Components required for building a sparse model")
+void define_sparse_model_components(py::module& m) {
+    stormpy::bindings::bindTemplateClass<SparseModelComponents<ValueType>>(m, "SparseModelComponents", stormpy::bindings::typeIndex<ValueType>(),
+                                                                           "Components required for building a sparse model")
 
         .def(py::init<SparseMatrix<ValueType> const&, StateLabeling const&, std::unordered_map<std::string, SparseRewardModel<ValueType>> const&, bool,
                       boost::optional<BitVector> const&, boost::optional<SparseMatrix<storm::storage::sparse::state_type>> const&>(),
@@ -58,8 +61,8 @@ void define_sparse_model_components(py::module& m, std::string const& vtSuffix) 
         .def_readwrite("state_player_indications", &SparseModelComponents<ValueType>::statePlayerIndications, "The vector mapping states to player indices");
 }
 
-template void define_sparse_model_components<double>(py::module& m, std::string const& vtSuffix);
-template void define_sparse_model_components<storm::RationalNumber>(py::module& m, std::string const& vtSuffix);
-template void define_sparse_model_components<storm::Interval>(py::module& m, std::string const& vtSuffix);
-template void define_sparse_model_components<storm::RationalInterval>(py::module& m, std::string const& vtSuffix);
-template void define_sparse_model_components<storm::RationalFunction>(py::module& m, std::string const& vtSuffix);
+template void define_sparse_model_components<double>(py::module& m);
+template void define_sparse_model_components<storm::RationalNumber>(py::module& m);
+template void define_sparse_model_components<storm::Interval>(py::module& m);
+template void define_sparse_model_components<storm::RationalInterval>(py::module& m);
+template void define_sparse_model_components<storm::RationalFunction>(py::module& m);

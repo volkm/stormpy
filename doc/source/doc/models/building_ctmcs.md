@@ -47,7 +47,7 @@ transitions = np.array(
 The following function call returns a sparse matrix with default row groups:
 
 ```{code-cell} python3
-transition_matrix = stormpy.build_sparse_matrix(transitions)
+transition_matrix = stormpy.datastructures.build_sparse_matrix(transitions)
 print(transition_matrix)
 ```
 
@@ -56,7 +56,7 @@ print(transition_matrix)
 The state labeling is created analogously to the previous example in [building DTMCs](building_dtmcs.md#labeling):
 
 ```{code-cell} python3
-state_labeling = stormpy.storage.StateLabeling(4)
+state_labeling = stormpy.models.StateLabeling(4)
 state_labels = {"empty", "init", "deadlock", "full"}
 for label in state_labels:
     state_labeling.add_label(label)
@@ -71,12 +71,12 @@ Now, we can collect all components, including the choice labeling.
 To let the transition values be interpreted as rates we set rate_transitions to True:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=True)
+components = stormpy.models.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, rate_transitions=True)
 ```
 
 And finally, we can build the model:
 
 ```{code-cell} python3
-ctmc = stormpy.storage.SparseCtmc(components)
+ctmc = stormpy.models.SparseCtmc(components)
 print(ctmc)
 ```

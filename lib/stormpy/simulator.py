@@ -1,17 +1,30 @@
+"""Simulators for stepping through sparse models and Prism programs.
+
+Use :func:`create_simulator` to obtain a simulator for a given model.
+"""
+
 from enum import Enum
 
-import stormpy._core
-import stormpy.storage._storage
+from stormpy import developer
+from stormpy.developer import storage
 
 
 class SimulatorObservationMode(Enum):
+    """How states (or observations) are reported by the simulator."""
+
     STATE_LEVEL = (0,)
+    """States are reported by their index in the model."""
     PROGRAM_LEVEL = 1
+    """States are reported by their variable valuation (as JSON)."""
 
 
 class SimulatorActionMode(Enum):
+    """How actions are referred to in the simulator."""
+
     INDEX_LEVEL = (0,)
+    """Actions are referred to by their index in the current state."""
     GLOBAL_NAMES = 1
+    """Actions are referred to by their (choice) label."""
 
 
 class Simulator:
@@ -100,19 +113,19 @@ class Simulator:
 class SparseSimulator(Simulator):
     """
     Simulator on top of sparse models.
+
+    :param model: Sparse model (DTMC, MDP or POMDP).
+    :param seed: (optional) Seed of the random generator.
     """
 
     def __init__(self, model, seed=None):
         super().__init__(seed)
         self._model = model
-        if self._model.is_exact:
-            self._engine = stormpy._core._DiscreteTimeSparseModelSimulatorExact(model)
-        else:
-            self._engine = stormpy._core._DiscreteTimeSparseModelSimulatorDouble(model)
+        self._engine = developer.DiscreteTimeSparseModelSimulator(model)
         if seed is not None:
             self._engine.set_seed(seed)
         self._state_valuations = None
-        self.set_full_observability(self._model.model_type != stormpy.storage.ModelType.POMDP)
+        self.set_full_observability(self._model.model_type != storage.ModelType.POMDP)
 
     def set_seed(self, value):
         self._engine.set_seed(value)
@@ -146,7 +159,7 @@ class SparseSimulator(Simulator):
         if self._observation_mode == SimulatorObservationMode.STATE_LEVEL:
             return self._engine.get_current_state()
         elif self._observation_mode == SimulatorObservationMode.PROGRAM_LEVEL:
-            return self._state_valuations.get_json(self._engine.get_current_state())
+            return self._state_valuations.to_json(self._engine.get_current_state())
         assert False, "The observation mode is unexpected"
 
     def _report_observation(self):
@@ -154,7 +167,7 @@ class SparseSimulator(Simulator):
         :return:
         """
         # TODO this should be ensured earlier
-        assert self._model.model_type == stormpy.storage.ModelType.POMDP
+        assert self._model.model_type == storage.ModelType.POMDP
         if self._observation_mode == SimulatorObservationMode.STATE_LEVEL:
             return self._model.get_observation(self._engine.get_current_state())
         elif self._observation_mode == SimulatorObservationMode.PROGRAM_LEVEL:
@@ -168,7 +181,7 @@ class SparseSimulator(Simulator):
             return self._report_observation(), self._report_rewards(), self._report_labels()
 
     def _report_rewards(self):
-        return self._engine.get_last_reward()
+        return self._engine.get_last_rewards()
 
     def _report_labels(self):
         return self._model.labeling.get_labels_of_state(self._engine.get_current_state())
@@ -206,8 +219,8 @@ class SparseSimulator(Simulator):
 
     def restart(self, state=None):
         if state is not None:
-            raise RuntimeError("Not implemented")
-        self._engine.reset_to_initial_state()
+            raise NotImplementedError("Restarting in a given state is not supported for sparse simulators.")
+        self._engine.reset_to_initial()
         return self._report_result()
 
     def is_done(self):
@@ -226,18 +239,22 @@ class SparseSimulator(Simulator):
 
 class PrismSimulator(Simulator):
     """
-    Simulator on top of prism programs.
-    Uses the simulator based on the nextstate generator.
+    Simulator on top of Prism programs.
+    Uses the simulator based on the next-state generator and explores the state space on-the-fly.
+
+    :param program: Prism program.
+    :param seed: (optional) Seed of the random generator.
+    :param options: (optional) Builder options.
     """
 
-    def __init__(self, program, seed=None, options=stormpy.BuilderOptions()):
+    def __init__(self, program, seed=None, options=None):
         super().__init__(seed)
         self._program = program
         # TODO support exact arithmetic here
-        self._engine = stormpy._core._DiscreteTimePrismProgramSimulatorDouble(program, options)
+        self._engine = developer.DiscreteTimePrismProgramSimulator[float](program, options if options is not None else developer.BuilderOptions())
         if seed is not None:
             self._engine.set_seed(seed)
-        self.set_full_observability(self._program.model_type != stormpy.storage.PrismModelType.POMDP)
+        self.set_full_observability(self._program.model_type != storage.PrismModelType.POMDP)
 
     def set_seed(self, value):
         self._engine.set_seed(value)
@@ -247,18 +264,18 @@ class PrismSimulator(Simulator):
             return range(self.nr_available_actions())
         else:
             assert self._action_mode == SimulatorActionMode.GLOBAL_NAMES, "Unknown type of simulator action mode"
-            return [self._program.get_action_name(i) for i in self._engine.get_action_indices()]
+            return [self._program.get_action_name(choice.get_action_index()) for choice in self._engine.get_choices()]
 
     def nr_available_actions(self):
-        return self._engine.get_number_of_current_choices()
+        return len(self._engine.get_choices())
 
     def _report_state(self):
         assert self._observation_mode == SimulatorObservationMode.PROGRAM_LEVEL
-        return self._engine.get_current_state_as_json()
+        return self._engine.get_state_as_json()
 
     def _report_observation(self):
         assert self._observation_mode == SimulatorObservationMode.PROGRAM_LEVEL
-        return self._engine.get_current_observation_as_json()
+        return self._engine.get_observation_as_json()
 
     def _report_result(self):
         if self._full_observe:
@@ -267,13 +284,13 @@ class PrismSimulator(Simulator):
             return self._report_observation(), self._report_rewards(), self._report_labels()
 
     def _report_rewards(self):
-        return self._engine.get_last_reward()
+        return self._engine.get_last_rewards()
 
     def _get_current_state(self):
         return self._engine.get_current_state()
 
     def _report_labels(self):
-        return self._engine.get_current_labels()
+        return self._engine.get_current_state_labelling()
 
     def random_step(self):
         raise NotImplementedError("Random steps are not implemented in this simulator")
@@ -309,18 +326,15 @@ class PrismSimulator(Simulator):
 
     def restart(self, state=None):
         if state is None:
-            self._engine.reset_to_initial_state()
+            self._engine.reset_to_initial()
+        elif isinstance(state, (storage.BitVector, storage.SimpleValuation)):
+            self._engine.reset_to_state(state)
         else:
-            if isinstance(state, stormpy.BitVector):
-                self._engine._reset_to_state_from_compressed_state(state)
-            elif isinstance(state, stormpy.SimpleValuation):
-                self._engine._reset_to_state_from_valuation(state)
-            else:
-                raise ValueError(f"States of type {type(state)} are not supported yet.")
+            raise ValueError(f"States of type {type(state)} are not supported yet.")
         return self._report_result()
 
     def is_done(self):
-        return self._engine.get_current_state_is_sink()
+        return self._engine.is_sink_state()
 
     def set_observation_mode(self, mode):
         super().set_observation_mode(mode)
@@ -339,17 +353,16 @@ def create_simulator(
     """
     Factory method for creating a simulator.
 
-    :param model: Some form of model
+    :param model: Sparse model or Prism program.
     :param seed: A seed for reproducibility. If None (default), the seed is internally generated.
-    :param options: BuilderOptions that can be passed to the simulator (currently only for symbolic simulators)
-    :return: A simulator that can simulate on top of this model
+    :param options: BuilderOptions that can be passed to the simulator (only for Prism programs).
+    :return: A simulator that can simulate on top of this model.
     """
-    if isinstance(model, stormpy.storage._storage._ModelBase):
+    if isinstance(model, storage.ModelBase):
         if model.is_sparse_model:
             return SparseSimulator(model, seed)
-    elif isinstance(model, stormpy.storage.PrismProgram):
-        if options is None:
-            options = stormpy.BuilderOptions()
+        raise NotImplementedError("Currently, we only support simulators for sparse models.")
+    elif isinstance(model, storage.PrismProgram):
         result = PrismSimulator(model, seed, options)
         result.set_observation_mode(SimulatorObservationMode.PROGRAM_LEVEL)
         return result

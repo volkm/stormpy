@@ -1,0 +1,63 @@
+import pytest
+import stormpy
+from stormpy.exceptions import StormError
+
+from helpers.helper import get_example_path
+
+
+class TestAnalysis:
+    def test_topological_sort(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        model = stormpy.build_model(program)
+        order = stormpy.analysis.topological_sort(model)
+        assert sorted(order) == list(range(model.nr_states))
+        backward = stormpy.analysis.topological_sort(model, forward=False, initial=[7])
+        assert len(backward) > 0
+
+
+class TestProb01:
+    def test_prob01_dtmc(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        prop = stormpy.parse_property('P=? [F "six"]', program)
+        model = stormpy.build_model(program, prop)
+        prob0, prob1 = stormpy.analysis.compute_prob01_states(model, prop)
+        assert prob0.get_number_of_set_bits() == 9
+        assert prob1.get_number_of_set_bits() == 1
+        # Same as the developer function with all states as phi states
+        psi_states = stormpy.model_checking(model, prop.get_raw_formula().subformula.subformula).get_truth_values_vector()
+        assert (prob0, prob1) == tuple(stormpy.developer.perform_prob01(model, stormpy.datastructures.BitVector(model.nr_states, True), psi_states))
+        # Path formula without probability operator
+        formula = prop.get_raw_formula().subformula
+        assert stormpy.analysis.compute_prob01_states(model, formula) == (prob0, prob1)
+
+    def test_prob01_until(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        prop = stormpy.parse_property('P=? [s<7 U "six"]', program)
+        model = stormpy.build_model(program, prop)
+        phi_states = stormpy.model_checking(model, prop.get_raw_formula().subformula.left_subformula).get_truth_values_vector()
+        psi_states = stormpy.model_checking(model, prop.get_raw_formula().subformula.right_subformula).get_truth_values_vector()
+        expected = tuple(stormpy.developer.perform_prob01(model, phi_states, psi_states))
+        assert stormpy.analysis.compute_prob01_states(model, prop) == expected
+
+    def test_prob01_mdp(self):
+        program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
+        properties = stormpy.parse_properties('Pmin=? [ F "finished" & "all_coins_equal_1"];Pmax=? [ F "finished" & "all_coins_equal_1"]', program)
+        model = stormpy.build_model(program, properties)
+        prob0_min, prob1_min = stormpy.analysis.compute_prob01_states(model, properties[0])
+        assert prob0_min.get_number_of_set_bits() == 94
+        assert prob1_min.get_number_of_set_bits() == 15
+        prob0_max, prob1_max = stormpy.analysis.compute_prob01_states(model, properties[1])
+        assert prob0_max.get_number_of_set_bits() == 83
+        assert prob1_max.get_number_of_set_bits() == 18
+
+    def test_prob01_errors(self):
+        program = stormpy.parse_prism_program(get_example_path("mdp", "coin2-2.nm"))
+        properties = stormpy.parse_properties('P=? [ F "finished"];Pmax=? [ F<=5 "finished"]', program)
+        model = stormpy.build_model(program, properties)
+        with pytest.raises(StormError, match="optimization direction"):
+            stormpy.analysis.compute_prob01_states(model, properties[0])
+        # Path formulas have no optimization direction
+        with pytest.raises(StormError, match="optimization direction"):
+            stormpy.analysis.compute_prob01_states(model, properties[0].get_raw_formula().subformula)
+        with pytest.raises(StormError, match="unbounded"):
+            stormpy.analysis.compute_prob01_states(model, properties[1])

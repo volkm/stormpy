@@ -26,19 +26,19 @@ numpy_avail = pytest.mark.skipif(not has_package("numpy"), reason="Numpy not ava
 plotting = pytest.mark.skipif(not has_package("matplotlib") or not has_package("scipy"), reason="Libraries for plotting not available")
 pycarl_parser = pytest.mark.skipif(not has_pycarl_parser, reason="No support for parsing")
 
-from stormpy import pycarl
+from stormpy.numbers import developer as pycarl
 
 # Skip not supported functionality
 pycarl_cln = pytest.mark.skipif(not pycarl.has_cln(), reason="No support for CLN")
 
 # Parametrize available number types
-from stormpy.pycarl import gmp
+from stormpy.numbers.developer import gmp
 
 parameters = [pycarl.gmp]
 names = ["gmp"]
 
 if pycarl.has_cln():
-    from stormpy.pycarl import cln
+    from stormpy.numbers.developer import cln
 
     parameters.append(pycarl.cln)
     names.append("cln")

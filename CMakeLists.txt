@@ -23,7 +23,7 @@ option(STORMPY_USE_STORM_DFT "Enable support for DFTs" ON)
 option(STORMPY_USE_STORM_GSPN "Enable support for GSPNs" ON)
 option(STORMPY_USE_STORM_PARS "Enable support for parametric models" ON)
 option(STORMPY_USE_STORM_POMDP "Enable support for POMDPs" ON)
-option(STORMPY_USE_CLN_NUMBERS "Make cln numbers available in pycarl" ON)
+option(STORMPY_USE_CLN_NUMBERS "Make cln numbers available" ON)
 option(STORMPY_DISABLE_SIGNATURE_DOC "Disable the signature in the documentation" OFF)
 MARK_AS_ADVANCED(STORMPY_DISABLE_SIGNATURE_DOC)
 option(STORMPY_COMPILE_WITH_CCACHE "Compile using CCache (if found)" ON)
@@ -42,7 +42,7 @@ endif()
 # Find python first, as recommended here:
 # https://pybind11.readthedocs.io/en/latest/compiling.html#findpython-mode
 # Python version should be synced with pyproject.toml
-find_package(Python 3.10 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python 3.11 COMPONENTS Interpreter Development.Module REQUIRED)
 # Pybind11 version should be synced with pyproject.toml
 find_package(pybind11 3.1.0 EXACT CONFIG REQUIRED)
 message(STATUS "Stormpy - Using pybind11 version ${pybind11_VERSION}")
@@ -174,7 +174,13 @@ if(APPLE)
 else()
     set(RELPOS_STRING "$ORIGIN")
 endif()
-SET(CMAKE_INSTALL_RPATH "${RELPOS_STRING}/../../../lib/storm;${RELPOS_STRING}/../../../lib/storm/resources;${RELPOS_STRING}/../../lib/storm;${RELPOS_STRING}/../../lib/storm/resources;${RELPOS_STRING}/../lib/storm;${RELPOS_STRING}/../lib/storm/resources;${RELPOS_STRING}/lib/storm;${RELPOS_STRING}/lib/storm/resources;${RELPOS_STRING};${RELPOS_STRING}/resources;${RELPOS_STRING}/../lib;${RELPOS_STRING}/lib")
+set(CMAKE_INSTALL_RPATH
+    "${RELPOS_STRING}/lib"          # Root extensions
+    "${RELPOS_STRING}/../lib"       # Depth-one extensions, e.g. stormpy/developer/_core.so
+    "${RELPOS_STRING}/../../lib"    # Depth-two extensions, e.g. stormpy/numbers/developer/_pycarl_core.so
+    "${RELPOS_STRING}/../../../lib" # Depth-three extensions, e.g. stormpy/numbers/developer/cln/_cln.so
+    "${RELPOS_STRING}/../../../../lib" # Depth-four extensions, e.g. stormpy/numbers/developer/cln/formula/_formula.so
+)
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -233,12 +239,12 @@ if (STORM_USE_CLN_RF)
 else()
     set(PYCARL_RF_PACKAGE "gmp")
 endif()
-set(PYCARL_IMPORTS "from stormpy import pycarl")
+set(PYCARL_IMPORTS "from stormpy.numbers import developer as pycarl")
 if (STORM_USE_CLN_EA OR STORM_USE_CLN_RF)
-    set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nfrom stormpy.pycarl import cln")
+    set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nfrom stormpy.numbers.developer import cln")
 endif()
 if (NOT STORM_USE_CLN_EA OR NOT STORM_USE_CLN_RF)
-    set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nfrom stormpy.pycarl import gmp")
+    set(PYCARL_IMPORTS "${PYCARL_IMPORTS}\nfrom stormpy.numbers.developer import gmp")
 endif()
 # Check support for CLN
 if(STORM_USE_CLN_EA OR STORM_USE_CLN_RF)
@@ -286,11 +292,11 @@ function(stormpy_module MOD_NAME OUT_DIR ADDITIONAL_INCLUDES ADDITIONAL_LIBS)
                          "${ADDITIONAL_LIBS}")
 endfunction(stormpy_module)
 # Helper function to build an optional stormpy module (if supported and required)
-function(stormpy_optional_module MOD_NAME DESCRIPTION)
+function(stormpy_optional_module MOD_NAME OUT_DIR DESCRIPTION)
     string(TOUPPER "${MOD_NAME}" LIB_NAME)
     if(STORMPY_HAVE_STORM_${LIB_NAME} AND STORMPY_USE_STORM_${LIB_NAME})
         build_stormpy_module("stormpy_${MOD_NAME}"
-                             "${MOD_NAME}" "${MOD_NAME}"
+                             "${OUT_DIR}" "${MOD_NAME}"
                              "mod_${MOD_NAME}.cpp" "${MOD_NAME}/*.cpp"
                              "${storm-${MOD_NAME}_INCLUDE_DIR}"
                              "storm-${MOD_NAME}")
@@ -310,7 +316,7 @@ function(build_pycarl_module MOD_NAME OUT_DIR OUT_NAME MOD_FILE SOURCE_PATH ADDI
 endfunction(build_pycarl_module)
 function(pycarl_module MOD_NAME ADDITIONAL_INCLUDES ADDITIONAL_LIBS)
     build_pycarl_module("pycarl_${MOD_NAME}"
-                        "pycarl/${MOD_NAME}" "${MOD_NAME}"
+                        "numbers/developer/${MOD_NAME}" "${MOD_NAME}"
                         "pycarl/mod_${MOD_NAME}.cpp" "pycarl/${MOD_NAME}/*.cpp"
                         "${ADDITIONAL_INCLUDES}"
                         "${ADDITIONAL_LIBS}")
@@ -318,7 +324,7 @@ endfunction(pycarl_module)
 # Helper function to build an optional pycarl module
 function(pycarl_typed_module MOD_NAME TYPE ADDITIONAL_INCLUDES ADDITIONAL_LIBS)
     build_pycarl_module("pycarl_${MOD_NAME}_${TYPE}"
-                        "pycarl/${TYPE}/${MOD_NAME}" "${MOD_NAME}"
+                        "numbers/developer/${TYPE}/${MOD_NAME}" "${MOD_NAME}"
                         "pycarl/mod_typed_${MOD_NAME}.cpp" "pycarl/typed_${MOD_NAME}/*.cpp"
                         "${ADDITIONAL_INCLUDES}"
                         "${ADDITIONAL_LIBS}")
@@ -333,37 +339,38 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/pycarl/definitions.h.in ${CMAKE_C
 # Build stormpy
 ######
 # Build stormpy modules
-stormpy_module(core "." "${storm-counterexamples_INCLUDE_DIR}" storm-counterexamples)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/core_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_config.py @ONLY)
-stormpy_module(info info "${storm-version-info_INCLUDE_DIR}" storm-version-info)
+stormpy_module(numbers numbers/developer "" "")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/numbers_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/numbers/_config.py @ONLY)
+stormpy_module(core "developer" "${storm-counterexamples_INCLUDE_DIR}" storm-counterexamples)
+stormpy_module(info "developer/info" "${storm-version-info_INCLUDE_DIR}" storm-version-info)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/info_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/info/_config.py @ONLY)
-stormpy_module(logic logic "" "")
-stormpy_module(storage storage "" "")
-stormpy_module(utility utility "" "")
+stormpy_module(logic "developer/logic" "" "")
+stormpy_module(storage "developer/storage" "" "")
+stormpy_module(utility "developer/utility" "" "")
 
 # Build optional stormpy modules
-stormpy_optional_module(dft "DFT")
-stormpy_optional_module(gspn "GSPN")
-stormpy_optional_module(pars "parametric models")
-stormpy_optional_module(pomdp "POMDP")
+stormpy_optional_module(dft "dft/developer" "DFT" )
+stormpy_optional_module(gspn "gspn/developer" "GSPN")
+stormpy_optional_module(pars "pars/developer" "parametric models")
+stormpy_optional_module(pomdp "pomdp/developer" "POMDP")
 
 # Build pycarl modules
 ######
 # Pycarl core
 build_pycarl_module(pycarl_core
-                    "pycarl" "pycarl_core"
+                    "numbers/developer" "pycarl_core"
                     "pycarl/mod_core.cpp" "pycarl/core/*.cpp"
                     ""
                     "")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/pycarl_core_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pycarl/_config.py @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/pycarl_core_config.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/numbers/developer/_config.py @ONLY)
 build_pycarl_module(pycarl_gmp
-                    "pycarl/gmp" "gmp"
+                    "numbers/developer/gmp" "gmp"
                     "pycarl/mod_gmp.cpp" "pycarl/typed_core/*.cpp"
                     ""
                     "")
 if (PYCARL_HAS_CLN)
     build_pycarl_module(pycarl_cln
-                        "pycarl/cln" "cln"
+                        "numbers/developer/cln" "cln"
                         "pycarl/mod_cln.cpp" "pycarl/typed_core/*.cpp"
                         ""
                         "")

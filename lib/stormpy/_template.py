@@ -1,0 +1,435 @@
+"""Runtime representation and metadata for native C++ template families.
+
+C++ template specializations still need to be compiled and bound separately.
+``_TemplateClass`` groups those concrete Python classes behind one public,
+subscriptable object and exposes their structure to documentation and stub
+generation tools.
+"""
+
+from __future__ import annotations
+
+import functools
+import inspect
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from dataclasses import dataclass
+from types import MappingProxyType, SimpleNamespace
+from typing import Any, Literal, TypeAlias
+
+_TemplateParameterKind: TypeAlias = Literal["type", "value"]
+
+
+@dataclass(frozen=True)
+class _TemplateParameter:
+    """Description of one public template parameter.
+
+    ``type`` parameters select a Python or native type. ``value`` parameters
+    select a runtime value, such as a ``ModelType`` enum member.
+    """
+
+    name: str
+    kind: _TemplateParameterKind = "type"
+
+
+@dataclass(frozen=True)
+class _TemplateInstantiation:
+    """Description of one concrete native template specialization."""
+
+    arguments: tuple[object, ...]
+    implementation: type
+    native_name: str
+
+
+@dataclass(frozen=True)
+class DeductionSource:
+    """Constructor argument used by a built-in deduction guide."""
+
+    position: int
+    keywords: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _TemplateMetadata:
+    """Tooling-oriented description of a complete template family."""
+
+    name: str
+    canonical_name: str
+    parameters: tuple[_TemplateParameter, ...]
+    instantiations: tuple[_TemplateInstantiation, ...]
+    deduction_guide: str | None
+    deduction_source: DeductionSource | None = None
+
+
+_DeductionGuide: TypeAlias = Callable[["_TemplateClass", tuple[Any, ...], Mapping[str, Any]], object]
+
+
+def _deduce_default(*parameters: object) -> _DeductionGuide:
+    """Create a guide that always selects the given template parameters."""
+
+    def deduction(_family: _TemplateClass, _args: tuple[Any, ...], _kwargs: Mapping[str, Any]) -> object:
+        return parameters
+
+    deduction.__name__ = "deduce_default"
+    deduction.__qualname__ = "deduce_default"
+    return deduction
+
+
+def _deduce_from_object(
+    get_type: Callable[[Any], object], *, keyword: str | tuple[str, ...] = (), position: int = 0, default: tuple[object, ...] | None = None
+) -> _DeductionGuide:
+    """Create a guide that deduces template parameters from a constructor argument.
+
+    The guide selects the positional argument at the zero-based ``position``,
+    or the first supplied name in ``keyword`` if that argument is absent.
+    ``keyword`` accepts a single name or a tuple of names in precedence order.
+    It calls ``get_type`` with the selected argument. ``get_type`` must return
+    a template parameter or the complete parameter tuple.
+
+    If no matching argument is supplied, the guide returns ``default`` when
+    configured; otherwise it raises ``TypeError``.
+    """
+    keywords = (keyword,) if isinstance(keyword, str) else keyword
+
+    def deduction(_family: _TemplateClass, args: tuple[Any, ...], kwargs: Mapping[str, Any]) -> object:
+        if len(args) > position:
+            return get_type(args[position])
+        for name in keywords:
+            if name in kwargs:
+                return get_type(kwargs[name])
+        if default is not None:
+            return default
+        raise TypeError(f"Cannot deduce template parameters: missing argument at position {position} or keywords {keywords!r}")
+
+    deduction.__name__ = "deduce_from_object"
+    deduction.__qualname__ = "deduce_from_object"
+    deduction.__stormpy_deduction_source__ = DeductionSource(position, keywords)
+    return deduction
+
+
+def _deduce_from_first_argument(source: "_TemplateClass | None" = None, *, keyword: str | None = None) -> _DeductionGuide:
+    """Create a guide that copies template arguments from an instance.
+
+    The first positional constructor argument is used when present. ``keyword``
+    optionally identifies the same argument for keyword-only calls. If
+    ``source`` is omitted, the instance is matched against the family being
+    constructed; otherwise it is matched against ``source``.
+    """
+
+    def deduction(family: _TemplateClass, args: tuple[Any, ...], kwargs: Mapping[str, Any]) -> object:
+        if args:
+            instance = args[0]
+        elif keyword is not None and keyword in kwargs:
+            instance = kwargs[keyword]
+        else:
+            argument = f"{keyword!r}" if keyword is not None else " first positional"
+            raise TypeError(f"Cannot deduce template parameters without the {argument} argument")
+        return (source if source is not None else family).parameters_of(instance)
+
+    deduction.__name__ = "deduce_from_first_argument"
+    deduction.__qualname__ = "deduce_from_first_argument"
+    deduction.__stormpy_deduction_source__ = DeductionSource(0, (keyword,) if keyword is not None else ())
+    return deduction
+
+
+def _format_parameter(parameter: object) -> str:
+    """Format a template parameter for messages.
+
+    Types exported by :mod:`stormpy` are shown with their public name (e.g. ``RationalInterval``),
+    builtin types with their name and other types with their qualified name. Values are shown via ``repr``.
+    """
+    if not isinstance(parameter, type):
+        return repr(parameter)
+    if parameter.__module__ == "builtins":
+        return parameter.__name__
+    import stormpy
+
+    for name in getattr(stormpy, "__all__", ()):
+        if getattr(stormpy, name, None) is parameter:
+            return name
+    return f"{parameter.__module__}.{parameter.__qualname__}"
+
+
+def _format_parameters(parameters: tuple[object, ...]) -> str:
+    """Format a template-parameter tuple for messages, e.g. ``float`` or ``(ModelType.DTMC, float)``."""
+    formatted = [_format_parameter(parameter) for parameter in parameters]
+    return formatted[0] if len(formatted) == 1 else f"({', '.join(formatted)})"
+
+
+class _TemplateClass:
+    """Native C++ template family exposed as a subscriptable Python object.
+
+    ``family[parameters]`` returns a registered concrete Python class.
+    ``family(*args, **kwargs)`` constructs a class selected by a configured
+    deduction guide.
+    """
+
+    def __init__(
+        self,
+        canonical_name: str,
+        module: object,
+        *,
+        parameters: Sequence[str | _TemplateParameter],
+        deduce: _DeductionGuide | None = None,
+    ) -> None:
+        """Load a native template family.
+
+        :param canonical_name: Fully qualified public family name used for
+            native registration lookup, tooling, and representations. Its last
+            component is the native template-family name.
+        :param module: Native module containing the registered specializations.
+        :param parameters: Ordered descriptions or names of the public
+            template parameters. A bare name describes a type parameter.
+        :param deduce: Optional constructor deduction guide. It receives this
+            family, the positional constructor arguments, and a read-only
+            mapping of keyword arguments, and returns the complete template
+            parameter tuple. Deduction guides may inspect any constructor
+            argument and may provide defaults or transform parameters.
+        :raises RuntimeError: If the module has no registrations for ``name``,
+            has an empty registration table, or mixes parameter arities.
+        :raises ValueError: If parameter metadata or the canonical name is
+            invalid.
+        """
+        canonical_module, separator, name = canonical_name.rpartition(".")
+        if not separator or not canonical_module or not name.isidentifier():
+            raise ValueError("Canonical template name must be fully qualified")
+
+        try:
+            implementations = module._template_instantiations[name]
+        except (AttributeError, KeyError):
+            raise RuntimeError(f"Native module has no registrations for {name}") from None
+        if not implementations:
+            raise RuntimeError(f"Native module has no registrations for {name}")
+
+        arities = {len(arguments) for arguments in implementations}
+        if len(arities) != 1:
+            raise RuntimeError(f"Native module has inconsistent registrations for {name}")
+
+        parameter_metadata = tuple(parameter if isinstance(parameter, _TemplateParameter) else _TemplateParameter(parameter) for parameter in parameters)
+        arity = arities.pop()
+        if len(parameter_metadata) != arity:
+            raise ValueError(f"{name} has {arity} native template parameters, but {len(parameter_metadata)} parameter names were provided")
+        if any(not parameter.name or not parameter.name.isidentifier() for parameter in parameter_metadata):
+            raise ValueError(f"Invalid template parameter name for {name}")
+        if any(parameter.kind not in ("type", "value") for parameter in parameter_metadata):
+            raise ValueError(f"Invalid template parameter kind for {name}")
+        if len({parameter.name for parameter in parameter_metadata}) != arity:
+            raise ValueError(f"Template parameter names for {name} must be unique")
+
+        self.__name__ = name
+        self.__qualname__ = name
+        self.__module__ = canonical_module
+        self._canonical_name = canonical_name
+        self._parameters = parameter_metadata
+        self._arity = arity
+        self._deduction_guide = deduce
+        self._instantiations: dict[tuple[object, ...], type] = {}
+        self._parameters_by_type: dict[type, tuple[object, ...]] = {}
+        for arguments, implementation in implementations.items():
+            self.register(arguments, implementation)
+
+    def _normalize(self, parameters: object) -> tuple[object, ...]:
+        """Convert subscription parameters to a validated tuple."""
+        key = parameters if isinstance(parameters, tuple) else (parameters,)
+        if len(key) != self._arity:
+            raise TypeError(f"{self.__name__} expects {self._arity} template parameter{'s' if self._arity != 1 else ''}, got {len(key)}")
+        return key
+
+    def register(self, parameters: object, implementation: type) -> None:
+        """Add a concrete specialization to this family.
+
+        :param parameters: One parameter or a tuple containing the complete
+            template-parameter list.
+        :param implementation: Concrete Python class for those parameters.
+        :raises TypeError: If the parameter count is wrong or ``implementation``
+            is not a class.
+        :raises ValueError: If the parameter tuple or implementation class is
+            already registered.
+        """
+        key = self._normalize(parameters)
+        self._check_implementation(implementation)
+        if key in self._instantiations:
+            raise ValueError(f"{self.__name__} instantiation for {key!r} is already registered")
+        if implementation in self._parameters_by_type:
+            other_key = self._parameters_by_type[implementation]
+            raise ValueError(f"{self.__name__} implementation {implementation!r} is already registered for {other_key!r}")
+        self._instantiations[key] = implementation
+        self._parameters_by_type[implementation] = key
+
+    def _check_implementation(self, implementation: object) -> None:
+        """Check that ``implementation`` can be registered in this family.
+
+        :raises TypeError: If ``implementation`` is not a class.
+        """
+        if not isinstance(implementation, type):
+            raise TypeError("A template implementation must be a class")
+
+    def __getitem__(self, parameters: object) -> type:
+        """Return the concrete class registered for ``parameters``.
+
+        A single parameter may be written directly as ``family[T]``; multiple
+        parameters use normal subscription tuple syntax, ``family[T, U]``.
+
+        :raises TypeError: If the parameter count is wrong or no matching
+            specialization is registered. The message lists the registered
+            specializations.
+        """
+        key = self._normalize(parameters)
+        try:
+            return self._instantiations[key]
+        except KeyError:
+            supported = ", ".join(_format_parameters(registered) for registered in self._instantiations)
+            raise TypeError(f"{self.__name__} has no instantiation for {key!r}. Supported are: {supported}") from None
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Construct the specialization selected by the deduction guide.
+
+        :raises TypeError: If no deduction guide is configured or the deduced
+            specialization is unavailable.
+        """
+        if self._deduction_guide is None:
+            raise TypeError(f"{self.__name__} requires explicit template parameters")
+        parameters = self._deduction_guide(self, args, MappingProxyType(kwargs))
+        return self[parameters](*args, **kwargs)
+
+    def parameters_of(self, instance: object) -> tuple[object, ...]:
+        """Return the complete parameter tuple of a registered instance.
+
+        The runtime type must be an exact registered implementation; instances
+        of unregistered subclasses are not recognized.
+
+        :raises TypeError: If the instance's runtime type is not registered.
+        """
+        try:
+            return self._parameters_by_type[type(instance)]
+        except KeyError:
+            raise TypeError(f"Cannot infer {self.__name__} template parameters from {type(instance)!r}") from None
+
+    @property
+    def canonical_name(self) -> str:
+        """Fully qualified public name of this template family."""
+        return self._canonical_name
+
+    @property
+    def metadata(self) -> _TemplateMetadata:
+        """Return an immutable, current description for documentation tools."""
+        instantiations = tuple(
+            _TemplateInstantiation(parameters, implementation, f"{implementation.__module__}.{implementation.__name__}")
+            for parameters, implementation in self._instantiations.items()
+        )
+        guide = None
+        if self._deduction_guide is not None:
+            guide = getattr(self._deduction_guide, "__qualname__", type(self._deduction_guide).__qualname__)
+        source = getattr(self._deduction_guide, "__stormpy_deduction_source__", None)
+        return _TemplateMetadata(self.__name__, self._canonical_name, self._parameters, instantiations, guide, source)
+
+    @property
+    def instantiations(self) -> Mapping[tuple[object, ...], type]:
+        """Map registered parameter tuples to classes without allowing mutation."""
+        return MappingProxyType(self._instantiations)
+
+    def is_instantiation(self, instance: object) -> bool:
+        """Return whether ``instance`` has a registered concrete runtime type."""
+        return type(instance) in self._parameters_by_type
+
+    def __iter__(self) -> Iterator[tuple[object, ...]]:
+        """Iterate over registered parameter tuples in registration order."""
+        return iter(self._instantiations)
+
+    def publish_as(self, canonical_name: str) -> "_TemplateClass":
+        """Return a new _TemplateClass for the same registrations, under a different canonical name.
+
+        Can be used in a  public module to re-expose a template family declared against an internal/developer module under its own public name,
+        so ``canonical_name``, ``repr()``, and ``metadata`` reflect the public path instead of the internal one.
+        ``metadata.instantiations[...].native_name``, registrations and deduction guides remain as-is.
+
+        :param canonical_name: Fully qualified public family name for the republished class.
+        :raises ValueError: If the canonical name is invalid.
+        """
+        canonical_module, separator, name = canonical_name.rpartition(".")
+        if not separator or not canonical_module or not name.isidentifier():
+            raise ValueError("Canonical template name must be fully qualified")
+
+        published = type(self).__new__(type(self))
+        published.__name__ = name
+        published.__qualname__ = name
+        published.__module__ = canonical_module
+        published._canonical_name = canonical_name
+        published._parameters = self._parameters
+        published._arity = self._arity
+        published._deduction_guide = self._deduction_guide
+        published._instantiations = dict(self._instantiations)
+        published._parameters_by_type = dict(self._parameters_by_type)
+        if hasattr(self, "__signature__"):
+            published.__signature__ = self.__signature__
+        return published
+
+    def __repr__(self) -> str:
+        """Return a concise template-family representation."""
+        return f"<template class {self._canonical_name}>"
+
+
+class _TemplateFunction(_TemplateClass):
+    """Native C++ template function family exposed as a subscriptable Python object.
+
+    Used for functions whose template parameters cannot be deduced from their arguments,
+    e.g. because the value type only occurs in the return type.
+    ``family[parameters](*args, **kwargs)`` calls the registered instantiation.
+    ``family(*args, **kwargs)`` calls the instantiation selected by a configured deduction guide.
+
+    Note that deducing the template has a performance impact. If performance is critical,
+    directly access the instantiated function instead.
+    """
+
+    def _check_implementation(self, implementation: object) -> None:
+        """Check that ``implementation`` can be registered in this family.
+
+        :raises TypeError: If ``implementation`` is not callable.
+        """
+        if not callable(implementation):
+            raise TypeError("A template function implementation must be callable")
+
+    def __repr__(self) -> str:
+        """Return a concise template-family representation."""
+        return f"<template function {self._canonical_name}>"
+
+
+def _template_function(
+    canonical_name: str,
+    *,
+    parameters: Sequence[str | _TemplateParameter],
+    instantiations: Iterable[object],
+    deduce: _DeductionGuide | None = None,
+) -> Callable[[Callable[..., Any]], _TemplateFunction]:
+    """Turn a generic Python function into a template function family.
+
+    The decorated function receives the template parameters as its leading positional arguments.
+    For each entry of ``instantiations``, an instantiation is created with these parameters bound.
+
+    :param canonical_name: Fully qualified public family name.
+    :param parameters: Ordered descriptions or names of the template parameters.
+    :param instantiations: Template parameters (or parameter tuples) for which instantiations are created.
+    :param deduce: Optional deduction guide used when the family is called without subscript.
+    :return: Decorator creating the template function family.
+    """
+
+    def decorator(generic: Callable[..., Any]) -> _TemplateFunction:
+        arity = len(parameters)
+        signature = inspect.signature(generic)
+        instantiation_signature = signature.replace(parameters=list(signature.parameters.values())[arity:])
+        implementations = {}
+        for arguments in instantiations:
+            key = arguments if isinstance(arguments, tuple) else (arguments,)
+
+            def implementation(*args: Any, _key: tuple[object, ...] = key, **kwargs: Any) -> Any:
+                return generic(*_key, *args, **kwargs)
+
+            functools.update_wrapper(implementation, generic)
+            implementation.__signature__ = instantiation_signature
+            implementations[key] = implementation
+
+        name = canonical_name.rpartition(".")[2]
+        module = SimpleNamespace(_template_instantiations={name: implementations})
+        family = _TemplateFunction(canonical_name, module, parameters=parameters, deduce=deduce)
+        family.__signature__ = instantiation_signature
+        return family
+
+    return decorator

@@ -11,7 +11,7 @@
 #include "src/pycarl/types.h"
 
 PYBIND11_MODULE(_cln, m) {
-    m.attr("__name__") = "stormpy.pycarl.cln";
+    m.attr("__name__") = "stormpy.numbers.developer.cln";
 
     m.doc() = "pycarl core cln-typed data and functions";
 

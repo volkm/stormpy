@@ -5,8 +5,22 @@
 
 # Needed for version information
 import pathlib
+import sys
+from functools import partial
+from importlib import import_module
 
 import stormpy
+
+# Load optional public owners before selecting the remaining developer bindings.
+for module in ("stormpy.dft", "stormpy.gspn", "stormpy.pars", "stormpy.pomdp"):
+    try:
+        import_module(module)
+    except ImportError as error:
+        print(f"Could not import optional module {module}: {error}", file=sys.stderr)
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent / "_ext"))
+from stormpy_autosummary import _filter_api_members, canonical_api_alias
+from stormpy_templates import template_families, template_functions, template_info, template_function_info
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -22,7 +36,10 @@ language = "en"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "stormpy_templates",
+    "stormpy_developer",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.autosectionlabel",
     #'sphinx.ext.intersphinx',
     "sphinx.ext.githubpages",
@@ -33,6 +50,29 @@ autosectionlabel_prefix_document = True
 
 # Autodoc options
 autoclass_content = "both"  # Add documentation for both the class and __init__
+
+# Autosummary options
+# Also list members that are re-exported (e.g. classes defined in the
+# compiled _logic module and imported into stormpy.logic)
+autosummary_imported_members = True
+
+# Variables (and callables) available in autosummary templates
+# Sphinx excludes bare functions from cached config. Partials preserve their
+# callable behavior and can be pickled through the imported functions.
+autosummary_context = {
+    name: partial(function)
+    for name, function in {
+        "filter_api_members": _filter_api_members,
+        "canonical_api_alias": canonical_api_alias,
+        "template_families": template_families,
+        "template_functions": template_functions,
+        "template_info": template_info,
+        "template_function_info": template_function_info,
+    }.items()
+}
+
+# Wrap long signatures instead of scrolling them
+python_maximum_signature_line_length = 100
 
 templates_path = ["_templates"]
 exclude_patterns = []
@@ -90,6 +130,16 @@ html_theme_options = {
             "match": "api/*",
         },
         {
+            "text": "Extensions API",
+            "link": "extensions_api",
+            "match": "extensions_api/*",
+        },
+        {
+            "text": "Developer API",
+            "link": "developer_api",
+            "match": "developer_api/*",
+        },
+        {
             "text": "Storm",
             "link": "https://www.stormchecker.org/",
         },
@@ -122,8 +172,17 @@ html_favicon = "_static/favicon.png"
 # Execute notebooks with missing cached outputs; reuse cached results when sources are unchanged
 myst_nb_execution_mode = "cache"
 
+# Allow header anchors for deeper level
+myst_heading_anchors = 3
+
 
 # Documentation pages that are paired jupytext notebooks (used for binder badges)
 _source_dir = pathlib.Path(__file__).parent
 notebook_docs = sorted(str(p.relative_to(_source_dir).with_suffix("")) for p in _source_dir.rglob("*.md") if "jupytext:" in p.read_text(errors="ignore")[:500])
 html_context = {"notebook_docs": notebook_docs}
+
+
+# -- Myst options --
+myst_enable_extensions = [
+    "colon_fence",
+]

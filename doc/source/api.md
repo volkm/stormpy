@@ -1,25 +1,28 @@
-# Stormpy API Reference
+# API Documentation
 
-Work in progress!
+The core API provides model checking, models, data structures, and utilities.
+See the [Extensions API](extensions_api.md) for DFTs, GSPNs, parametric models,
+and POMDPs, and the [Developer API](developer_api.md) for internal bindings.
 
-```{toctree}
-:maxdepth: 2
-:caption: Stormpy modules:
+```{eval-rst}
+.. autosummary::
+   :toctree: api/generated
+   :template: autosummary/module.rst
+   :caption: Core modules:
 
-api/core
-api/info
-api/exceptions
-api/logic
-api/storage
-api/utility
-
-api/dft
-api/gspn
-api/pars
-api/pomdp
-
-api/pycarl/core
-api/pycarl/convert
-api/pycarl/formula
-api/pycarl/parse
+   stormpy
+   stormpy.analysis
+   stormpy.datastructures
+   stormpy.environments
+   stormpy.exceptions
+   stormpy.expressions
+   stormpy.info
+   stormpy.io
+   stormpy.logic
+   stormpy.models
+   stormpy.numbers
+   stormpy.plotting
+   stormpy.results
+   stormpy.simulator
+   stormpy.transformations
 ```

@@ -29,7 +29,7 @@ def example_simulator_01():
     options = stormpy.BuilderOptions([])
     options.set_build_state_valuations()
     options.set_build_all_reward_models()
-    model = stormpy.build_sparse_model_with_options(prism_program, options)
+    model = stormpy.build_model(prism_program, options=options)
     simulator = stormpy.simulator.create_simulator(model, seed=42)
     simulator.set_observation_mode(stormpy.simulator.SimulatorObservationMode.PROGRAM_LEVEL)
     final_outcomes = dict()

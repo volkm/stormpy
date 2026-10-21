@@ -1,0 +1,269 @@
+name: 'Build and test stormpy'
+description: 'Build, check and test stormpy inside the calling job'
+inputs:
+  nr_jobs:
+    description: "Number of parallel build jobs"
+    type: string
+    default: "4"
+  name:
+    description: "Display name for the test configuration"
+    type: string
+    required: true
+  config:
+    description: >
+      JSON-encoded config object (e.g. from ci-configs.json, resolved by the calling job)
+      providing: buildType, stormSource, storm_tag, carl_tag, extras, disable_all, setupArgs, testPaths,
+      allowIncompatible, checkDocs, cache, expectHave, expectNotHave.
+    type: string
+    required: true
+  restore_cache:
+    description: "Restore ccache from cache"
+    type: boolean
+    default: false
+  save_cache:
+    description: "Save ccache to cache"
+    type: boolean
+    default: false
+  restore_3rdparty_cache:
+    description: "Restore cached 3rdparty source downloads of Storm"
+    type: boolean
+    default: false
+  save_3rdparty_cache:
+    description: "Save 3rdparty source downloads of Storm to cache"
+    type: boolean
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Parse config
+      env:
+        CONFIG: ${{ inputs.config }}
+      run: |
+        echo "BUILD_TYPE=$(echo "$CONFIG" | jq -r '.buildType')" >> "$GITHUB_ENV"
+        echo "STORM_SOURCE=$(echo "$CONFIG" | jq -r '.stormSource')" >> "$GITHUB_ENV"
+        echo "STORM_TAG=$(echo "$CONFIG" | jq -r '.storm_tag')" >> "$GITHUB_ENV"
+        echo "CARL_TAG=$(echo "$CONFIG" | jq -r '.carl_tag')" >> "$GITHUB_ENV"
+        echo "EXTRAS=$(echo "$CONFIG" | jq -r '.extras')" >> "$GITHUB_ENV"
+        echo "DISABLE_ALL=$(echo "$CONFIG" | jq -r '.disable_all')" >> "$GITHUB_ENV"
+        echo "SETUP_ARGS=$(echo "$CONFIG" | jq -r '.setupArgs')" >> "$GITHUB_ENV"
+        echo "TEST_PATHS=$(echo "$CONFIG" | jq -r '.testPaths')" >> "$GITHUB_ENV"
+        echo "ALLOW_INCOMPATIBLE=$(echo "$CONFIG" | jq -r '.allowIncompatible')" >> "$GITHUB_ENV"
+        echo "CHECK_DOCS=$(echo "$CONFIG" | jq -r '.checkDocs')" >> "$GITHUB_ENV"
+        echo "CACHE=$(echo "$CONFIG" | jq -r '.cache')" >> "$GITHUB_ENV"
+        # Name usable in cache keys (which must not contain commas)
+        echo "CACHE_NAME=$(echo "$CONFIG" | jq -r '.name | gsub("[^A-Za-z0-9._-]+"; "_")')" >> "$GITHUB_ENV"
+        echo "EXPECT_HAVE=$(echo "$CONFIG" | jq -r '(.expectHave // []) | join(" ")')" >> "$GITHUB_ENV"
+        echo "EXPECT_NOT_HAVE=$(echo "$CONFIG" | jq -r '(.expectNotHave // []) | join(" ")')" >> "$GITHUB_ENV"
+      shell: bash
+
+    # Set up Python
+    # Python (incl. headers and venv), jq and ccache must be provided by the calling workflow
+    - name: Set up virtual environment
+      run: |
+        python3 -m venv "${RUNNER_TEMP}/venv"
+        echo "VIRTUAL_ENV=${RUNNER_TEMP}/venv" >> "$GITHUB_ENV"
+        echo "${RUNNER_TEMP}/venv/bin" >> "$GITHUB_PATH"
+      shell: bash
+
+    - name: Checkout Storm
+      #  Storm sources are only needed for stormSource "build"
+      if: env.STORM_SOURCE == 'build'
+      uses: actions/checkout@v7
+      with:
+        repository: stormchecker/storm
+        ref: ${{ env.STORM_TAG }}
+        path: storm
+    - name: Checkout Storm 3rdparty configuration
+      # stormpy fetches Storm itself, only the versions of the 3rdparty dependencies are needed
+      if: env.STORM_SOURCE == 'fetch'
+      uses: actions/checkout@v7
+      with:
+        repository: stormchecker/storm
+        ref: ${{ env.STORM_TAG }}
+        path: storm
+        sparse-checkout: resources/3rdparty/CMakeLists.txt
+        sparse-checkout-cone-mode: false
+
+    # Cache Storm
+    - name: Set CCACHE_DIR
+      if: inputs.restore_cache == 'true'
+      run: |
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          echo "CCACHE_DIR=/Users/runner/.ccache" >> "$GITHUB_ENV"
+        else
+          echo "CCACHE_DIR=${GITHUB_WORKSPACE}/.ci-ccache" >> "$GITHUB_ENV"
+        fi
+      shell: bash
+    - name: Ensure ccache directory exists
+      if: inputs.restore_cache == 'true'
+      run: mkdir -p "${CCACHE_DIR}"
+      shell: bash
+    - name: Restore ccache
+      id: ccache-restore
+      if: inputs.restore_cache == 'true'
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        # Caching key depends on configuration and build type.
+        key: buildtest-ccache-${{ env.CACHE_NAME }}-${{ env.BUILD_TYPE }}-${{ github.sha }}
+        restore-keys: |
+          buildtest-ccache-${{ env.CACHE_NAME }}-${{ env.BUILD_TYPE }}-
+          buildtest-ccache-${{ env.CACHE_NAME }}-
+    - name: Prepare ccache
+      if: inputs.restore_cache == 'true'
+      # Limit cache size to fit within 10GB limit of GitHub
+      # Four configs are cached (2x Debug, 2x Release) which use ~8GB in total.
+      # This leaves space for the 3rdparty source caches and for saving a new entry before older ones are evicted.
+      run: |
+        if [ "${BUILD_TYPE}" = "Debug" ]; then
+          ccache --max-size=2500M
+        else
+          ccache --max-size=1500M
+        fi
+        ccache --zero-stats
+        ccache --show-stats --verbose
+      shell: bash
+    # Caching source code for 3rdparty dependencies of Storm.
+    - name: Restore 3rdparty source cache
+      id: cache-3rdparty-restore
+      if: env.STORM_SOURCE != 'system'
+      uses: ./.github/actions/cache-3rdparty-action
+      with:
+        restore: ${{ inputs.restore_3rdparty_cache }}
+        stormDir: storm
+
+    # Build and install Storm (only for stormSource "build")
+    - name: Configure Storm
+      if: env.STORM_SOURCE == 'build'
+      working-directory: ./storm
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+                 -DSTORM_BUILD_TESTS=OFF \
+                 -DSTORM_BUILD_EXECUTABLES=OFF \
+                 -DSTORM_CARL_GIT_TAG="${CARL_TAG}" \
+                 ${{ env.CACHE == 'true' && '-DSTORM_COMPILE_WITH_PCH=OFF' || '' }} \
+                 ${{ steps.cache-3rdparty-restore.outputs.cmake-args }}
+      shell: bash
+    - name: Save 3rdparty source cache
+      if: env.STORM_SOURCE == 'build'
+      uses: ./.github/actions/cache-3rdparty-action
+      with:
+        save: ${{ inputs.save_3rdparty_cache }}
+        stormDir: storm
+        depsDir: storm/build
+    - name: Build and install Storm
+      if: env.STORM_SOURCE == 'build'
+      working-directory: ./storm/build
+      run: |
+        make -j ${{ inputs.nr_jobs }}
+        ${{ runner.os == 'macOS' && 'sudo make install' || 'make install' }}
+        cd ..
+        rm -rf build
+      shell: bash
+
+    # Build stormpy
+    - name: Build stormpy
+      id: build
+      env:
+        THIRDPARTY_CMAKE_ARGS: ${{ steps.cache-3rdparty-restore.outputs.cmake-args }}
+      run: |
+        ARGS=(--config-settings=cmake.build-type="${BUILD_TYPE}"
+              --config-settings=cmake.define.CMAKE_BUILD_PARALLEL_LEVEL=${{ inputs.nr_jobs }})
+        if [ "${STORM_SOURCE}" = "fetch" ]; then
+          ARGS+=(--config-settings=cmake.define.STORMPY_ALLOW_STORM_SYSTEM=OFF
+                 --config-settings=cmake.define.STORM_GIT_TAG="${STORM_TAG}"
+                 --config-settings=cmake.define.STORM_CARL_GIT_TAG="${CARL_TAG}"
+                 # Fixed build directory to find the fetched 3rdparty sources afterwards
+                 --config-settings=build-dir=build/ci)
+          # Use cached 3rdparty sources for Storm
+          for arg in ${THIRDPARTY_CMAKE_ARGS}; do
+            ARGS+=(--config-settings=cmake.define.${arg#-D})
+          done
+          if [ "${CACHE}" = "true" ]; then
+            ARGS+=(--config-settings=cmake.define.STORM_COMPILE_WITH_PCH=OFF)
+          fi
+        else
+          ARGS+=(--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF)
+        fi
+        if [ "${DISABLE_ALL}" = "true" ]; then
+          for lib in DFT GSPN PARS POMDP; do
+            ARGS+=(--config-settings=cmake.define.STORMPY_USE_STORM_${lib}=OFF)
+          done
+        fi
+        read -ra EXTRA_ARGS <<< "${SETUP_ARGS}"
+        ARGS+=("${EXTRA_ARGS[@]}")
+        # Documentation checks need the dependencies for the documentation
+        if [ "${CHECK_DOCS}" = "true" ]; then
+          EXTRAS="${EXTRAS%]},doc]"
+        fi
+
+        status=0
+        pip install -v "${ARGS[@]}" ".${EXTRAS}" 2>&1 | tee "${RUNNER_TEMP}/build-stormpy.log" || status=$?
+        if [ "${status}" -ne 0 ] && [ "${ALLOW_INCOMPATIBLE}" = "true" ]; then
+          # Only compiler errors or an unsupported Storm version indicate an incompatibility with Storm.
+          # Other failures (e.g. dependencies, configuration, packaging) are still handled as failures.
+          if grep -qE ':[0-9]+:[0-9]+: (fatal )?error:|Storm version .* is not supported anymore' "${RUNNER_TEMP}/build-stormpy.log"; then
+            # Warn about possible incompatibility but do not handle as failure
+            echo "::warning file=CMakeLists.txt::Stormpy might be incompatible with Storm used in configuration '${{ inputs.name }}'"
+            echo "run_tests=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::error::Building stormpy failed for a reason other than an incompatibility with Storm"
+        fi
+        echo "run_tests=true" >> "$GITHUB_OUTPUT"
+        exit ${status}
+      shell: bash
+    - name: Save 3rdparty source cache
+      if: env.STORM_SOURCE == 'fetch'
+      uses: ./.github/actions/cache-3rdparty-action
+      with:
+        save: ${{ inputs.save_3rdparty_cache }}
+        stormDir: storm
+        depsDir: build/ci
+    - name: Print ccache stats
+      if: inputs.restore_cache == 'true'
+      run: ccache --show-stats --verbose
+      shell: bash
+    - name: Save ccache
+      if: inputs.save_cache == 'true' && always() && steps.ccache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: buildtest-ccache-${{ env.CACHE_NAME }}-${{ env.BUILD_TYPE }}-${{ github.sha }}
+
+    # Perform checks
+    - name: Check expected configuration
+      if: steps.build.outputs.run_tests == 'true'
+      run: |
+        python - <<'EOF'
+        import os
+        import sys
+        from stormpy.info import _config
+
+        failed = False
+        for flag in os.environ["EXPECT_HAVE"].split():
+            if not getattr(_config, flag):
+                print(f"::error::Expected {flag} to be set, but it is not.")
+                failed = True
+        for flag in os.environ["EXPECT_NOT_HAVE"].split():
+            if getattr(_config, flag):
+                print(f"::error::Expected {flag} to be unset, but it is set.")
+                failed = True
+        expect_system = os.environ["STORM_SOURCE"] != "fetch"
+        if _config.STORM_FROM_SYSTEM != expect_system:
+            print(f"::error::Expected STORM_FROM_SYSTEM to be {expect_system}, but it is {_config.STORM_FROM_SYSTEM}.")
+            failed = True
+        sys.exit(1 if failed else 0)
+        EOF
+      shell: bash
+    - name: Run tests
+      if: steps.build.outputs.run_tests == 'true'
+      run: pytest ${TEST_PATHS}
+      shell: bash
+    - name: Check documentation notebooks
+      if: steps.build.outputs.run_tests == 'true' && env.CHECK_DOCS == 'true'
+      run: make check-doc
+      shell: bash

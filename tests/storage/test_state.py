@@ -6,7 +6,7 @@ from helpers.helper import get_example_path
 
 class TestState:
     def test_states_dtmc(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         i = 0
         states = model.states
         assert len(states) == 13
@@ -21,11 +21,10 @@ class TestState:
 
     def test_state_valuations(self):
         program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
-        options = stormpy.BuilderOptions()
-        options.set_build_state_valuations()
-        model = stormpy.build_sparse_model_with_options(program, options)
+        options = stormpy.BuilderOptions(build_full=True)
+        model = stormpy.build_model(program, options=options)
         assert model.has_state_valuations()
-        for var in program.get_variables():
+        for var in program.get_all_expression_variables():
             if var.name == "s":
                 var_s = var
             elif var.name == "d":
@@ -42,7 +41,7 @@ class TestState:
         assert vals_d == comp_d
 
     def test_states_mdp(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         i = 0
         assert len(model.states) == 169
         for state in model.states:
@@ -56,7 +55,7 @@ class TestState:
         assert state.id == 1
 
     def test_labels_dtmc(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         labelsOrig = [
             ["init"],
             [],
@@ -80,14 +79,14 @@ class TestState:
             i += 1
 
     def test_actions_dtmc(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         for state in model.states:
             assert len(state.actions) == 1
             for action in state.actions:
                 assert action.id == 0
 
     def test_actions_mdp(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         for state in model.states:
             assert len(state.actions) == 1 or len(state.actions) == 2
             for action in state.actions:
@@ -116,7 +115,7 @@ class TestState:
             (11, 11, 1),
             (12, 12, 1),
         ]
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         i = 0
         for state in model.states:
             for action in state.actions:
@@ -126,17 +125,17 @@ class TestState:
                     i += 1
                     assert state.id == transition_orig[0]
                     assert transition.column == transition_orig[1]
-                    assert transition.value() == transition_orig[2]
+                    assert transition.value == transition_orig[2]
 
     def test_transitions_mdp(self):
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("mdp", "two_dice.tra"), get_example_path("mdp", "two_dice.lab"))
         assert model.states[1].id == 1
         for state in model.states:
             i = 0
             for action in state.actions:
                 i += 1
                 for transition in action.transitions:
-                    assert transition.value() == 0.5 or transition.value() == 1
+                    assert transition.value == 0.5 or transition.value == 1
             assert i == 1 or i == 2
 
     def test_row_iterator(self):
@@ -162,7 +161,7 @@ class TestState:
             (11, 11, 1),
             (12, 12, 1),
         ]
-        model = stormpy.build_sparse_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
+        model = stormpy.build_model_from_explicit(get_example_path("dtmc", "die.tra"), get_example_path("dtmc", "die.lab"))
         i = 0
         for state in model.states:
             for transition in model.transition_matrix.row_iter(state.id, state.id):
@@ -170,13 +169,13 @@ class TestState:
                 i += 1
                 assert state.id == transition_orig[0]
                 assert transition.column == transition_orig[1]
-                assert transition.value() == transition_orig[2]
+                assert transition.value == transition_orig[2]
 
     def test_parametric_transitions(self):
         program = stormpy.parse_prism_program(get_example_path("pmdp", "two_dice.nm"))
-        model = stormpy.build_parametric_model(program)
+        model = stormpy.build_model[stormpy.RationalFunction](program)
         assert model.states[1].id == 1
-        one = stormpy.FactorizedPolynomial(stormpy.RationalRF(1))
+        one = stormpy.numbers.Polynomial(stormpy.numbers.RationalFunctionCoefficient(1))
         i = 0
         for state in model.states:
             assert state.id == i
@@ -186,12 +185,12 @@ class TestState:
                 assert j == 0 or j == 1
                 j += 1
                 for transition in action.transitions:
-                    assert transition.value().denominator == one
+                    assert transition.value.denominator == one
 
     def test_states_mdp_maze(self):
         program = stormpy.parse_prism_program(get_example_path("mdp", "maze_2.nm"))
-        properties = stormpy.parse_properties_for_prism_program('R=? [F "goal"]', program, None)
-        model = stormpy.build_model(program, properties)
+        prop = stormpy.parse_property('R=? [F "goal"]', program)
+        model = stormpy.build_model(program, prop)
         assert model.nr_states == 15
         assert model.nr_transitions == 66
         assert len(model.initial_states) == 1
@@ -222,9 +221,9 @@ class TestState:
                 if state.id == 0:
                     assert len(action.transitions) == 13
                     for transition in action.transitions:
-                        assert math.isclose(transition.value(), 1 / 13)
+                        assert math.isclose(transition.value, 1 / 13)
                 else:
                     assert len(action.transitions) == 1
                     for transition in action.transitions:
-                        assert transition.value() == 1
+                        assert transition.value == 1
                         assert transition.column == expected[state.id][action.id]

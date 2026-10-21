@@ -3,6 +3,8 @@
 #include <storm-dft/environment/AllDftEnvironments.h>
 #include <storm-dft/environment/DftEnvironment.h>
 
+namespace stormpy::dft {
+
 void define_dft_environment(py::module& m) {
     py::classh<storm::dft::DftEnvironment>(m, "DftEnvironment", "Environment for DFT")
         .def(py::init<>(), "Construct default DFT environment")
@@ -79,3 +81,5 @@ void define_dft_environment(py::module& m) {
         .def_property("label_behavior", &storm::dft::TransformationEnvironment::getLabelBehavior, &storm::dft::TransformationEnvironment::setLabelBehavior,
                       "Behavior for labels when eliminating non-Markovian chains");
 }
+
+}  // namespace stormpy::dft

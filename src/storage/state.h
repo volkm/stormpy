@@ -148,4 +148,4 @@ class SparseModelActions {
 };
 
 template<typename ValueType>
-void define_state(py::module& m, std::string const& vtSuffix);
+void define_state(py::module& m);

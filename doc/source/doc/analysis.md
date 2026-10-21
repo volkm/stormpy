@@ -27,7 +27,7 @@ import stormpy.examples.files
 path = stormpy.examples.files.prism_dtmc_die
 prism_program = stormpy.parse_prism_program(path)
 formula_str = "P=? [F s=7 & d=2]"
-properties = stormpy.parse_properties(formula_str, prism_program)
+prop = stormpy.parse_property(formula_str, prism_program)
 ```
 
 ## Qualitative Analysis
@@ -39,19 +39,18 @@ properties = stormpy.parse_properties(formula_str, prism_program)
 Instead of using the sparse representation, models can also be built symbolically:
 
 ```{code-cell} python3
-model = stormpy.build_symbolic_model(prism_program, properties)
-result = stormpy.model_checking(model, properties[0])
+model = stormpy.build_symbolic_model(prism_program, prop)
+result = stormpy.model_checking(model, prop)
 ```
 
 To access the result, the result has to be filtered:
 
 ```{code-cell} python3
-filter = stormpy.create_filter_initial_states_symbolic(model)
-result.filter(filter)
-assert result.min == result.max
+stormpy.filter_initial_states(result, model)
+assert result.get_min() == result.get_max()
 ```
 
-Then, result.min (or result.max) contains the result. Notice that if there are multiple initial states, result.min will not be equal to result.max.
+Then, result.get_min() (or result.get_max()) contains the result. Notice that if there are multiple initial states, result.get_min() will not be equal to result.get_max().
 
 Besides this analysis on the DD, there are approaches that combine both representation.
 Stormpy does support them, but we have not yet documented them.
@@ -63,27 +62,33 @@ Stormpy does support them, but we have not yet documented them.
 Reconsider the model checking example from the getting started guide:
 
 ```{code-cell} python3
-model = stormpy.build_model(prism_program, properties)
-result = stormpy.model_checking(model, properties[0])
+model = stormpy.build_model(prism_program, prop)
+result = stormpy.model_checking(model, prop)
 ```
 
-We can also vary the model checking algorithm:
+By default, model checking uses the environment given by ``stormpy.environments.default(model)``.
+It enforces sound computations, yielding guaranteed bounds on the results.
+In case of exact and parametric models, it enforces exact computations.
+The environments ``stormpy.environments.sound()`` and ``stormpy.environments.exact()`` can also be created explicitly and adapted further.
+
+We can also vary the model checking algorithm. Here, we start from the default environment and select a sound method:
 
 ```{code-cell} python3
-env = stormpy.Environment()
-env.solver_environment.set_linear_equation_solver_type(stormpy.EquationSolverType.native)
-env.solver_environment.native_solver_environment.method = stormpy.NativeLinearEquationSolverMethod.power_iteration
-result = stormpy.model_checking(model, properties[0], environment=env)
+env = stormpy.environments.default(model)
+env.solver().set_linear_equation_solver_type(stormpy.environments.EquationSolverType.NATIVE)
+env.solver().native().method = stormpy.environments.NativeLinearEquationSolverMethod.OPTIMISTIC_VALUE_ITERATION
+result = stormpy.model_checking(model, prop, environment=env)
 ```
 
 Finally, we allow to change some parameters of the algorithms. E.g., in iterative approaches,
 we allow to change the number of iterations:
 
 ```{code-cell} python3
-env.solver_environment.native_solver_environment.maximum_iterations = 3
-result = stormpy.model_checking(model, properties[0])
+env.solver().native().maximal_number_of_iterations = 3
+result = stormpy.model_checking(model, prop, environment=env)
 ```
 
 Notice that by setting such parameters, the result may be off from the actual model checking algorithm.
+Sound methods still report guaranteed bounds on the actual result, but these can be one-sided or loose.
 
 Environments can be used likewise for symbolic model checking. See the example for more information.

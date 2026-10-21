@@ -32,25 +32,22 @@ import stormpy.examples.files
 path = stormpy.examples.files.prism_mdp_coin_2_2
 formula_str = 'Pmin=? [F "finished" & "all_coins_equal_1"]'
 program = stormpy.parse_prism_program(path)
-formulas = stormpy.parse_properties(formula_str, program)
-options = stormpy.BuilderOptions(True, True)
-options.set_build_state_valuations()
-options.set_build_choice_labels()
-options.set_build_with_choice_origins()
-model = stormpy.build_sparse_model_with_options(program, options)
+formula = stormpy.parse_property(formula_str, program)
+options = stormpy.BuilderOptions(build_full=True)
+model = stormpy.build_model(program, options=options)
 ```
 
 Next we check the model and make sure to extract the scheduler:
 
 ```{code-cell} python3
-result = stormpy.model_checking(model, formulas[0], extract_scheduler=True)
+result = stormpy.model_checking(model, formula, extract_scheduler=True)
 ```
 
 The result then contains the scheduler we want:
 
 ```{code-cell} python3
 assert result.has_scheduler
-scheduler = result.scheduler
+scheduler = result.get_scheduler()
 assert scheduler.memoryless
 assert scheduler.deterministic
 print(scheduler)
@@ -80,23 +77,23 @@ We build the model as before:
 path = stormpy.examples.files.prism_ma_simple
 formula_str = "Tmin=? [ F s=4 ]"
 
-program = stormpy.parse_prism_program(path, False, True)
-formulas = stormpy.parse_properties_for_prism_program(formula_str, program)
-ma = stormpy.build_model(program, formulas)
+program = stormpy.parse_prism_program(path)
+formula = stormpy.parse_property(formula_str, program)
+ma = stormpy.build_model(program, formula)
 ```
 
 Next we transform the continuous-time model into a discrete-time model.
 Note that all timing information is lost at this point:
 
 ```{code-cell} python3
-mdp, mdp_formulas = stormpy.transform_to_discrete_time_model(ma, formulas)
-assert mdp.model_type == stormpy.ModelType.MDP
+mdp, mdp_formulas = stormpy.transformations.transform_to_discrete_time_model(ma, formula)
+assert mdp.model_type == stormpy.models.ModelType.MDP
 ```
 
 After the transformation we have obtained an MDP where we can extract the scheduler as shown before:
 
 ```{code-cell} python3
 result = stormpy.model_checking(mdp, mdp_formulas[0], extract_scheduler=True)
-scheduler = result.scheduler
+scheduler = result.get_scheduler()
 print(scheduler)
 ```

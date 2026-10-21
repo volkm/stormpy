@@ -1,3 +1,4 @@
+import pytest
 import stormpy
 import stormpy.simulator
 from helpers.helper import get_example_path
@@ -48,9 +49,8 @@ class TestSparseModelSimulator:
     def test_simulate_die_steps_vals(self):
         path = stormpy.examples.files.prism_dtmc_die
         prism_program = stormpy.parse_prism_program(path)
-        options = stormpy.BuilderOptions()
-        options.set_build_state_valuations()
-        model = stormpy.build_sparse_model_with_options(prism_program, options)
+        options = stormpy.BuilderOptions(build_full=True)
+        model = stormpy.build_model(prism_program, options=options)
         simulator = stormpy.simulator.create_simulator(model, seed=42)
         simulator.set_observation_mode(stormpy.simulator.SimulatorObservationMode.PROGRAM_LEVEL)
 
@@ -63,9 +63,8 @@ class TestSparseModelSimulator:
     def test_simulate_die_vals(self):
         path = stormpy.examples.files.prism_dtmc_die
         prism_program = stormpy.parse_prism_program(path)
-        options = stormpy.BuilderOptions()
-        options.set_build_state_valuations()
-        model = stormpy.build_sparse_model_with_options(prism_program, options)
+        options = stormpy.BuilderOptions(build_full=True)
+        model = stormpy.build_model(prism_program, options=options)
         simulator = stormpy.simulator.create_simulator(model, seed=42)
         simulator.set_observation_mode(stormpy.simulator.SimulatorObservationMode.PROGRAM_LEVEL)
         assert simulator.get_reward_names() == ["coin_flips"]
@@ -123,10 +122,8 @@ class TestSparseModelSimulator:
         rng = random.Random(23)
         path = stormpy.examples.files.prism_mdp_slipgrid
         prism_program = stormpy.parse_prism_program(path)
-        options = stormpy.BuilderOptions()
-        options.set_build_choice_labels()
-        options.set_build_state_valuations()
-        model = stormpy.build_sparse_model_with_options(prism_program, options)
+        options = stormpy.BuilderOptions(build_full=True)
+        model = stormpy.build_model(prism_program, options=options)
         simulator = stormpy.simulator.create_simulator(model, seed=42)
         simulator.set_action_mode(stormpy.simulator.SimulatorActionMode.GLOBAL_NAMES)
         simulator.set_observation_mode(stormpy.simulator.SimulatorObservationMode.PROGRAM_LEVEL)
@@ -155,15 +152,40 @@ class TestSparseModelSimulator:
         for path in paths:
             assert path[0]["x"] == 1
             assert path[0]["y"] == 1
-            assert all(isinstance(p["x"], stormpy.utility.JsonContainerRational) for p in path[::2])
+            assert all(isinstance(p["x"], stormpy.datastructures.JsonContainer[stormpy.Rational]) for p in path[::2])
             assert all(p in ["north", "east", "south", "west"] for p in path[1::2])
             assert len(path) <= 41
 
+    def test_prism_simulator_restart_in_state(self):
+        program = stormpy.parse_prism_program(get_example_path("dtmc", "die.pm"))
+        simulator = stormpy.simulator.create_simulator(program, seed=42)
+        initial_state = simulator._engine.get_current_state_as_valuation()
+        simulator.step()
+        simulator.step()
+        state, _, _ = simulator.restart(initial_state)
+        assert state == simulator.restart()[0]
+
 
 class TestPrismSimulator:
+    def test_choices(self):
+        prism_program = stormpy.parse_prism_program(stormpy.examples.files.prism_mdp_slipgrid)
+        simulator = stormpy.developer.DiscreteTimePrismProgramSimulator(prism_program, stormpy.BuilderOptions())
+        simulator.reset_to_initial()
+        choices = simulator.get_choices()
+        assert len(choices) == 2
+        action_names = {prism_program.get_action_name(choice.get_action_index()) for choice in choices}
+        assert action_names == {"south", "west"}
+        for choice in choices:
+            assert isinstance(choice, stormpy.developer.Choice[float])
+            assert not choice.has_labels()
+            assert choice.get_labels() == set()
+            assert not choice.is_markovian()
+            assert choice.get_total_mass() == pytest.approx(1)
+            assert len(choice) == choice.size() >= 1
+
     def test_negative_values(self):
         prism_program = stormpy.parse_prism_program(get_example_path("dtmc", "negativevals.pm"))
-        prism_program = stormpy.preprocess_symbolic_input(prism_program, [], "")[0].as_prism_program()
+        prism_program, _ = stormpy.instantiate_constants(prism_program, "")
 
         simulator = stormpy.simulator.create_simulator(prism_program, seed=42)
         simulator.set_action_mode(stormpy.simulator.SimulatorActionMode.GLOBAL_NAMES)
@@ -200,6 +222,6 @@ class TestPrismSimulator:
         for path in paths:
             assert path[0]["x"] == 1
             assert path[0]["y"] == 1
-            assert all(isinstance(p["x"], stormpy.utility.JsonContainerDouble) for p in path[::2])
+            assert all(isinstance(p["x"], stormpy.datastructures.JsonContainer[float]) for p in path[::2])
             assert all(isinstance(p, int) for p in path[1::2])
             assert len(path) <= 41

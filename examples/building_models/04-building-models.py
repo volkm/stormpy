@@ -13,11 +13,8 @@ Building with a fixed (permissive) policy
 def example_building_models_04():
     path = stormpy.examples.files.prism_mdp_firewire
     prism_program = stormpy.parse_prism_program(path)
-    prism_program = stormpy.preprocess_symbolic_input(prism_program, [], "delay=10,fast=0.8")[0].as_prism_program()
-    options = stormpy.BuilderOptions()
-    options.set_build_state_valuations()
-    options.set_build_all_reward_models(True)
-    options.set_build_choice_labels(True)
+    prism_program = stormpy.instantiate_constants(prism_program, "delay=10,fast=0.8")[0]
+    options = stormpy.BuilderOptions(build_full=True)
 
     def permissive_policy(state_valuation, action_index):
         """
@@ -37,7 +34,7 @@ def example_building_models_04():
         cond3 = json.loads(str(state_valuation.to_json()))["x1"] < 40
         return cond1 or (cond2 and cond3)
 
-    constructor = stormpy.make_sparse_model_builder(prism_program, options, stormpy.StateValuationFunctionActionMaskDouble(permissive_policy))
+    constructor = stormpy.developer.make_explicit_model_builder(prism_program, options, stormpy.developer.StateValuationFunctionMask[float](permissive_policy))
     model = constructor.build()
     print(model)
 

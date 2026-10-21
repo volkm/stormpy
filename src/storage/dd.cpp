@@ -1,57 +1,60 @@
 #include "dd.h"
 
-#include <storm/storage/dd/Add.h>
-#include <storm/storage/dd/Bdd.h>
-#include <storm/storage/dd/Dd.h>
-#include <storm/storage/dd/DdManager.h>
-#include <storm/storage/dd/DdMetaVariable.h>
+#include <storm/dd/Add.h>
+#include <storm/dd/Bdd.h>
+#include <storm/dd/Dd.h>
+#include <storm/dd/DdManager.h>
+#include <storm/dd/DdMetaVariable.h>
 
+#include "src/binding_type_index.h"
 #include "src/helpers.h"
 
 template<storm::dd::DdType DdType>
-py::classh<storm::dd::Dd<DdType>> define_dd(py::module& m, std::string const& libstring) {
-    py::classh<storm::dd::DdMetaVariable<DdType>> ddMetaVariable(m, (std::string("DdMetaVariable_") + libstring).c_str());
-    ddMetaVariable.def("compute_indices", &storm::dd::DdMetaVariable<DdType>::getIndices, py::arg("sorted") = true);
+py::classh<storm::dd::Dd<DdType>> define_dd(py::module& m) {
+    auto const index = stormpy::bindings::typeIndex<DdType>();
+    auto ddMetaVariable = stormpy::bindings::bindTemplateClass<storm::dd::DdMetaVariable<DdType>>(m, "DdMetaVariable", index, "DD meta variable");
+    ddMetaVariable.def("get_indices", &storm::dd::DdMetaVariable<DdType>::getIndices, py::arg("sorted") = true);
     ddMetaVariable.def_property_readonly("name", &storm::dd::DdMetaVariable<DdType>::getName);
     ddMetaVariable.def_property_readonly("lowest_value", &storm::dd::DdMetaVariable<DdType>::getLow);
     ddMetaVariable.def_property_readonly("type", &storm::dd::DdMetaVariable<DdType>::getType);
     ddMetaVariable.def("__str__", &storm::dd::DdMetaVariable<DdType>::getName);
 
-    py::classh<storm::dd::DdManager<DdType>> ddManager(m, (std::string("DdManager_") + libstring).c_str());
+    auto ddManager = stormpy::bindings::bindTemplateClass<storm::dd::DdManager<DdType>>(m, "DdManager", index, "DD manager");
     ddManager.def(
         "get_meta_variable", [](storm::dd::DdManager<DdType> const& manager, storm::expressions::Variable const& var) { return manager.getMetaVariable(var); },
         py::arg("expression_variable"));
 
-    py::classh<storm::dd::Dd<DdType>> dd(m, (std::string("Dd_") + libstring).c_str(), "Dd");
+    auto dd = stormpy::bindings::bindTemplateClass<storm::dd::Dd<DdType>>(m, "Dd", index, "Dd");
     dd.def_property_readonly("node_count", &storm::dd::Dd<DdType>::getNodeCount, "get node count");
     dd.def_property_readonly("dd_manager", &storm::dd::Dd<DdType>::getDdManager, "get the manager");
     dd.def_property_readonly("meta_variables", [](storm::dd::Dd<DdType> const& dd) { return dd.getContainedMetaVariables(); }, "the contained meta variables");
 
-    py::classh<storm::dd::Bdd<DdType>> bdd(m, (std::string("Bdd_") + libstring).c_str(), "Bdd", dd);
-    bdd.def("to_expression", &storm::dd::Bdd<DdType>::toExpression, py::arg("expression_manager"));
+    stormpy::bindings::bindTemplateClass<storm::dd::Bdd<DdType>>(m, "Bdd", index, "Bdd", dd)
+        .def("to_expression", &storm::dd::Bdd<DdType>::toExpression, py::arg("expression_manager"));
 
     return dd;
 }
 
 template<storm::dd::DdType DdType, typename ValueType>
-void define_dd_typed(py::module& m, std::string const& libstring, std::string const& valueSuffix, py::classh<storm::dd::Dd<DdType>> const& dd) {
-    py::classh<storm::dd::Add<DdType, ValueType>> add(m, (std::string("Add_") + libstring + valueSuffix).c_str(), "Add", dd);
+void define_dd_typed(py::module& m, py::classh<storm::dd::Dd<DdType>> const& dd) {
+    auto const index = stormpy::bindings::typeIndex<DdType, ValueType>();
+    auto add = stormpy::bindings::bindTemplateClass<storm::dd::Add<DdType, ValueType>>(m, "Add", index, "Add", dd);
     add.def(
         "__iter__", [](const storm::dd::Add<DdType, ValueType>& s) { return py::make_iterator(s.begin(), s.end()); },
         py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 
-    py::classh<storm::dd::AddIterator<DdType, ValueType>> addIterator(m, (std::string("AddIterator_") + libstring + valueSuffix).c_str(), "AddIterator");
+    auto addIterator = stormpy::bindings::bindTemplateClass<storm::dd::AddIterator<DdType, ValueType>>(m, "AddIterator", index, "AddIterator");
     addIterator.def("get", [](const storm::dd::AddIterator<DdType, ValueType>& it) { return *it; });
 }
 
 void define_dd_nt(py::module& m) {
+    py::native_enum<storm::dd::DdType>(m, "DdType", "enum.Enum").value("Sylvan", storm::dd::DdType::Sylvan).value("CUDD", storm::dd::DdType::CUDD).finalize();
     py::native_enum<storm::dd::MetaVariableType>(m, "DdMetaVariableType", "enum.Enum")
-        .value("Int", storm::dd::MetaVariableType::Int)
-        .value("Bool", storm::dd::MetaVariableType::Bool)
-        .value("Bitvector", storm::dd::MetaVariableType::BitVector)
+        .value("INT", storm::dd::MetaVariableType::Int)
+        .value("BOOL", storm::dd::MetaVariableType::Bool)
+        .value("BITVECTOR", storm::dd::MetaVariableType::BitVector)
         .finalize();
 }
 
-template py::classh<storm::dd::Dd<storm::dd::DdType::Sylvan>> define_dd<storm::dd::DdType::Sylvan>(py::module& m, std::string const& libstring);
-template void define_dd_typed<storm::dd::DdType::Sylvan, double>(py::module&, std::string const&, std::string const&,
-                                                                 py::classh<storm::dd::Dd<storm::dd::DdType::Sylvan>> const&);
+template py::classh<storm::dd::Dd<storm::dd::DdType::Sylvan>> define_dd<storm::dd::DdType::Sylvan>(py::module& m);
+template void define_dd_typed<storm::dd::DdType::Sylvan, double>(py::module&, py::classh<storm::dd::Dd<storm::dd::DdType::Sylvan>> const&);

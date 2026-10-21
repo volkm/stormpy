@@ -1,0 +1,97 @@
+name: Deploy
+# Build stormpy Docker image, test it and deploy it to DockerHub.
+# Also builds the documentation and deploys it to GitHub pages.
+
+on:
+  workflow_call:
+    inputs:
+      nr_jobs:
+        description: "Number of parallel build jobs"
+        type: string
+        default: "4"
+      buildType:
+        description: "Build type name (Debug or Release)"
+        type: string
+        required: true
+      dockerTag:
+        description: "Docker image tag to use (e.g. ci-debug, ci)"
+        type: string
+        required: true
+      stormBase:
+        description: "Storm base image (e.g. movesrwth/storm:ci)"
+        type: string
+        required: true
+      setupArgs:
+        description: "Additional arguments for compiling stormpy"
+        type: string
+        default: "--config-settings=cmake.define.STORMPY_ALLOW_STORM_FETCH=OFF"
+      extras:
+        description: "Optional dependencies of stormpy to install"
+        type: string
+        default: "[test,parser,plot,doc]"
+      deployDocs:
+        description: "Deploy the documentation to GitHub pages"
+        type: boolean
+        default: false
+    secrets:
+      STORM_CI_DOCKER_USERNAME:
+        required: false
+      STORM_CI_DOCKER_TOKEN:
+        required: false
+
+jobs:
+  deploy:
+    name: Test and Deploy (${{ inputs.buildType }})
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed for documentation deployment
+      contents: write
+    env:
+      NR_JOBS: ${{ inputs.nr_jobs }}
+    steps:
+      - name: Git clone
+        uses: actions/checkout@v7
+      - name: Build stormpy from Dockerfile
+        run: |
+          docker build -t movesrwth/stormpy:${{ inputs.dockerTag }} . \
+            --build-arg STORM_BASE=${{ inputs.stormBase }} \
+            --build-arg build_type="${{ inputs.buildType }}" \
+            --build-arg setup_args="${{ inputs.setupArgs }}" \
+            --build-arg options="${{ inputs.extras }}" \
+            --build-arg no_threads=${NR_JOBS}
+      - name: Run Docker
+        run: docker run -d -it --name ci movesrwth/stormpy:${{ inputs.dockerTag }}
+      - name: Run tests
+        run: docker exec ci bash -c "cd /opt/stormpy; pytest"
+
+      - name: Login into docker
+        # Only login if using master on original repo (and not for pull requests or forks)
+        if: github.repository_owner == 'stormchecker' && github.ref == 'refs/heads/master'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.STORM_CI_DOCKER_USERNAME }}
+          password: ${{ secrets.STORM_CI_DOCKER_TOKEN }}
+      - name: Deploy stormpy
+        # Only deploy if using master on original repo (and not for pull requests or forks)
+        if: github.repository_owner == 'stormchecker' && github.ref == 'refs/heads/master'
+        run: |
+          docker commit ci movesrwth/stormpy:${{ inputs.dockerTag }}
+          docker push movesrwth/stormpy:${{ inputs.dockerTag }}
+
+      - name: Check documentation notebooks
+        run: |
+          docker exec ci bash -c "cd /opt/stormpy; make check-doc"
+      - name: Build documentation
+        run: |
+          docker exec ci bash -c "cd /opt/stormpy/doc; make html"
+          docker exec ci rm -r /opt/stormpy/doc/build/html/_sources
+          docker cp ci:/opt/stormpy/doc/build/html .
+      - name: Deploy documentation
+        # Only deploy if requested and using master on original repo (and not for pull requests or forks)
+        if: inputs.deployDocs && github.repository_owner == 'stormchecker' && github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./html
+          publish_branch: gh-pages
+          force_orphan: true

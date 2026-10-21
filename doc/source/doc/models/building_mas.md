@@ -45,7 +45,7 @@ transitions = np.array([[0, 1, 0, 0, 0], [0.8, 0, 0.2, 0, 0], [0.9, 0, 0, 0.1, 0
 When building the matrix we define a custom row grouping by passing a list containing the starting row of each row group in ascending order:
 
 ```{code-cell} python3
-transition_matrix = stormpy.build_sparse_matrix(transitions, [0, 2, 3, 4, 5])
+transition_matrix = stormpy.datastructures.build_sparse_matrix(transitions, [0, 2, 3, 4, 5])
 print(transition_matrix)
 ```
 
@@ -53,13 +53,13 @@ print(transition_matrix)
 The labeling is similar the ones already covered in the previous examples.
 
 ```{code-cell} python3
-state_labeling = stormpy.storage.StateLabeling(5)
+state_labeling = stormpy.models.StateLabeling(5)
 state_labels = {"init", "deadlock"}
 for label in state_labels:
     state_labeling.add_label(label)
 state_labeling.add_label_to_state("init", 0)
 
-choice_labeling = stormpy.storage.ChoiceLabeling(6)
+choice_labeling = stormpy.models.ChoiceLabeling(6)
 choice_labels = {"alpha", "beta"}
 for label in choice_labels:
     choice_labeling.add_label(label)
@@ -73,7 +73,7 @@ In order to define which states have only one probability distribution over the 
 we build a BitVector that contains the respective Markovian states:
 
 ```{code-cell} python3
-markovian_states = stormpy.BitVector(5, [1, 2, 3, 4])
+markovian_states = stormpy.datastructures.BitVector(5, [1, 2, 3, 4])
 ```
 
 ## Exit Rates
@@ -89,7 +89,7 @@ exit_rates = [0.0, 10.0, 12.0, 1.0, 1.0]
 Now, we can collect all components:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, markovian_states=markovian_states)
+components = stormpy.models.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, markovian_states=markovian_states)
 components.choice_labeling = choice_labeling
 components.exit_rates = exit_rates
 ```
@@ -97,6 +97,6 @@ components.exit_rates = exit_rates
 Finally, we can build the model:
 
 ```{code-cell} python3
-ma = stormpy.storage.SparseMA(components)
+ma = stormpy.models.SparseMA(components)
 print(ma)
 ```

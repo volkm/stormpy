@@ -1,5 +1,5 @@
 #include <storm/adapters/IntervalAdapter.h>
-#include <storm/storage/dd/DdType.h>
+#include <storm/dd/DdType.h>
 
 #include "src/common.h"
 #include "src/storage/bitvector.h"
@@ -10,6 +10,7 @@
 #include "src/storage/expressions.h"
 #include "src/storage/geometry.h"
 #include "src/storage/jani.h"
+#include "src/storage/json.h"
 #include "src/storage/labeling.h"
 #include "src/storage/matrix.h"
 #include "src/storage/memorystructure.h"
@@ -30,36 +31,38 @@ PYBIND11_MODULE(_storage, m) {
 #endif
 
     define_bitvector(m);
-    auto ddSylvan = define_dd<storm::dd::DdType::Sylvan>(m, "Sylvan");
-    define_dd_typed<storm::dd::DdType::Sylvan, double>(m, "Sylvan", "_Double", ddSylvan);
+    define_json<double>(m);
+    define_json<storm::RationalNumber>(m);
     define_dd_nt(m);
+    auto ddSylvan = define_dd<storm::dd::DdType::Sylvan>(m);
+    define_dd_typed<storm::dd::DdType::Sylvan, double>(m, ddSylvan);
     define_model(m);
-    define_sparse_model<double>(m, "");
-    define_sparse_model<storm::RationalNumber>(m, "Exact");
-    define_sparse_model<storm::Interval>(m, "Interval");
-    define_sparse_model<storm::RationalFunction>(m, "Parametric");
-    define_sparse_model<storm::RationalInterval>(m, "RationalInterval");
+    define_sparse_model<double>(m);
+    define_sparse_model<storm::RationalNumber>(m);
+    define_sparse_model<storm::Interval>(m);
+    define_sparse_model<storm::RationalFunction>(m);
+    define_sparse_model<storm::RationalInterval>(m);
     define_valuation(m);
     define_valuation_transformer(m);
     define_simplevaluation(m);
-    define_sparse_matrix<double>(m, "");
-    define_sparse_matrix<storm::RationalNumber>(m, "Exact");
-    define_sparse_matrix<storm::Interval>(m, "Interval");
-    define_sparse_matrix<storm::RationalInterval>(m, "RationalInterval");
-    define_sparse_matrix<storm::RationalFunction>(m, "Parametric");
-    define_sparse_matrix_nt(m);
-    define_symbolic_model<storm::dd::DdType::Sylvan, double>(m, "Sylvan");
-    define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalNumber>(m, "SylvanExact");
-    define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalFunction>(m, "SylvanParametric");
-    define_state<double>(m, "");
-    define_state<storm::RationalNumber>(m, "Exact");
-    define_state<storm::Interval>(m, "Interval");
-    define_state<storm::RationalInterval>(m, "RationalInterval");
-    define_state<storm::RationalFunction>(m, "Parametric");
-    define_memorystructure_typed<double>(m, "");
-    define_memorystructure_typed<storm::RationalNumber>(m, "Exact");
-    define_memorystructure_typed<storm::Interval>(m, "Interval");
-    define_memorystructure_typed<storm::RationalFunction>(m, "Parametric");
+    define_sparse_matrix<double>(m);
+    define_sparse_matrix<storm::RationalNumber>(m);
+    define_sparse_matrix<storm::Interval>(m);
+    define_sparse_matrix<storm::RationalInterval>(m);
+    define_sparse_matrix<storm::RationalFunction>(m);
+    define_symbolic_model<storm::dd::DdType::Sylvan, double>(m);
+    define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalNumber>(m);
+    define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalFunction>(m);
+    define_state<double>(m);
+    define_state<storm::RationalNumber>(m);
+    define_state<storm::Interval>(m);
+    define_state<storm::RationalInterval>(m);
+    define_state<storm::RationalFunction>(m);
+    define_memorystructure_typed<double>(m);
+    define_memorystructure_typed<storm::RationalNumber>(m);
+    define_memorystructure_typed<storm::Interval>(m);
+    define_memorystructure_typed<storm::RationalInterval>(m);
+    define_memorystructure_typed<storm::RationalFunction>(m);
     define_memorystructure_untyped(m);
     define_prism(m);
     define_jani(m);
@@ -67,28 +70,32 @@ PYBIND11_MODULE(_storage, m) {
     define_labeling(m);
     define_origins(m);
     define_expressions(m);
-    define_scheduler<double>(m, "");
-    define_scheduler<storm::RationalNumber>(m, "Exact");
-    define_scheduler<storm::Interval>(m, "Interval");
-    define_scheduler<storm::RationalInterval>(m, "RationalInterval");
-    define_scheduler<storm::RationalFunction>(m, "Parametric");
-    define_distribution<double>(m, "");
-    define_distribution<storm::RationalNumber>(m, "Exact");
-    define_distribution<storm::Interval>(m, "Interval");
-    define_distribution<storm::RationalInterval>(m, "RationalInterval");
-    define_sparse_model_components<double>(m, "");
-    define_sparse_model_components<storm::RationalNumber>(m, "Exact");
-    define_sparse_model_components<storm::Interval>(m, "Interval");
-    define_sparse_model_components<storm::RationalInterval>(m, "RationalInterval");
-    define_sparse_model_components<storm::RationalFunction>(m, "Parametric");
-    define_geometry<double>(m, "Double");
-    define_geometry<storm::RationalNumber>(m, "Exact");
+    define_scheduler<double>(m);
+    define_scheduler<storm::RationalNumber>(m);
+    define_scheduler<storm::Interval>(m);
+    define_scheduler<storm::RationalInterval>(m);
+    define_scheduler<storm::RationalFunction>(m);
+    define_distribution<double>(m);
+    define_distribution<storm::RationalNumber>(m);
+    define_distribution<storm::Interval>(m);
+    define_distribution<storm::RationalInterval>(m);
+    define_sparse_model_components<double>(m);
+    define_sparse_model_components<storm::RationalNumber>(m);
+    define_sparse_model_components<storm::Interval>(m);
+    define_sparse_model_components<storm::RationalInterval>(m);
+    define_sparse_model_components<storm::RationalFunction>(m);
+    define_geometry<double>(m);
+    define_geometry<storm::RationalNumber>(m);
 
     define_maximal_end_components(m);
-    define_maximal_end_component_decomposition<double>(m, "_double");
-    define_maximal_end_component_decomposition<storm::RationalNumber>(m, "_exact");
-    define_maximal_end_component_decomposition<storm::Interval>(m, "_interval");
-    define_maximal_end_component_decomposition<storm::RationalInterval>(m, "_ratinterval");
-    define_maximal_end_component_decomposition<storm::RationalFunction>(m, "_ratfunc");
+    define_maximal_end_component_decomposition<double>(m);
+    define_maximal_end_component_decomposition<storm::RationalNumber>(m);
+    define_maximal_end_component_decomposition<storm::Interval>(m);
+    define_maximal_end_component_decomposition<storm::RationalInterval>(m);
+    define_maximal_end_component_decomposition<storm::RationalFunction>(m);
     define_umb(m);
+    define_umb_typed<double>(m);
+    define_umb_typed<storm::RationalNumber>(m);
+    define_umb_typed<storm::Interval>(m);
+    define_umb_typed<storm::RationalInterval>(m);
 }

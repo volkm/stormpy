@@ -4,11 +4,11 @@
 #include "src/pycarl/formula/relation.h"
 
 PYBIND11_MODULE(_formula, m) {
-    m.attr("__name__") = "stormpy.pycarl.formula";
+    m.attr("__name__") = "stormpy.numbers.developer.formula";
     m.doc() = "pycarl formula untyped functions";
 
     // Constraint relies on Rational
-    m.import("stormpy.pycarl");
+    m.import("stormpy.numbers.developer");
 
     define_relation(m);
     define_formula_type(m);

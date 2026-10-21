@@ -1,5 +1,5 @@
 import stormpy
-from stormpy.storage import Expression
+from stormpy.expressions import Expression
 
 import stormpy.examples
 import stormpy.examples.files
@@ -10,13 +10,12 @@ def example_analysis_02():
     prism_program = stormpy.parse_prism_program(path)
 
     formula_str = "P=? [F s=7 & d=2]"
-    properties = stormpy.parse_properties(formula_str, prism_program)
-    model = stormpy.build_symbolic_model(prism_program, properties)
-    result = stormpy.model_checking(model, properties[0])
-    filter = stormpy.create_filter_initial_states_symbolic(model)
-    result.filter(filter)
-    assert result.min == result.max
-    print(result.min)
+    prop = stormpy.parse_property(formula_str, prism_program)
+    model = stormpy.build_symbolic_model(prism_program, prop)
+    result = stormpy.model_checking(model, prop)
+    stormpy.filter_initial_states(result, model)
+    assert result.get_min() == result.get_max()
+    print(result.get_min())
 
     # Create an auxiliary mapping to build expressions that matches some state.
     variables = dict()
@@ -25,20 +24,16 @@ def example_analysis_02():
             variables[v.name] = v.expression_variable.get_expression()
     expr_manager = prism_program.expression_manager
 
-    expr_for_state_1 = Expression.Conjunction(
-        [Expression.Eq(variables["s"], expr_manager.create_integer(1)), Expression.Eq(variables["d"], expr_manager.create_integer(0))]
-    )
-    expr_for_state_2 = Expression.And(
-        Expression.Eq(variables["s"], expr_manager.create_integer(4)), Expression.Eq(variables["d"], expr_manager.create_integer(0))
-    )
+    expr_for_state_1 = Expression.Conjunction([Expression.Eq(variables["s"], expr_manager.integer(1)), Expression.Eq(variables["d"], expr_manager.integer(0))])
+    expr_for_state_2 = Expression.And(Expression.Eq(variables["s"], expr_manager.integer(4)), Expression.Eq(variables["d"], expr_manager.integer(0)))
 
-    result = stormpy.model_checking(model, properties[0])
+    result = stormpy.model_checking(model, prop)
     cached_res = result.clone()
-    cached_res.filter(stormpy.create_filter_symbolic(model, expr_for_state_1))
-    print(cached_res.min)
-    result.filter(stormpy.create_filter_symbolic(model, expr_for_state_2))
-    assert result.min == result.max
-    print(result.min)
+    cached_res.filter(stormpy.create_filter(model, expr_for_state_1))
+    print(cached_res.get_min())
+    result.filter(stormpy.create_filter(model, expr_for_state_2))
+    assert result.get_min() == result.get_max()
+    print(result.get_min())
 
 
 if __name__ == "__main__":

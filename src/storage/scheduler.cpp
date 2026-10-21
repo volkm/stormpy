@@ -2,17 +2,32 @@
 
 #include <storm/adapters/IntervalAdapter.h>
 #include <storm/adapters/RationalFunctionAdapter.h>
-#include <storm/storage/Scheduler.h>
+#include <storm/storage/scheduler/Scheduler.h>
 
+#include "src/binding_type_index.h"
 #include "src/helpers.h"
 
+// The return value's type cannot be deduced from the scheduler argument.
+// Register one function family per target type, with overloads for the source types.
+template<typename SourceType, typename TargetType>
+void bind_scheduler_conversion(py::module& m) {
+    auto const index = stormpy::bindings::typeIndex<TargetType>();
+    auto convert = [](storm::storage::Scheduler<SourceType> const& scheduler) { return scheduler.template toValueType<TargetType>(); };
+    if constexpr (std::is_same_v<SourceType, double>) {
+        stormpy::bindings::bindTemplateFunction(m, "to_value_type", index, convert, "Convert a scheduler to another value type", py::arg("scheduler"));
+    } else {
+        stormpy::bindings::bindInternalFunction(m, stormpy::bindings::templateClassName("to_value_type", index), convert,
+                                                "Convert a scheduler to another value type", py::arg("scheduler"));
+    }
+}
+
 template<typename ValueType>
-void define_scheduler(py::module& m, std::string vt_suffix) {
+void define_scheduler(py::module& m) {
     using Scheduler = storm::storage::Scheduler<ValueType>;
     using SchedulerChoice = storm::storage::SchedulerChoice<ValueType>;
 
-    std::string schedulerClassName = std::string("Scheduler") + vt_suffix;
-    py::classh<Scheduler> scheduler(m, schedulerClassName.c_str(), "A Finite Memory Scheduler");
+    auto const index = stormpy::bindings::typeIndex<ValueType>();
+    auto scheduler = stormpy::bindings::bindTemplateClass<Scheduler>(m, "Scheduler", index, "A Finite Memory Scheduler");
     scheduler
         .def("__str__",
              [](Scheduler const& s) {
@@ -47,31 +62,26 @@ void define_scheduler(py::module& m, std::string vt_suffix) {
              "Get the memoryless scheduler corresponding to the given memory state");
 
     if constexpr (!storm::IsIntervalType<ValueType>) {
-        // Conversion from Interval not implemented
-        scheduler.def("cast_to_double_datatype", &Scheduler::template toValueType<double>, "Construct the scheduler with `double` value type")
-            .def("cast_to_exact_datatype", &Scheduler::template toValueType<storm::RationalNumber>, "Construct the scheduler with `exact` value type")
-            .def("cast_to_parametric_datatype", &Scheduler::template toValueType<storm::RationalFunction>,
-                 "Construct the scheduler with `parametric` value type");
+        bind_scheduler_conversion<ValueType, double>(m);
+        bind_scheduler_conversion<ValueType, storm::RationalNumber>(m);
+        bind_scheduler_conversion<ValueType, storm::RationalFunction>(m);
         if constexpr (!std::is_same_v<ValueType, storm::RationalFunction>) {
-            // Conversion from RationalFunction to Interval not implemented
-            scheduler.def("cast_to_interval_datatype", &Scheduler::template toValueType<storm::Interval>, "Construct the scheduler with `interval` value type");
-            scheduler.def("cast_to_exact_interval_datatype", &Scheduler::template toValueType<storm::RationalInterval>,
-                          "Construct the scheduler with `exact interval` value type");
+            bind_scheduler_conversion<ValueType, storm::Interval>(m);
+            bind_scheduler_conversion<ValueType, storm::RationalInterval>(m);
         }
     }
 
-    std::string schedulerChoiceClassName = std::string("SchedulerChoice") + vt_suffix;
-    py::classh<SchedulerChoice> schedulerChoice(m, schedulerChoiceClassName.c_str(), "A choice of a finite memory scheduler");
+    auto schedulerChoice = stormpy::bindings::bindTemplateClass<SchedulerChoice>(m, "SchedulerChoice", index, "A choice of a finite memory scheduler");
     schedulerChoice.def(py::init<uint64_t>(), "choice"_a)
         .def_property_readonly("defined", &SchedulerChoice::isDefined, "Is the choice defined by the scheduler?")
         .def_property_readonly("deterministic", &SchedulerChoice::isDeterministic, "Is the choice deterministic (given by a Dirac distribution)?")
         .def("get_deterministic_choice", &SchedulerChoice::getDeterministicChoice, "Get the deterministic choice")
-        .def("get_choice", &SchedulerChoice::getChoiceAsDistribution, "Get the distribution over the actions")
+        .def("get_choice_as_distribution", &SchedulerChoice::getChoiceAsDistribution, "Get the distribution over the actions")
         .def("__str__", &streamToString<SchedulerChoice>);
 }
 
-template void define_scheduler<double>(py::module& m, std::string vt_suffix);
-template void define_scheduler<storm::RationalNumber>(py::module& m, std::string vt_suffix);
-template void define_scheduler<storm::Interval>(py::module& m, std::string vt_suffix);
-template void define_scheduler<storm::RationalInterval>(py::module& m, std::string vt_suffix);
-template void define_scheduler<storm::RationalFunction>(py::module& m, std::string vt_suffix);
+template void define_scheduler<double>(py::module& m);
+template void define_scheduler<storm::RationalNumber>(py::module& m);
+template void define_scheduler<storm::Interval>(py::module& m);
+template void define_scheduler<storm::RationalInterval>(py::module& m);
+template void define_scheduler<storm::RationalFunction>(py::module& m);

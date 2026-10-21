@@ -36,7 +36,7 @@ We begin by creating the matrix representing the transitions in the model in ter
 For constructing the transition matrix, we use the SparseMatrixBuilder:
 
 ```{code-cell} python3
-builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=False)
+builder = stormpy.datastructures.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=False)
 ```
 
 Here, we start with an empty matrix to later insert more entries.
@@ -81,7 +81,7 @@ transition_matrix = builder.build()
 
 It should be noted that entries can only be inserted in ascending order, i.e. row by row and column by column.
 Stormpy provides the possibility to build a sparse matrix using the numpy library ([https://numpy.org/](https://numpy.org/) )
-Instead of using the SparseMatrixBuilder, a sparse matrix can be build from a numpy array via the method stormpy.build_sparse_matrix.
+Instead of using the SparseMatrixBuilder, a sparse matrix can be build from a numpy array via the method stormpy.datastructures.build_sparse_matrix.
 An example is given in [building CTMCs](building_ctmcs.md#transition-matrix).
 
 ## Labeling
@@ -90,7 +90,7 @@ States can be labeled with sets of propositions, for example state 0 can be labe
 In order to specify the state labeling we create an empty labeling for the given number of states and add the labels to the labeling:
 
 ```{code-cell} python3
-state_labeling = stormpy.storage.StateLabeling(13)
+state_labeling = stormpy.models.StateLabeling(13)
 
 labels = {"init", "one", "two", "three", "four", "five", "six", "done", "deadlock"}
 for label in labels:
@@ -118,7 +118,7 @@ state_labeling.add_label_to_state("six", 12)
 To set the same label for multiple states, we can use a BitVector representation for the set of states:
 
 ```{code-cell} python3
-state_labeling.set_states("done", stormpy.BitVector(13, [7, 8, 9, 10, 11, 12]))
+state_labeling.set_states("done", stormpy.datastructures.BitVector(13, [7, 8, 9, 10, 11, 12]))
 print(state_labeling)
 ```
 
@@ -134,7 +134,7 @@ The state-action rewards are represented by a vector, which is associated to a r
 ```{code-cell} python3
 reward_models = {}
 action_reward = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+reward_models["coin_flips"] = stormpy.models.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 ```
 
 ## Building the Model
@@ -142,12 +142,12 @@ reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_re
 Next, we collect all components:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models)
+components = stormpy.models.SparseModelComponents(transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models)
 ```
 
 And finally, we can build the DTMC:
 
 ```{code-cell} python3
-dtmc = stormpy.storage.SparseDtmc(components)
+dtmc = stormpy.models.SparseDtmc(components)
 print(dtmc)
 ```

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <storm/adapters/IntervalAdapter.h>
 #include <storm/adapters/RationalFunctionAdapter.h>
+#include <storm/dd/DdManager.h>
 #include <storm/models/ModelBase.h>
 #include <storm/models/sparse/Ctmc.h>
 #include <storm/models/sparse/Dtmc.h>
@@ -19,11 +20,11 @@
 #include <storm/models/symbolic/Mdp.h>
 #include <storm/models/symbolic/Model.h>
 #include <storm/models/symbolic/StandardRewardModel.h>
-#include <storm/storage/Scheduler.h>
-#include <storm/storage/dd/DdManager.h>
+#include <storm/storage/scheduler/Scheduler.h>
 #include <storm/utility/dd.h>
 #include <string>
 
+#include "src/binding_type_index.h"
 #include "src/storage/state.h"
 
 // Typedefs
@@ -150,7 +151,7 @@ void define_model(py::module& m) {
         .finalize();
 
     // ModelBase
-    py::classh<ModelBase> modelBase(m, "_ModelBase", "Base class for all models");
+    py::classh<ModelBase> modelBase(m, "ModelBase", "Base class for all models");
     modelBase.def_property_readonly("nr_states", &ModelBase::getNumberOfStates, "Number of states")
         .def_property_readonly("nr_transitions", &ModelBase::getNumberOfTransitions, "Number of transitions")
         .def_property_readonly("nr_choices", &ModelBase::getNumberOfChoices, "Number of choices")
@@ -175,8 +176,10 @@ void define_model(py::module& m) {
 
 // Bindings for sparse models
 template<typename ValueType>
-void define_sparse_model(py::module& m, std::string const& vtSuffix) {
-    py::classh<SparseModel<ValueType>, ModelBase> model(m, ("_Sparse" + vtSuffix + "Model").c_str(), "A probabilistic model in a sparse matrix representation");
+void define_sparse_model(py::module& m) {
+    auto const index = stormpy::bindings::typeIndex<ValueType>();
+    auto model = stormpy::bindings::bindTemplateClass<SparseModel<ValueType>, ModelBase>(m, "SparseModel", index,
+                                                                                         "A probabilistic model in a sparse matrix representation");
     model.def_property_readonly("supports_uncertainty", &SparseModel<ValueType>::supportsUncertainty, "Flag whether model supports uncertainty via intervals")
         .def_property_readonly("labeling", &getLabeling<ValueType>, "Labels")
         .def(
@@ -187,7 +190,7 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
         .def(
             "has_choice_origins", [](SparseModel<ValueType> const& model) { return model.hasChoiceOrigins(); }, "has choice origins?")
         .def_property_readonly("choice_origins", [](SparseModel<ValueType> const& model) { return model.getChoiceOrigins(); })
-        .def("labels_state", &SparseModel<ValueType>::getLabelsOfState, py::arg("state"), "Get labels of state")
+        .def("get_labels_of_state", &SparseModel<ValueType>::getLabelsOfState, py::arg("state"), "Get labels of state")
         .def_property_readonly("initial_states", &getSparseInitialStates<ValueType>, "Initial states")
         .def_property_readonly("initial_states_as_bitvector", [](SparseModel<ValueType> const& model) { return model.getInitialStates(); })
         .def("set_initial_states", &SparseModel<ValueType>::setInitialStates, py::arg("states"), "Set initial states")
@@ -264,15 +267,16 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
                 },
                 py::arg("parameter"), "Find states with a particular parameter");
     }
-    py::classh<SparseDeterministicModel<ValueType>> detModel(m, ("_SparseDeterministic" + vtSuffix + "Model").c_str(), "Deterministic sparse model", model);
-    py::classh<SparseNondeterministicModel<ValueType>> nondetModel(m, ("_SparseNondeterministic" + vtSuffix + "Model").c_str(), "Nondeterministic sparse model",
-                                                                   model);
+    auto detModel = stormpy::bindings::bindInternalClass<SparseDeterministicModel<ValueType>>(
+        m, stormpy::bindings::templateClassName("SparseDeterministicModel", index), "Deterministic sparse model", model);
+    auto nondetModel = stormpy::bindings::bindInternalClass<SparseNondeterministicModel<ValueType>>(
+        m, stormpy::bindings::templateClassName("SparseNondeterministicModel", index), "Nondeterministic sparse model", model);
 
-    py::classh<SparseDtmc<ValueType>>(m, ("Sparse" + vtSuffix + "Dtmc").c_str(), "DTMC in sparse representation", detModel)
+    stormpy::bindings::bindTemplateClass<SparseDtmc<ValueType>>(m, "SparseDtmc", index, "DTMC in sparse representation", detModel)
         .def(py::init<SparseDtmc<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def("__str__", &getModelInfoPrinter);
-    py::classh<SparseMdp<ValueType>> mdp(m, ("Sparse" + vtSuffix + "Mdp").c_str(), "MDP in sparse representation", nondetModel);
+    auto mdp = stormpy::bindings::bindTemplateClass<SparseMdp<ValueType>>(m, "SparseMdp", index, "MDP in sparse representation", nondetModel);
     mdp.def(py::init<SparseMdp<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&, storm::models::ModelType>(), py::arg("components"), py::arg("type") = storm::models::ModelType::Mdp)
         .def_property_readonly("nondeterministic_choice_indices", [](SparseMdp<ValueType> const& mdp) { return mdp.getNondeterministicChoiceIndices(); })
@@ -293,7 +297,7 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
             },
             "apply scheduler", "scheduler"_a, "drop_unreachable_states"_a = true)
         .def("__str__", &getModelInfoPrinter);
-    py::classh<SparsePomdp<ValueType>>(m, ("Sparse" + vtSuffix + "Pomdp").c_str(), "POMDP in sparse representation", mdp)
+    stormpy::bindings::bindTemplateClass<SparsePomdp<ValueType>>(m, "SparsePomdp", index, "POMDP in sparse representation", mdp)
         .def(py::init<SparsePomdp<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&, bool>(), py::arg("components"), py::arg("canonic_flag") = false)
         .def("__str__", &getModelInfoPrinter)
@@ -302,13 +306,13 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
         .def_property_readonly("nr_observations", &SparsePomdp<ValueType>::getNrObservations)
         .def("has_observation_valuations", &SparsePomdp<ValueType>::hasObservationValuations)
         .def_property_readonly("observation_valuations", &SparsePomdp<ValueType>::getObservationValuations);
-    py::classh<SparseCtmc<ValueType>>(m, ("Sparse" + vtSuffix + "Ctmc").c_str(), "CTMC in sparse representation", detModel)
+    stormpy::bindings::bindTemplateClass<SparseCtmc<ValueType>>(m, "SparseCtmc", index, "CTMC in sparse representation", detModel)
         .def(py::init<SparseCtmc<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def_property_readonly("exit_rates", [](SparseCtmc<ValueType> const& ctmc) { return ctmc.getExitRateVector(); })
-        .def("probability_matrix", &SparseCtmc<ValueType>::computeProbabilityMatrix)
+        .def("compute_probability_matrix", &SparseCtmc<ValueType>::computeProbabilityMatrix)
         .def("__str__", &getModelInfoPrinter);
-    py::classh<SparseMarkovAutomaton<ValueType>>(m, ("Sparse" + vtSuffix + "MA").c_str(), "MA in sparse representation", nondetModel)
+    stormpy::bindings::bindTemplateClass<SparseMarkovAutomaton<ValueType>>(m, "SparseMA", index, "MA in sparse representation", nondetModel)
         .def(py::init<SparseMarkovAutomaton<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def_property_readonly("exit_rates", [](SparseMarkovAutomaton<ValueType> const& ma) { return ma.getExitRates(); })
@@ -329,13 +333,13 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
                                "Check whether the MA can be converted into a CTMC.")
         .def("convert_to_ctmc", &SparseMarkovAutomaton<ValueType>::convertToCtmc, "Convert the MA into a CTMC.");
 
-    py::classh<SparseSmg<ValueType>>(m, ("Sparse" + vtSuffix + "Smg").c_str(), "SMG in sparse representation", nondetModel)
+    stormpy::bindings::bindTemplateClass<SparseSmg<ValueType>>(m, "SparseSmg", index, "SMG in sparse representation", nondetModel)
         .def(py::init<SparseSmg<ValueType>>(), py::arg("other_model"))
         .def(py::init<ModelComponents<ValueType> const&>(), py::arg("components"))
         .def("get_state_player_indications", &SparseSmg<ValueType>::getStatePlayerIndications, "Get for each state its corresponding player")
         .def("get_player_of_state", &SparseSmg<ValueType>::getPlayerOfState, py::arg("state"), "Get player for the given state");
 
-    py::classh<SparseRewardModel<ValueType>>(m, ("Sparse" + vtSuffix + "RewardModel").c_str(), "Reward structure for sparse models")
+    stormpy::bindings::bindTemplateClass<SparseRewardModel<ValueType>>(m, "SparseRewardModel", index, "Reward structure for sparse models")
         .def(py::init<std::optional<std::vector<ValueType>> const&, std::optional<std::vector<ValueType>> const&,
                       std::optional<storm::storage::SparseMatrix<ValueType>> const&>(),
              py::arg("optional_state_reward_vector") = std::nullopt, py::arg("optional_state_action_reward_vector") = std::nullopt,
@@ -348,7 +352,7 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
         .def("get_state_reward", [](SparseRewardModel<ValueType>& rewardModel, uint64_t state) { return rewardModel.getStateReward(state); })
         .def("set_state_reward",
              [](SparseRewardModel<ValueType>& rewardModel, uint64_t state, ValueType const& value) { return rewardModel.setStateReward(state, value); })
-        .def("get_zero_reward_states", &SparseRewardModel<ValueType>::template getStatesWithZeroReward<ValueType>, "get states where all rewards are zero",
+        .def("get_states_with_zero_reward", &SparseRewardModel<ValueType>::template getStatesWithZeroReward<ValueType>, "get states where all rewards are zero",
              py::arg("transition_matrix"))
         .def("get_state_action_reward",
              [](SparseRewardModel<ValueType>& rewardModel, uint64_t action_index) { return rewardModel.getStateActionReward(action_index); })
@@ -363,9 +367,10 @@ void define_sparse_model(py::module& m, std::string const& vtSuffix) {
 
 // Bindings for symbolic models
 template<storm::dd::DdType DdType, typename ValueType>
-void define_symbolic_model(py::module& m, std::string vt_suffix) {
-    py::classh<SymbolicModel<DdType, ValueType>, ModelBase> model(m, ("_Symbolic" + vt_suffix + "Model").c_str(),
-                                                                  "A probabilistic model in a symbolic representation");
+void define_symbolic_model(py::module& m) {
+    auto const index = stormpy::bindings::typeIndex<DdType, ValueType>();
+    auto model = stormpy::bindings::bindTemplateClass<SymbolicModel<DdType, ValueType>, ModelBase>(m, "SymbolicModel", index,
+                                                                                                   "A probabilistic model in a symbolic representation");
     model.def_property_readonly(
              "reward_models", [](SymbolicModel<DdType, ValueType>& model) { return model.getRewardModels(); }, "Reward models")
         .def_property_readonly("dd_manager", &SymbolicModel<DdType, ValueType>::getManager, "dd manager")
@@ -387,27 +392,27 @@ void define_symbolic_model(py::module& m, std::string vt_suffix) {
     if constexpr (std::is_same_v<ValueType, storm::RationalFunction>) {
         model.def("get_parameters", &SymbolicModel<DdType, ValueType>::getParameters, "Get parameters");
     }
-    py::classh<SymbolicDtmc<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "Dtmc").c_str(), "DTMC in symbolic representation", model)
+    stormpy::bindings::bindTemplateClass<SymbolicDtmc<DdType, ValueType>>(m, "SymbolicDtmc", index, "DTMC in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
-    py::classh<SymbolicMdp<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "Mdp").c_str(), "MDP in symbolic representation", model)
+    stormpy::bindings::bindTemplateClass<SymbolicMdp<DdType, ValueType>>(m, "SymbolicMdp", index, "MDP in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
-    py::classh<SymbolicCtmc<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "Ctmc").c_str(), "CTMC in symbolic representation", model)
+    stormpy::bindings::bindTemplateClass<SymbolicCtmc<DdType, ValueType>>(m, "SymbolicCtmc", index, "CTMC in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
-    py::classh<SymbolicMarkovAutomaton<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "MA").c_str(), "MA in symbolic representation", model)
+    stormpy::bindings::bindTemplateClass<SymbolicMarkovAutomaton<DdType, ValueType>>(m, "SymbolicMA", index, "MA in symbolic representation", model)
         .def("__str__", &getModelInfoPrinter);
 
-    py::classh<SymbolicRewardModel<DdType, ValueType>>(m, ("Symbolic" + vt_suffix + "RewardModel").c_str(), "Reward structure for symbolic models")
+    stormpy::bindings::bindTemplateClass<SymbolicRewardModel<DdType, ValueType>>(m, "SymbolicRewardModel", index, "Reward structure for symbolic models")
         .def_property_readonly("has_state_rewards", &SymbolicRewardModel<DdType, ValueType>::hasStateRewards)
         .def_property_readonly("has_state_action_rewards", &SymbolicRewardModel<DdType, ValueType>::hasStateActionRewards)
         .def_property_readonly("has_transition_rewards", &SymbolicRewardModel<DdType, ValueType>::hasTransitionRewards);
 }
 
-template void define_sparse_model<double>(py::module& m, std::string const& vt_suffix);
-template void define_sparse_model<storm::RationalNumber>(py::module& m, std::string const& vt_suffix);
-template void define_sparse_model<storm::Interval>(py::module& m, std::string const& vt_suffix);
-template void define_sparse_model<storm::RationalInterval>(py::module& m, std::string const& vt_suffix);
-template void define_sparse_model<storm::RationalFunction>(py::module& m, std::string const& vt_suffix);
+template void define_sparse_model<double>(py::module& m);
+template void define_sparse_model<storm::RationalNumber>(py::module& m);
+template void define_sparse_model<storm::Interval>(py::module& m);
+template void define_sparse_model<storm::RationalInterval>(py::module& m);
+template void define_sparse_model<storm::RationalFunction>(py::module& m);
 
-template void define_symbolic_model<storm::dd::DdType::Sylvan, double>(py::module& m, std::string vt_suffix);
-template void define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalNumber>(py::module& m, std::string vt_suffix);
-template void define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalFunction>(py::module& m, std::string vt_suffix);
+template void define_symbolic_model<storm::dd::DdType::Sylvan, double>(py::module& m);
+template void define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalNumber>(py::module& m);
+template void define_symbolic_model<storm::dd::DdType::Sylvan, storm::RationalFunction>(py::module& m);

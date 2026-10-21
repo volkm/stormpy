@@ -31,7 +31,7 @@ import stormpy
 Since we want to build a nondeterministic model, we create a transition matrix with a custom row group for each state:
 
 ```{code-cell} python3
-builder = stormpy.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
+builder = stormpy.datastructures.SparseMatrixBuilder(rows=0, columns=0, entries=0, force_dimensions=False, has_custom_row_grouping=True, row_groups=0)
 ```
 
 We need more than one row for the transitions starting in state 0 because a nondeterministic choice over the actions is available.
@@ -88,7 +88,7 @@ transition_matrix = builder.build()
 The state labeling is similar to the one in the previous example for [building a DTMC](building_dtmcs.md).
 
 ```{code-cell} python3
-state_labeling = stormpy.storage.StateLabeling(13)
+state_labeling = stormpy.models.StateLabeling(13)
 labels = {"init", "one", "two", "three", "four", "five", "six", "done", "deadlock"}
 for label in labels:
     state_labeling.add_label(label)
@@ -100,7 +100,7 @@ state_labeling.add_label_to_state("three", 9)
 state_labeling.add_label_to_state("four", 10)
 state_labeling.add_label_to_state("five", 11)
 state_labeling.add_label_to_state("six", 12)
-state_labeling.set_states("done", stormpy.BitVector(13, [7, 8, 9, 10, 11, 12]))
+state_labeling.set_states("done", stormpy.datastructures.BitVector(13, [7, 8, 9, 10, 11, 12]))
 ```
 
 ### Choice labeling
@@ -109,7 +109,7 @@ Since in state 0 a nondeterministic choice over two actions is available, the to
 To distinguish those we can define a choice labeling:
 
 ```{code-cell} python3
-choice_labeling = stormpy.storage.ChoiceLabeling(14)
+choice_labeling = stormpy.models.ChoiceLabeling(14)
 choice_labels = {"a", "b"}
 
 for label in choice_labels:
@@ -132,7 +132,7 @@ In this reward model the length of the action rewards coincides with the number 
 ```{code-cell} python3
 reward_models = {}
 action_reward = [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_reward_vector=action_reward)
+reward_models["coin_flips"] = stormpy.models.SparseRewardModel(optional_state_action_reward_vector=action_reward)
 ```
 
 ## Building the Model
@@ -140,7 +140,7 @@ reward_models["coin_flips"] = stormpy.SparseRewardModel(optional_state_action_re
 We collect the components:
 
 ```{code-cell} python3
-components = stormpy.SparseModelComponents(
+components = stormpy.models.SparseModelComponents(
     transition_matrix=transition_matrix, state_labeling=state_labeling, reward_models=reward_models, rate_transitions=False
 )
 components.choice_labeling = choice_labeling
@@ -149,7 +149,7 @@ components.choice_labeling = choice_labeling
 We build the model:
 
 ```{code-cell} python3
-mdp = stormpy.storage.SparseMdp(components)
+mdp = stormpy.models.SparseMdp(components)
 print(mdp)
 ```
 

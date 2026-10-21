@@ -42,7 +42,7 @@ And the same for parametric models:
 
 ```{code-cell} python3
 path = stormpy.examples.files.drn_pdtmc_die
-model = stormpy.build_parametric_model_from_drn(path)
+model = stormpy.build_model_from_drn[stormpy.RationalFunction](path)
 print(model.model_type)
 ```
 
