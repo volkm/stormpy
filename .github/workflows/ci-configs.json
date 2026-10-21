@@ -1,0 +1,245 @@
+{
+  "defaults": {
+    "cache": false,
+    "stormSource": "system",
+    "storm_tag": "master",
+    "carl_tag": "master",
+    "extras": "[test,parser,plot]",
+    "disable_all": false,
+    "setupArgs": "",
+    "testPaths": "",
+    "allowIncompatible": false,
+    "checkDocs": false,
+    "expectNotHave": []
+  },
+  "linuxTests": [
+    {
+      "name": "Storm master, all libraries",
+      "buildTypes": {
+        "quick": [
+          "Debug",
+          "Release"
+        ],
+        "normal": [
+          "Debug",
+          "Release"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "baseImg": {
+        "Debug": "movesrwth/storm:ci-debug",
+        "Release": "movesrwth/storm:ci"
+      },
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "checkDocs": true
+    },
+    {
+      "name": "Storm master, no libraries",
+      "buildTypes": {
+        "normal": [
+          "Release"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "baseImg": {
+        "Debug": "movesrwth/storm:ci-debug",
+        "Release": "movesrwth/storm:ci"
+      },
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "extras": "[test]",
+      "disable_all": true,
+      "testPaths": "tests",
+      "expectNotHave": [
+        "DFT",
+        "GSPN",
+        "PARS",
+        "POMDP"
+      ]
+    },
+    {
+      "name": "Storm stable",
+      "buildTypes": {
+        "quick": [
+          "Debug",
+          "Release"
+        ],
+        "normal": [
+          "Debug",
+          "Release"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "baseImg": {
+        "Debug": "movesrwth/storm:stable-debug",
+        "Release": "movesrwth/storm:stable"
+      },
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "allowIncompatible": true
+    },
+    {
+      "name": "Ubuntu 24.04 (fetch)",
+      "cache": true,
+      "buildTypes": {
+        "normal": [
+          "Debug"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "baseImg": "movesrwth/storm-basesystem:ubuntu-24.04",
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Ubuntu 24.04 (fetch), only Storm core",
+      "buildTypes": {
+        "extensive": [
+          "Debug"
+        ]
+      },
+      "baseImg": "movesrwth/storm-basesystem:ubuntu-24.04",
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "stormSource": "fetch",
+      "extras": "[test]",
+      "disable_all": true,
+      "testPaths": "tests",
+      "expectNotHave": [
+        "DFT",
+        "GSPN",
+        "PARS",
+        "POMDP"
+      ]
+    },
+    {
+      "name": "Debian 12 (fetch)",
+      "buildTypes": {
+        "extensive": [
+          "Debug"
+        ]
+      },
+      "baseImg": "movesrwth/storm-basesystem:debian-12",
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Debian 13 (fetch)",
+      "buildTypes": {
+        "extensive": [
+          "Debug"
+        ]
+      },
+      "baseImg": "movesrwth/storm-basesystem:debian-13",
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Ubuntu 26.04 (fetch)",
+      "buildTypes": {
+        "extensive": [
+          "Debug"
+        ]
+      },
+      "baseImg": "movesrwth/storm-basesystem:ubuntu-26.04",
+      "setup": "apt-get update && apt-get install -y --no-install-recommends jq python3 python3-dev python3-venv",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Arch Linux (fetch)",
+      "buildTypes": {
+        "normal": [
+          "Debug"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "baseImg": "archlinux:latest",
+      "setup": "pacman -Syu --noconfirm && pacman -S --noconfirm base-devel ccache cmake git jq python boost cln ginac glpk gmp highs hwloc libarchive xerces-c z3",
+      "stormSource": "fetch"
+    }
+  ],
+  "macTests": [
+    {
+      "name": "Mac 15 ARM (fetch)",
+      "buildTypes": {
+        "extensive": [
+          "Debug"
+        ]
+      },
+      "distro": "macos-15",
+      "xcode": "16.4",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Mac 26 ARM (fetch)",
+      "cache": true,
+      "buildTypes": {
+        "normal": [
+          "Debug"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "distro": "macos-26",
+      "xcode": "latest-stable",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Mac 26 Intel (fetch)",
+      "buildTypes": {
+        "extensive": [
+          "Debug"
+        ]
+      },
+      "distro": "macos-26-intel",
+      "xcode": "latest-stable",
+      "stormSource": "fetch"
+    },
+    {
+      "name": "Mac 26 ARM (Storm installed)",
+      "cache": true,
+      "buildTypes": {
+        "normal": [
+          "Release"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "distro": "macos-26",
+      "xcode": "latest-stable",
+      "stormSource": "build"
+    },
+    {
+      "name": "Mac 27 ARM (fetch)",
+      "cache": true,
+      "buildTypes": {
+        "normal": [
+          "Release"
+        ],
+        "extensive": [
+          "Debug",
+          "Release"
+        ]
+      },
+      "distro": "xcode-27",
+      "xcode": "latest",
+      "stormSource": "fetch"
+    }
+  ]
+}

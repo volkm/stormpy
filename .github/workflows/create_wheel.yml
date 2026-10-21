@@ -13,10 +13,10 @@ on:
         type: string
         default: 'x.y.z'
       version:
-        description: 'Version to use for stormpy (e.g. 1.1.0 or 1.1.0.dev1)'
-        required: true
+        description: 'Version to use for stormpy (e.g. 1.1.0 or 1.1.0.dev1). If empty, the version from the source is kept.'
+        required: false
         type: string
-        default: 'x.y.z'
+        default: ''
       full_build:
         description: 'Build for all Python versions (if false, 3.13 and 3.14 only)'
         required: true
@@ -96,9 +96,9 @@ jobs:
             xcode: latest-stable
             deploy_target: 15.0
           - os: macos-arm
-            runs-on: macos-14 # macos-14+ (including latest) are ARM64 runners
-            xcode: 15.4
-            deploy_target: 14.0
+            runs-on: macos-15 # ARM64 runners
+            xcode: latest-stable
+            deploy_target: 15.0
       fail-fast: false
     steps:
       - name: Git clone (default current repo)
@@ -115,6 +115,7 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode }}
       - name: Prepare version
+        if: ${{ inputs.version != '' }}
         run: perl -i -pe 's/__version__ = "[^"]+"/__version__ = "'"${{ inputs.version }}"'"/' lib/stormpy/_version.py
       - name: Build wheels (development)
         if: ${{ !inputs.full_build }}
@@ -164,6 +165,7 @@ jobs:
           repository: ${{ inputs.repo }}
           ref: ${{ inputs.ref }}
       - name: Prepare version
+        if: ${{ inputs.version != '' }}
         run: perl -i -pe 's/__version__ = "[^"]+"/__version__ = "'"${{ inputs.version }}"'"/' lib/stormpy/_version.py
       - name: Build sdist
         run: pipx run build --sdist
@@ -269,19 +271,29 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          - {name: "XCode 15.4, ARM",
-             os: macos-arm,
-             distro: "macos-14",
-             xcode: "15.4"
-          }
-          - {name: "XCode Latest, ARM",
+          - {name: "macOS 15, XCode 16.4, ARM",
              os: macos-arm,
              distro: "macos-15",
+             xcode: "16.4"
+          }
+          - {name: "macOS 26, XCode Latest, ARM",
+             os: macos-arm,
+             distro: "macos-26",
              xcode: "latest-stable"
           }
-          - {name: "XCode Latest, Intel",
+          - {name: "macOS 27, XCode Latest, ARM",
+             os: macos-arm,
+             distro: "xcode-27",
+             xcode: "latest"
+          }
+          - {name: "macOS 15, XCode Latest, Intel",
              os: macos-intel,
              distro: "macos-15-intel",
+             xcode: "latest-stable"
+          }
+          - {name: "macOS 26, XCode Latest, Intel",
+             os: macos-intel,
+             distro: "macos-26-intel",
              xcode: "latest-stable"
           }
     steps:
