@@ -10,7 +10,7 @@ import typing
 
 import pytest
 import stormpy
-from configurations import has_dft, has_gspn, has_pars, has_package
+from configurations import has_dft, has_gspn, has_pars, has_pomdp, has_package
 
 
 def _core_documented_elsewhere(name):
@@ -47,6 +47,7 @@ _PUBLIC_MODULES = {
     "stormpy.dft": (has_dft, _not_documented_elsewhere),
     "stormpy.gspn": (has_gspn, _not_documented_elsewhere),
     "stormpy.pars": (has_pars, _not_documented_elsewhere),
+    "stormpy.pomdp": (has_pomdp, _not_documented_elsewhere),
 }
 
 _UNAVAILABLE = pytest.mark.skip(reason="Module not available in this build of Storm")
